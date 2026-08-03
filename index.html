@@ -687,7 +687,15 @@ function nomToggleLang(){
   var btn = document.getElementById("nomBtnLang");
   if (btn) btn.textContent = next==="es" ? "EN" : "ES";
 }
-new MutationObserver(function(){ if ((localStorage.getItem("sif_lang")||"es")==="en") nomApplyLangToNode(document.body); }).observe(document.body, {childList:true, subtree:true, characterData:true});
+var __nomTranslating = false;
+new MutationObserver(function(muts){
+  if (__nomTranslating) return;
+  if ((localStorage.getItem("sif_lang")||"es")!=="en") return;
+  var onlyText = muts.every(function(m){ return m.type === "characterData"; });
+  if (onlyText) return;
+  __nomTranslating = true;
+  try { nomApplyLangToNode(document.body); } finally { __nomTranslating = false; }
+}).observe(document.body, {childList:true, subtree:true});
 document.addEventListener("DOMContentLoaded", function(){ if ((localStorage.getItem("sif_lang")||"es")==="en") nomApplyLangAll(); });
 if (document.readyState !== "loading" && (localStorage.getItem("sif_lang")||"es")==="en") { nomApplyLangAll(); }
 
