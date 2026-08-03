@@ -32,6 +32,16 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;back
 /* ═══ APP (módulo Nóminas) ═══ */
 #nom-wrap{min-height:100vh;display:flex;flex-direction:column}
 #nom-topbar{background:#0d3d6b;color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.sync-badge{font-size:11px;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:5px;margin-left:auto}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:20px;padding:4px 10px 4px 4px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:#ffb703;color:#0d3d6b;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+.user-meta{display:flex;flex-direction:column;line-height:1.15}
+.user-meta .name{font-size:11.5px;font-weight:600;color:#fff}
+.user-meta .role{font-size:9.5px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.04em}
+.btn-ghost{background:rgba(255,255,255,.15);border:none;color:#fff;padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .15s}
+.btn-ghost:hover{background:rgba(255,255,255,.25)}
+html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .nom-logo{font-weight:800;font-size:16px;letter-spacing:.3px;display:flex;align-items:center;gap:7px}
 .nom-logo span{font-size:20px}
 .nom-topbar-user{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px}
@@ -162,9 +172,18 @@ body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;back
   <div id="nom-topbar">
     <div class="nom-logo"><span>💵</span> SIF · Nóminas</div>
     <div class="nom-topbar-user">
-      <span id="nom-ubName" style="font-weight:600"></span>
-      <span id="nom-ubRole" class="nom-role-badge"></span>
-      <button class="nom-logout-btn" onclick="doLogout()">Salir</button>
+      <span class="sync-badge"><span class="sync-dot"></span><span id="nomSyncTxt">Conectado a Supabase</span></span>
+      <div class="user-chip">
+        <div class="user-avatar" id="nom-ubAvatar">—</div>
+        <div class="user-meta">
+          <span class="name" id="nom-ubName"></span>
+          <span class="role" id="nom-ubRole"></span>
+        </div>
+      </div>
+      <button class="btn-ghost" onclick="nomToggleTheme()">🌓</button>
+      <button class="btn-ghost" id="nomBtnLang" onclick="nomToggleLang()">EN</button>
+      <button class="btn-ghost" onclick="nomVolverPortal()">← Portal</button>
+      <button class="btn-ghost nom-logout-btn" onclick="doLogout()">Salir</button>
     </div>
   </div>
 
@@ -431,6 +450,8 @@ window.__initReport__ = function __initReport__(role) {
 
   document.getElementById('nom-ubName').textContent = __nomUsername;
   document.getElementById('nom-ubRole').textContent = NOM_ROLE_LABELS[role] || role;
+  var __nomInitials = (__nomUsername||'').trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase();
+  var __nomAvEl = document.getElementById('nom-ubAvatar'); if (__nomAvEl) __nomAvEl.textContent = __nomInitials || '?';
 
   nomRender();
 };
@@ -565,6 +586,63 @@ async function doLogout(){
   try { await sb.auth.signOut(); } catch(e){}
   mostrarLogin();
 }
+
+var PORTAL_URL = "https://jcgt1976.github.io/SIF-Portal/";
+function nomVolverPortal(){ window.location.href = PORTAL_URL; }
+function nomToggleTheme(){
+  var html = document.documentElement;
+  var cur = html.dataset.theme === "dark" ? "dark" : "light";
+  html.dataset.theme = cur === "dark" ? "light" : "dark";
+  localStorage.setItem("sif_theme", html.dataset.theme);
+}
+(function(){ var t = localStorage.getItem("sif_theme"); if (t === "dark") document.documentElement.dataset.theme = "dark"; })();
+
+var NOM_ES2EN = {
+  "Conectado a Supabase": "Connected to Supabase",
+  "Salir": "Log out",
+  "Todas": "All"
+};
+function nomApplyLangToNode(root){
+  if (!root) return;
+  var lang = localStorage.getItem("sif_lang")||"es";
+  var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(node){
+      var p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      var tag = p.tagName;
+      if (tag==="SCRIPT"||tag==="STYLE"||tag==="NOSCRIPT") return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  var nodes = [];
+  var n;
+  while (n = walker.nextNode()) nodes.push(n);
+  nodes.forEach(function(node){
+    if (node.__i18nOriginal === undefined) node.__i18nOriginal = node.nodeValue;
+    var original = node.__i18nOriginal;
+    var trimmed = original.trim();
+    if (!trimmed) return;
+    if (lang === "en") {
+      var translated = NOM_ES2EN[trimmed];
+      if (translated !== undefined) node.nodeValue = original.split(trimmed).join(translated);
+      else node.nodeValue = original;
+    } else {
+      node.nodeValue = original;
+    }
+  });
+}
+function nomApplyLangAll(){ nomApplyLangToNode(document.body); }
+function nomToggleLang(){
+  var cur = localStorage.getItem("sif_lang")||"es";
+  var next = cur==="es" ? "en" : "es";
+  localStorage.setItem("sif_lang", next);
+  nomApplyLangAll();
+  var btn = document.getElementById("nomBtnLang");
+  if (btn) btn.textContent = next==="es" ? "EN" : "ES";
+}
+new MutationObserver(function(){ if ((localStorage.getItem("sif_lang")||"es")==="en") nomApplyLangToNode(document.body); }).observe(document.body, {childList:true, subtree:true, characterData:true});
+document.addEventListener("DOMContentLoaded", function(){ if ((localStorage.getItem("sif_lang")||"es")==="en") nomApplyLangAll(); });
+if (document.readyState !== "loading" && (localStorage.getItem("sif_lang")||"es")==="en") { nomApplyLangAll(); }
 
 // ────────────────────────────────────────────
 // EMPRESA SELECTOR
