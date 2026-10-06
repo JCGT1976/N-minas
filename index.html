@@ -174,7 +174,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     <div class="nom-topbar-user">
       <span class="sync-badge"><span class="sync-dot"></span><span id="nomSyncTxt">Conectado a Supabase</span></span>
       <div class="user-chip">
-        <div class="user-avatar" id="nom-ubAvatar">—</div>
+        <div class="user-avatar" id="nom-ubAvatar">&#x2014;</div>
         <div class="user-meta">
           <span class="name" id="nom-ubName"></span>
           <span class="role" id="nom-ubRole"></span>
@@ -182,7 +182,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
       </div>
       <button class="btn-ghost" onclick="nomToggleTheme()">🌓</button>
       <button class="btn-ghost" id="nomBtnLang" onclick="nomToggleLang()">EN</button>
-      <button class="btn-ghost" onclick="nomVolverPortal()">← Portal</button>
+      <button class="btn-ghost" onclick="nomVolverPortal()">&#x2190; Portal</button>
       <button class="btn-ghost nom-logout-btn" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -206,7 +206,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   <div class="nom-modal">
     <div class="nom-modal-hdr">
       <h3 id="nomNuevaTitulo">Nueva requisición de pago en efectivo</h3>
-      <button class="nom-modal-close" onclick="nomCerrarNueva()">✕</button>
+      <button class="nom-modal-close" onclick="nomCerrarNueva()">&#x2715;</button>
     </div>
     <div class="nom-modal-body">
       <div class="nom-form-row">
@@ -247,7 +247,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
       </div>
 
       <div id="nomAlertVariacion" class="nom-alert warn" style="display:none">
-        <span>⚠️</span><span id="nomAlertVariacionTxt"></span>
+        <span>&#x26A0;️</span><span id="nomAlertVariacionTxt"></span>
       </div>
 
       <div id="nomTotalesBox" class="nom-totals" style="margin-bottom:14px">
@@ -278,7 +278,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     <div class="nom-modal-foot">
       <button class="nom-btn nom-btn-ghost" onclick="nomCerrarNueva()">Cancelar</button>
       <button class="nom-btn nom-btn-ghost" id="nomBtnBorrador" onclick="nomGuardar('borrador')">Guardar borrador</button>
-      <button class="nom-btn nom-btn-primary" id="nomBtnEnviar" onclick="nomGuardar('revision')">Enviar a autorización ›</button>
+      <button class="nom-btn nom-btn-primary" id="nomBtnEnviar" onclick="nomGuardar('revision')">Enviar a autorización &#x203A;</button>
     </div>
   </div>
 </div>
@@ -288,7 +288,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   <div class="nom-modal">
     <div class="nom-modal-hdr">
       <h3 id="nomDetTitulo">Detalle de requisición</h3>
-      <button class="nom-modal-close" onclick="nomCerrarDetalle()">✕</button>
+      <button class="nom-modal-close" onclick="nomCerrarDetalle()">&#x2715;</button>
     </div>
     <div class="nom-modal-body" id="nomDetBody"></div>
     <div class="nom-modal-foot" id="nomDetFoot"></div>
@@ -300,7 +300,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   <div class="nom-modal" style="max-width:480px">
     <div class="nom-modal-hdr">
       <h3 id="nomAuthTitulo">Autorizar requisición</h3>
-      <button class="nom-modal-close" onclick="nomCerrarAutorizar()">✕</button>
+      <button class="nom-modal-close" onclick="nomCerrarAutorizar()">&#x2715;</button>
     </div>
     <div class="nom-modal-body">
       <div id="nomAuthResumen" style="background:#f0f4f9;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px"></div>
@@ -311,8 +311,8 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     </div>
     <div class="nom-modal-foot">
       <button class="nom-btn nom-btn-ghost" onclick="nomCerrarAutorizar()">Cancelar</button>
-      <button class="nom-btn nom-btn-danger nom-btn-sm" id="nomBtnRechazar" onclick="nomConfirmarAutorizacion('rechazado')">✕ Rechazar</button>
-      <button class="nom-btn nom-btn-success" id="nomBtnAprobar" onclick="nomConfirmarAutorizacion('autorizado')">✓ Autorizar</button>
+      <button class="nom-btn nom-btn-danger nom-btn-sm" id="nomBtnRechazar" onclick="nomConfirmarAutorizacion('rechazado')">&#x2715; Rechazar</button>
+      <button class="nom-btn nom-btn-success" id="nomBtnAprobar" onclick="nomConfirmarAutorizacion('autorizado')">&#x2713; Autorizar</button>
     </div>
   </div>
 </div>
@@ -322,11 +322,11 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   <div class="nom-modal" style="max-width:480px">
     <div class="nom-modal-hdr">
       <h3>Registrar retiro de efectivo</h3>
-      <button class="nom-modal-close" onclick="nomCerrarRetiro()">✕</button>
+      <button class="nom-modal-close" onclick="nomCerrarRetiro()">&#x2715;</button>
     </div>
     <div class="nom-modal-body">
       <div class="nom-alert info" style="margin-bottom:14px">
-        <span>ℹ️</span><span>Al confirmar, quedas registrado como responsable del resguardo del efectivo hasta la entrega.</span>
+        <span>&#x2139;️</span><span>Al confirmar, quedas registrado como responsable del resguardo del efectivo hasta la entrega.</span>
       </div>
       <div id="nomRetiroResumen" style="background:#f0f4f9;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px"></div>
       <div class="nom-form-row">
@@ -342,7 +342,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     </div>
     <div class="nom-modal-foot">
       <button class="nom-btn nom-btn-ghost" onclick="nomCerrarRetiro()">Cancelar</button>
-      <button class="nom-btn nom-btn-primary" onclick="nomConfirmarRetiro()">Confirmar retiro →</button>
+      <button class="nom-btn nom-btn-primary" onclick="nomConfirmarRetiro()">Confirmar retiro &#x2192;</button>
     </div>
   </div>
 </div>
@@ -352,11 +352,11 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   <div class="nom-modal">
     <div class="nom-modal-hdr">
       <h3 id="nomEntregaTitulo">Entrega de nómina en efectivo</h3>
-      <button class="nom-modal-close" onclick="nomCerrarEntrega()">✕</button>
+      <button class="nom-modal-close" onclick="nomCerrarEntrega()">&#x2715;</button>
     </div>
     <div class="nom-modal-body">
       <div class="nom-alert info" style="margin-bottom:14px">
-        <span>ℹ️</span><span>Marca a cada colaborador conforme reciba su pago. El cierre final registra la entrega completa.</span>
+        <span>&#x2139;️</span><span>Marca a cada colaborador conforme reciba su pago. El cierre final registra la entrega completa.</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <input class="nom-search" type="text" id="nomEntregaBuscar" placeholder="Buscar colaborador..." oninput="nomFiltrarEntrega()" style="flex:1">
@@ -366,7 +366,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     </div>
     <div class="nom-modal-foot">
       <button class="nom-btn nom-btn-ghost" onclick="nomCerrarEntrega()">Cerrar</button>
-      <button class="nom-btn nom-btn-success" id="nomBtnCerrarEntrega" onclick="nomCerrarEntregaFinal()" style="display:none">✓ Marcar como entregado total</button>
+      <button class="nom-btn nom-btn-success" id="nomBtnCerrarEntrega" onclick="nomCerrarEntregaFinal()" style="display:none">&#x2713; Marcar como entregado total</button>
     </div>
   </div>
 </div>
