@@ -1776,16 +1776,17 @@ function calcParseSimpSheet(rows) {
   var s = rows[0];
   var kHrsEsp   = calcFindKey(s, ['total de hrs esp','total hrs esp']);
   var kCompSuel  = calcFindKey(s, ['complemento sueldo']);
+  var kHrsDob    = calcFindKey(s, ['horas extras dobles valor','hrs dobles valor']);
   if (kHrsEsp || kCompSuel) {
     rows.forEach(function(r) {
       var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
       if (!nom) return;
-      var v = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kCompSuel]);
+      var v = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kCompSuel]) + nomParseMoney(r[kHrsDob]);
       if (v > 0 && v <= 200000) { out.neto += v; out.emps++; }
     });
     return out;
   }
-  var kNeto = calcFindKey(s, ['total','neto','monto','sueldo','cantidad','complemento']);
+  var kNeto = calcFindKey(s, ['cantridad','total neto','total a pagar','monto total','neto','monto','sueldo','cantidad','complemento sueldo']);
   if (!kNeto) return out;
   rows.forEach(function(r) {
     var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
@@ -1885,6 +1886,11 @@ function calcProcessWorkbook(wb, fileName) {
     }
     flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, total:p.neto});
   });
+  var totVales = regular.reduce(function(s,co){ return s+co.vales; }, 0);
+  if (totVales > 0) {
+    var valesEmps = regular.reduce(function(s,co){ return s+(co.vales>0?co.emps:0); }, 0);
+    flujoNeto.push({tipo:'Vales', concepto:'Vales de Despensa (monedero)', emps:valesEmps, total:totVales});
+  }
   var fin = {emps:0, regPat:'', percep:0, isr:0, imss:0, info:0, neto:0, rows:[]};
   var finFound = calcFindSheet(wb, 'FINIQUITO');
   if (finFound) {
