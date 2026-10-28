@@ -142,6 +142,46 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .nom-filter-chip.active{background:#0d3d6b;border-color:#0d3d6b;color:#fff}
 .nom-search{border:1.5px solid #d0d8e4;border-radius:9px;padding:6px 12px;font-size:13px;outline:none;min-width:180px}
 .nom-search:focus{border-color:#0d3d6b}
+
+/* ═══ TABS NAV ═══ */
+#nom-tab-nav{background:#fff;border-bottom:2px solid #e0e4ea;padding:0 16px;display:flex;gap:2px;overflow-x:auto;white-space:nowrap}
+.nom-tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:11px 18px;font-size:13px;font-weight:700;color:#888;cursor:pointer;margin-bottom:-2px;transition:.12s}
+.nom-tab-btn.active{color:#0d3d6b;border-bottom-color:#0d3d6b}
+.nom-tab-btn:hover:not(.active){color:#333;border-bottom-color:#d0d8e4}
+/* ═══ CALC PANEL ═══ */
+#nom-calc-panel{padding:0}
+.calc-cards-row{display:flex;gap:16px;flex-wrap:wrap}
+.calc-card{background:#fff;border-radius:12px;padding:20px;flex:1;min-width:280px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.calc-card-title{font-size:14px;font-weight:700;color:#0d3d6b;margin-bottom:16px;padding-bottom:10px;border-bottom:1.5px solid #eef1f6}
+.calc-field{margin-bottom:11px}
+.calc-field label{display:block;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.calc-field input,.calc-field select{width:100%;padding:9px 12px;border:1.5px solid #d0d8e4;border-radius:9px;font-size:14px;outline:none;background:#fff}
+.calc-field input:focus,.calc-field select:focus{border-color:#0d3d6b}
+.calc-2col{display:flex;gap:10px}
+.calc-2col .calc-field{flex:1;min-width:0}
+.calc-btn{background:#0d3d6b;color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:6px;transition:.12s}
+.calc-btn:hover{background:#0b3360}
+.calc-result{margin-top:16px;display:none;border-top:1px solid #eef1f6;padding-top:14px}
+.calc-block{margin-bottom:14px}
+.calc-block-title{font-size:10.5px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;padding:5px 8px;background:#f5f7fa;border-radius:6px;margin-bottom:6px}
+.calc-line{display:flex;justify-content:space-between;align-items:baseline;padding:4px 8px;font-size:13px}
+.calc-line:nth-child(even){background:#fafbfc;border-radius:4px}
+.calc-line .c-lbl{color:#555;flex:1;padding-right:8px}
+.calc-line .c-val{font-weight:600;color:#1a1a1a;white-space:nowrap}
+.calc-line .c-val.neg{color:#c0392b}
+.calc-line .c-val.pos{color:#1a7a4a}
+.calc-line .c-val.warn{color:#b86b00}
+.calc-cite{font-size:10px;color:#aaa;padding:1px 8px 5px;font-style:italic}
+.calc-total-line{display:flex;justify-content:space-between;padding:8px;font-size:14px;font-weight:800;border-top:2px solid #0d3d6b;color:#0d3d6b;margin-top:4px}
+.calc-reserve{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:12px;margin-top:10px}
+.calc-reserve-hdr{font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.calc-file-area{border:2px dashed #d0d8e4;border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfc}
+.calc-file-area:hover{border-color:#0d3d6b;background:#f0f5fb}
+.calc-file-area p{font-size:13px;color:#666;margin-top:6px}
+.calc-file-status{margin-top:8px;font-size:13px;color:#888;min-height:18px}
+.calc-sheet-list{margin-top:10px}
+.calc-sheet-row{display:flex;justify-content:space-between;padding:3px 8px;font-size:12px;border-radius:4px}
+.calc-sheet-row:nth-child(odd){background:#f5f7fa}
 </style>
 </head><body>
 
@@ -196,8 +236,85 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     <button class="nom-emp-chip" onclick="nomSelEmpresa('Comercial',this)">Comercial</button>
   </div>
 
+  <div id="nom-tab-nav">
+    <button id="nomTabPago" class="nom-tab-btn active" onclick="nomSwitchTab('pago')">Pago en Efectivo</button>
+    <button id="nomTabCalc" class="nom-tab-btn" onclick="nomSwitchTab('calc')">Calculo de Nomina</button>
+  </div>
+
   <div id="nom-main">
     <div id="nom-content"><div class="nom-loading">Cargando...</div></div>
+
+  <div id="nom-calc-panel" style="display:none;padding:20px;max-width:1200px;margin:0 auto;width:100%">
+    <div class="calc-cards-row">
+
+      <!-- CARD 1: Calculo individual -->
+      <div class="calc-card">
+        <div class="calc-card-title">Calculo por colaborador</div>
+        <div class="calc-field">
+          <label>Nombre del colaborador</label>
+          <input type="text" id="calcNombre" placeholder="Juan Perez Garcia">
+        </div>
+        <div class="calc-2col">
+          <div class="calc-field">
+            <label>Salario Diario (SD)</label>
+            <input type="number" id="calcSD" placeholder="500.00" step="0.01" min="0">
+          </div>
+          <div class="calc-field">
+            <label>SDI (integrado)</label>
+            <input type="number" id="calcSDI" placeholder="524.65" step="0.01" min="0">
+          </div>
+        </div>
+        <div class="calc-2col">
+          <div class="calc-field">
+            <label>Dias trabajados</label>
+            <input type="number" id="calcDias" value="7" min="1" max="7" step="1">
+          </div>
+          <div class="calc-field">
+            <label>Ciudad / Estado</label>
+            <select id="calcCiudad">
+              <option value="Tijuana">Tijuana (BC - 4.25%)</option>
+              <option value="Monterrey">Monterrey (NL - 3%)</option>
+              <option value="Cuautitlan Izcalli">Cuautitlan Izcalli (EdoMex - 3%)</option>
+              <option value="Guadalajara">Guadalajara (Jal - 3%)</option>
+            </select>
+          </div>
+        </div>
+        <div class="calc-2col">
+          <div class="calc-field">
+            <label>Tipo de trabajador</label>
+            <select id="calcTipo">
+              <option value="regular">Regular (con retenciones)</option>
+              <option value="proyecto">Proyecto (flujo neto)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Perc. extras gravables</label>
+            <input type="number" id="calcPercExtra" value="0" step="0.01" min="0">
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calcEjecutar()">Calcular</button>
+        <div class="calc-result" id="calcResult"></div>
+      </div>
+
+      <!-- CARD 2: Nomina completa desde Excel -->
+      <div class="calc-card">
+        <div class="calc-card-title">Calculo de nomina completa</div>
+        <div class="calc-field">
+          <label>Cargar Excel de nomina</label>
+          <div class="calc-file-area" id="calcFullDropArea" onclick="document.getElementById('calcFullFile').click()">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0d3d6b" stroke-width="1.5" style="margin-bottom:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <p><strong>Click para seleccionar</strong> o arrastra el archivo</p>
+            <p style="font-size:11px;color:#aaa;margin-top:4px">Detalle_de_pago_de_nomina_XX.xlsx</p>
+          </div>
+          <input type="file" id="calcFullFile" accept=".xls,.xlsx" style="display:none" onchange="calcNominaCompleta(event)">
+          <div class="calc-file-status" id="calcFullStatus"></div>
+        </div>
+        <div id="calcFullResult" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
   </div>
 </div>
 
@@ -1274,6 +1391,385 @@ async function nomCerrarEntregaFinal(){
     console.error('nomCerrarEntregaFinal', e);
     alert('Error: '+e.message);
   }
+}
+
+
+// ────────────────────────────────────────────
+// CALCULADORA DE NOMINA
+// ────────────────────────────────────────────
+
+var __calcTab = 'pago';
+
+window.nomSwitchTab = function nomSwitchTab(tab) {
+  __calcTab = tab;
+  var btP = document.getElementById('nomTabPago');
+  var btC = document.getElementById('nomTabCalc');
+  var bar = document.getElementById('nom-emp-bar');
+  var con = document.getElementById('nom-content');
+  var pan = document.getElementById('nom-calc-panel');
+  if (btP) { btP.className = 'nom-tab-btn' + (tab === 'pago' ? ' active' : ''); }
+  if (btC) { btC.className = 'nom-tab-btn' + (tab === 'calc' ? ' active' : ''); }
+  if (bar) { bar.style.display  = tab === 'pago' ? '' : 'none'; }
+  if (con) { con.style.display  = tab === 'pago' ? '' : 'none'; }
+  if (pan) { pan.style.display  = tab === 'calc' ? 'block' : 'none'; }
+};
+
+// Tabla ISR semanal 2026  (Art. 96 LISR, Anexo 8 RMF 2026, mensual / 4.3333)
+var CALC_ISR_SEM = [
+  {li:0.01,       ls:2339.26,    cf:0,          t:0.0192},
+  {li:2339.27,    ls:19851.26,   cf:44.91,      t:0.0640},
+  {li:19851.27,   ls:34886.43,   cf:1165.70,    t:0.1088},
+  {li:34886.44,   ls:40554.62,   cf:2801.57,    t:0.1600},
+  {li:40554.63,   ls:48554.62,   cf:3708.37,    t:0.1792},
+  {li:48554.63,   ls:97927.07,   cf:5141.26,    t:0.2136},
+  {li:97927.08,   ls:154437.60,  cf:15554.22,   t:0.2352},
+  {li:154437.61,  ls:294824.72,  cf:28981.51,   t:0.3000},
+  {li:294824.73,  ls:393107.48,  cf:71141.47,   t:0.3200},
+  {li:393107.49,  ls:1179319.94, cf:102548.99,  t:0.3400},
+  {li:1179319.95, ls:1e15,       cf:369665.08,  t:0.3500}
+];
+var CALC_SUB_MAX_SEM  = 93.88;
+var CALC_SUB_TOP_SEM  = 2095.62;
+var CALC_UMA          = 117.31;
+var CALC_UMA_TOP      = 2932.75;
+var CALC_IMSS_OBR     = 0.02775;
+var CALC_PAT_ENFMAT   = 0.0700;
+var CALC_PAT_RT       = 0.0150;
+var CALC_PAT_IV       = 0.0175;
+var CALC_PAT_GUARD    = 0.0100;
+var CALC_PAT_RETIRO   = 0.0200;
+var CALC_PAT_CYV      = 0.0533;
+var CALC_PAT_TOTAL    = CALC_PAT_ENFMAT + CALC_PAT_RT + CALC_PAT_IV + CALC_PAT_GUARD + CALC_PAT_RETIRO + CALC_PAT_CYV;
+var CALC_INFO_PAT     = 0.0500;
+var CALC_ISN = {
+  'Tijuana'           : 0.0425,
+  'Monterrey'         : 0.0300,
+  'Cuautitlan Izcalli': 0.0300,
+  'Guadalajara'       : 0.0300
+};
+
+function calcISRSemanal(ingGrav) {
+  if (ingGrav <= 0) { return {isr:0, isrBruto:0, sub:0, tramo:CALC_ISR_SEM[0]}; }
+  var tr = CALC_ISR_SEM[CALC_ISR_SEM.length - 1];
+  for (var i = 0; i < CALC_ISR_SEM.length; i++) {
+    if (ingGrav >= CALC_ISR_SEM[i].li && ingGrav <= CALC_ISR_SEM[i].ls) { tr = CALC_ISR_SEM[i]; break; }
+  }
+  var exc     = ingGrav - tr.li;
+  var isrBruto = tr.cf + exc * tr.t;
+  var sub     = ingGrav <= CALC_SUB_TOP_SEM ? Math.min(CALC_SUB_MAX_SEM, isrBruto) : 0;
+  var isr     = Math.max(0, isrBruto - sub);
+  return {isr:isr, isrBruto:isrBruto, sub:sub, tramo:tr};
+}
+
+window.calcEjecutar = function calcEjecutar() {
+  var sd     = parseFloat(document.getElementById('calcSD').value)        || 0;
+  var sdi    = parseFloat(document.getElementById('calcSDI').value)       || 0;
+  var dias   = parseFloat(document.getElementById('calcDias').value)      || 7;
+  var ciudad = document.getElementById('calcCiudad').value;
+  var tipo   = document.getElementById('calcTipo').value;
+  var extra  = parseFloat(document.getElementById('calcPercExtra').value) || 0;
+  if (!sdi || sdi < sd) { sdi = sd * 1.0493; }
+  if (sd <= 0) { alert('Ingresa el Salario Diario.'); return; }
+
+  var perc    = sd * dias + extra;
+  var res     = document.getElementById('calcResult');
+  res.style.display = 'block';
+
+  if (tipo === 'proyecto') {
+    var isnR = CALC_ISN[ciudad] || 0.0425;
+    res.innerHTML = calcHtmlProyecto(perc, ciudad, isnR);
+    return;
+  }
+
+  var isrData = calcISRSemanal(perc);
+  var isr     = isrData.isr;
+  var isrB    = isrData.isrBruto;
+  var sub     = isrData.sub;
+  var tr      = isrData.tramo;
+
+  var sbcD    = Math.min(sdi, CALC_UMA_TOP);
+  var imssObr = sbcD * dias * CALC_IMSS_OBR;
+  var neto    = perc - isr - imssObr;
+
+  var f = 4.3333;
+  var sbcM    = sbcD * 30.4;
+  var pat = {
+    enfmat : sbcM * CALC_PAT_ENFMAT  / f,
+    rt     : sbcM * CALC_PAT_RT      / f,
+    iv     : sbcM * CALC_PAT_IV      / f,
+    guard  : sbcM * CALC_PAT_GUARD   / f,
+    retiro : sbcM * CALC_PAT_RETIRO  / f,
+    cyv    : sbcM * CALC_PAT_CYV     / f
+  };
+  pat.total = pat.enfmat + pat.rt + pat.iv + pat.guard + pat.retiro + pat.cyv;
+
+  var isnRate = CALC_ISN[ciudad] || 0.0425;
+  var infoP   = sbcM * CALC_INFO_PAT / f;
+  var isn     = perc * isnRate;
+  var costo   = perc + pat.total + infoP + isn;
+  var reserva = {
+    isr  : isr,
+    imss : imssObr + pat.total,
+    info : infoP,
+    isn  : isn,
+    total: isr + imssObr + pat.total + infoP + isn
+  };
+
+  res.innerHTML = calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva);
+};
+
+function calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva) {
+  var F   = nomFmt;
+  var pct = function(x){ return (x * 100).toFixed(2) + '%'; };
+  var h   = '';
+
+  h += '<div class="calc-block">'
+     + '<div class="calc-block-title">Percepciones del periodo</div>'
+     + '<div class="calc-line"><span class="c-lbl">Sueldo bruto (SD x ' + dias + ' dias + extras)</span><span class="c-val">' + F(perc) + '</span></div>'
+     + '<div class="calc-cite">Art. 84 LFT | SBC diario ' + F(sbcD) + ' (tope 25 UMA = ' + F(CALC_UMA_TOP) + ') | UMA 2026: $' + CALC_UMA + '</div>'
+     + '</div>';
+
+  h += '<div class="calc-block">'
+     + '<div class="calc-block-title">Deducciones del trabajador</div>'
+     + '<div class="calc-line"><span class="c-lbl">ISR bruto (Art. 96 LISR, Anexo 8 RMF 2026)</span><span class="c-val neg">' + F(isrB) + '</span></div>'
+     + '<div class="calc-cite">Tramo ' + pct(tr.t) + ' | CF semanal $' + tr.cf.toFixed(2) + ' | Factor semanal 4.3333 (52 sem / 12 meses)</div>'
+     + (sub > 0 ? '<div class="calc-line"><span class="c-lbl">Subsidio al empleo (Decreto DOF 31-dic-2025)</span><span class="c-val pos">+' + F(sub) + '</span></div>' : '')
+     + '<div class="calc-line" style="font-weight:700"><span class="c-lbl">ISR neto retenido</span><span class="c-val neg">' + F(isr) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">IMSS obrero 2.775% SBC x ' + dias + ' dias</span><span class="c-val neg">' + F(imssObr) + '</span></div>'
+     + '<div class="calc-cite">Arts. 25, 106, 147, 168 LSS | Base: $' + F(sbcD * dias) + '</div>'
+     + '</div>';
+
+  h += '<div class="calc-total-line"><span>Neto a pagar</span><span>' + F(neto) + '</span></div>';
+
+  h += '<div class="calc-block" style="margin-top:14px">'
+     + '<div class="calc-block-title">Carga patronal</div>'
+     + '<div class="calc-line"><span class="c-lbl">Enf. y Maternidad (aprox.) 7.00%</span><span class="c-val warn">' + F(pat.enfmat) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">Riesgos de Trabajo est. 1.50%</span><span class="c-val warn">' + F(pat.rt) + '</span></div>'
+     + '<div class="calc-cite">Prima clase I-II SIFAM | verificar por empresa (Art. 74 LSS)</div>'
+     + '<div class="calc-line"><span class="c-lbl">Invalidez y Vida 1.75%</span><span class="c-val warn">' + F(pat.iv) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">Guarderias y Prest. Soc. 1.00%</span><span class="c-val warn">' + F(pat.guard) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">Retiro 2.00% (Art. 168 LSS)</span><span class="c-val warn">' + F(pat.retiro) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">Cesantia y Vejez est. 5.33%</span><span class="c-val warn">' + F(pat.cyv) + '</span></div>'
+     + '<div class="calc-cite">Reforma DOF 16-dic-2020 | Rango 2026: 3.15%-7.51% | max 11.875% en 2030</div>'
+     + '<div class="calc-line" style="font-weight:700"><span class="c-lbl">IMSS patronal total est. ' + pct(CALC_PAT_TOTAL) + '</span><span class="c-val warn">' + F(pat.total) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">INFONAVIT 5.00% SBC (Art. 29 fracc. II Ley INFONAVIT)</span><span class="c-val warn">' + F(infoP) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">ISN ' + pct(isnRate) + ' - ' + ciudad + '</span><span class="c-val warn">' + F(isn) + '</span></div>'
+     + '<div class="calc-cite">Ley de Hacienda del Estado | BC 4.25%, NL / EdoMex / Jal 3.00%</div>'
+     + '</div>';
+
+  h += '<div class="calc-total-line"><span>Costo total empresa</span><span>' + F(costo) + '</span></div>';
+
+  h += '<div class="calc-reserve">'
+     + '<div class="calc-reserve-hdr">Reserva semanal de tesoreria</div>'
+     + '<div class="calc-line"><span class="c-lbl">ISR retenido - SAT (pago mensual)</span><span class="c-val">' + F(reserva.isr) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">IMSS obrero + patronal - IMSS (mensual)</span><span class="c-val">' + F(reserva.imss) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">ISN - Estado (mensual)</span><span class="c-val">' + F(reserva.isn) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">INFONAVIT - INFONAVIT (bimestral)</span><span class="c-val">' + F(reserva.info) + '</span></div>'
+     + '<div class="calc-total-line" style="border-color:#fbbf24;color:#92400e"><span>Total a reservar</span><span>' + F(reserva.total) + '</span></div>'
+     + '</div>';
+
+  return h;
+}
+
+function calcHtmlProyecto(perc, ciudad, isnRate) {
+  var F = nomFmt;
+  var isn = perc * isnRate;
+  return '<div class="calc-block">'
+       + '<div class="calc-block-title">Trabajador tipo Proyecto - Flujo neto directo</div>'
+       + '<div class="calc-line"><span class="c-lbl">Monto a pagar</span><span class="c-val">' + F(perc) + '</span></div>'
+       + '<div class="calc-line"><span class="c-lbl">ISR retenido</span><span class="c-val pos">No aplica</span></div>'
+       + '<div class="calc-line"><span class="c-lbl">IMSS obrero</span><span class="c-val pos">No aplica</span></div>'
+       + '</div>'
+       + '<div class="calc-total-line"><span>Neto a pagar</span><span>' + F(perc) + '</span></div>'
+       + '<div class="calc-block" style="margin-top:14px">'
+       + '<div class="calc-block-title">Carga patronal (si aplica)</div>'
+       + '<div class="calc-line"><span class="c-lbl">ISN ' + ((isnRate * 100).toFixed(2)) + '% - ' + ciudad + ' (sobre neto)</span><span class="c-val warn">' + F(isn) + '</span></div>'
+       + '<div class="calc-cite">Ley de Hacienda del Estado</div>'
+       + '</div>';
+}
+
+// ── NOMINA COMPLETA DESDE EXCEL ─────────────────────────────
+
+window.calcNominaCompleta = function calcNominaCompleta(ev) {
+  var file = ev.target.files[0];
+  if (!file) return;
+  var status = document.getElementById('calcFullStatus');
+  status.textContent = 'Leyendo ' + file.name + '...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', cellFormula:true, raw:false});
+      var totals = calcProcessWorkbook(wb);
+      document.getElementById('calcFullResult').innerHTML = calcHtmlCompleta(totals);
+      document.getElementById('calcFullResult').style.display = 'block';
+      status.textContent = 'OK. ' + totals.emps + ' colaboradores en ' + totals.sheets.length + ' hojas procesadas.';
+    } catch(ex) {
+      console.error('calcNominaCompleta', ex);
+      status.textContent = 'Error: ' + ex.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+function calcFindKey(obj, patterns) {
+  var keys = Object.keys(obj);
+  for (var i = 0; i < patterns.length; i++) {
+    var p = patterns[i].toLowerCase();
+    for (var j = 0; j < keys.length; j++) {
+      if (String(keys[j]).toLowerCase().indexOf(p) >= 0) { return keys[j]; }
+    }
+  }
+  return null;
+}
+
+function calcSheetRows(sh) {
+  if (!sh) return [];
+  return XLSX.utils.sheet_to_json(sh, {defval:'', raw:false});
+}
+
+function calcParseRegSheet(rows) {
+  var out = {neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0, emps:0};
+  if (!rows.length) return out;
+  var s = rows[0];
+  var kNeto  = calcFindKey(s, ['total neto', 'neto total', 'total a pagar', 'neto']);
+  var kISR   = calcFindKey(s, ['51.ispt', 'ispt', 'i.s.r', 'isr']);
+  var kIMSS  = calcFindKey(s, ['52.imss', 'imss obrero', 'imss']);
+  var kSub   = calcFindKey(s, ['53.subemp', 'subemp', 'subsidio']);
+  var kInfo  = calcFindKey(s, ['54.infonavit', 'infonavit cred', 'infonavit']);
+  var kVales = calcFindKey(s, ['vale', 'despensa']);
+  if (!kNeto) return out;
+  rows.forEach(function(r) {
+    var nom = String(r[calcFindKey(r, ['nombre','name'])] || '').toUpperCase();
+    if (nom.indexOf('TOTAL') >= 0 || nom.indexOf('SUBTOTAL') >= 0) { return; }
+    var neto = nomParseMoney(r[kNeto]);
+    if (neto <= 0 || neto > 150000) { return; }
+    out.neto       += neto;
+    if (kISR)   { out.isr        += nomParseMoney(r[kISR]);  }
+    if (kIMSS)  { out.imssObr    += nomParseMoney(r[kIMSS]); }
+    if (kSub)   { out.sub        += nomParseMoney(r[kSub]);  }
+    if (kInfo)  { out.infoCredit += nomParseMoney(r[kInfo]); }
+    if (kVales) { out.vales      += nomParseMoney(r[kVales]);}
+    out.emps++;
+  });
+  return out;
+}
+
+function calcParseSimpSheet(rows) {
+  var out = {neto:0, emps:0};
+  if (!rows.length) return out;
+  var s = rows[0];
+  var kNeto = calcFindKey(s, ['total','neto','monto']) ;
+  if (!kNeto) return out;
+  rows.forEach(function(r) {
+    var nom = String(r[calcFindKey(r, ['nombre','name'])] || '').toUpperCase();
+    if (nom.indexOf('TOTAL') >= 0 || nom.indexOf('SUBTOTAL') >= 0) { return; }
+    var v = nomParseMoney(r[kNeto]);
+    if (v <= 0 || v > 150000) { return; }
+    out.neto += v;
+    out.emps++;
+  });
+  return out;
+}
+
+function calcProcessWorkbook(wb) {
+  var REG_PATS  = ['INT. TRANSFERENCIA','INT. EFECTIVO','NOM. COMERCIAL','NOM. AUTOBOT','NOM. ARIITRANST'];
+  var SIMP_PATS = ['PRENOMINA','PROY. TIJUANA','PROY. MTY','BONO ASISTENCIA','COMP. SUELDOS','COMPLEMENTO'];
+  var FIN_PAT   = 'FINIQUITO';
+
+  var T = { neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0,
+            netoProy:0, netoFiniq:0, isrFiniq:0, imssFiniq:0, infoFiniq:0,
+            emps:0, sheets:[] };
+
+  wb.SheetNames.forEach(function(sn) {
+    var snU = sn.toUpperCase().trim();
+    var rows = calcSheetRows(wb.Sheets[sn]);
+    if (!rows.length) return;
+
+    var isReg  = REG_PATS.some(function(p){ return snU.indexOf(p) >= 0; });
+    var isSimp = SIMP_PATS.some(function(p){ return snU.indexOf(p) >= 0; });
+    var isFin  = snU.indexOf(FIN_PAT) >= 0;
+
+    if (!isReg && !isSimp && !isFin) {
+      var keys = Object.keys(rows[0] || {}).map(function(k){ return k.toUpperCase(); });
+      var hasISR  = keys.some(function(k){ return k.indexOf('ISPT') >= 0; });
+      var hasNeto = keys.some(function(k){ return k.indexOf('NETO') >= 0; });
+      if (hasISR && hasNeto) { isReg = true; }
+      else if (hasNeto)      { isSimp = true; }
+      else                   { return; }
+    }
+
+    if (isReg) {
+      var p = calcParseRegSheet(rows);
+      T.neto       += p.neto;  T.isr      += p.isr;  T.imssObr    += p.imssObr;
+      T.sub        += p.sub;   T.infoCredit += p.infoCredit; T.vales += p.vales;
+      T.emps       += p.emps;
+      T.sheets.push({name:sn, type:'Regular', emps:p.emps, neto:p.neto, isr:p.isr});
+    } else if (isFin) {
+      var fp = calcParseRegSheet(rows);
+      T.netoFiniq  += fp.neto; T.isrFiniq  += fp.isr; T.imssFiniq += fp.imssObr;
+      T.infoFiniq  += fp.infoCredit; T.emps += fp.emps;
+      T.sheets.push({name:sn, type:'Finiquito', emps:fp.emps, neto:fp.neto, isr:fp.isr});
+    } else if (isSimp) {
+      var sp = calcParseSimpSheet(rows);
+      T.netoProy   += sp.neto; T.emps += sp.emps;
+      T.sheets.push({name:sn, type:'Simple', emps:sp.emps, neto:sp.neto, isr:0});
+    }
+  });
+
+  var f = 4.3333;
+  var patFactor = CALC_PAT_TOTAL / CALC_IMSS_OBR;
+  var infoFactor = CALC_INFO_PAT / CALC_IMSS_OBR;
+  T.imssPatEst   = (T.imssObr + T.imssFiniq) * patFactor;
+  T.infoPatEst   = (T.imssObr + T.imssFiniq) * infoFactor;
+  T.totalNeto    = T.neto + T.vales + T.netoProy + T.netoFiniq;
+  T.isnEst       = (T.neto + T.vales) * 0.0425 + T.netoProy * 0.03;
+  T.isrTotal     = T.isr + T.isrFiniq;
+  T.imssObrTotal = T.imssObr + T.imssFiniq;
+  T.infoCredTotal = T.infoCredit + T.infoFiniq;
+  T.reservaTotal = T.isrTotal + T.imssObrTotal + T.imssPatEst + T.infoPatEst + T.infoCredTotal + T.isnEst;
+  T.costoTotal   = T.totalNeto + T.imssPatEst + T.infoPatEst + T.isnEst;
+  return T;
+}
+
+function calcHtmlCompleta(T) {
+  var F = nomFmt;
+  var h = '';
+
+  h += '<div class="calc-block">'
+     + '<div class="calc-block-title">Neto a pagar</div>'
+     + (T.neto > 0     ? '<div class="calc-line"><span class="c-lbl">Nomina regular (prestaciones incluidas)</span><span class="c-val">' + F(T.neto) + '</span></div>' : '')
+     + (T.vales > 0    ? '<div class="calc-line"><span class="c-lbl">Vales de despensa</span><span class="c-val">' + F(T.vales) + '</span></div>' : '')
+     + (T.netoProy > 0 ? '<div class="calc-line"><span class="c-lbl">Proyectos (flujo neto)</span><span class="c-val">' + F(T.netoProy) + '</span></div>' : '')
+     + (T.netoFiniq > 0 ? '<div class="calc-line"><span class="c-lbl">Finiquitos neto</span><span class="c-val">' + F(T.netoFiniq) + '</span></div>' : '')
+     + '</div>'
+     + '<div class="calc-total-line"><span>Total efectivo a salir</span><span>' + F(T.totalNeto) + '</span></div>';
+
+  h += '<div class="calc-block" style="margin-top:14px">'
+     + '<div class="calc-block-title">Reserva de gobierno (estimada)</div>'
+     + '<div class="calc-line"><span class="c-lbl">ISR retenido - SAT (mensual)</span><span class="c-val warn">' + F(T.isrTotal) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">IMSS obrero - IMSS (mensual)</span><span class="c-val warn">' + F(T.imssObrTotal) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">IMSS patronal est. ' + (CALC_PAT_TOTAL*100).toFixed(2) + '% - IMSS (mensual)</span><span class="c-val warn">' + F(T.imssPatEst) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">INFONAVIT patronal est. - INFONAVIT (bimestral)</span><span class="c-val warn">' + F(T.infoPatEst) + '</span></div>'
+     + (T.infoCredTotal > 0 ? '<div class="calc-line"><span class="c-lbl">INFONAVIT credito (descuento a empleado)</span><span class="c-val warn">' + F(T.infoCredTotal) + '</span></div>' : '')
+     + '<div class="calc-line"><span class="c-lbl">ISN est. (BC 4.25% reg. / 3% proy.) - Estado (mensual)</span><span class="c-val warn">' + F(T.isnEst) + '</span></div>'
+     + '</div>'
+     + '<div class="calc-total-line" style="color:#b86b00;border-color:#fbbf24"><span>Reserva total</span><span>' + F(T.reservaTotal) + '</span></div>';
+
+  h += '<div class="calc-total-line" style="margin-top:8px"><span>Costo real de la semana</span><span>' + F(T.costoTotal) + '</span></div>';
+
+  h += '<div class="calc-block" style="margin-top:14px">'
+     + '<div class="calc-block-title">Hojas procesadas</div>'
+     + '<div class="calc-sheet-list">';
+  T.sheets.forEach(function(s) {
+    h += '<div class="calc-sheet-row">'
+       + '<span style="flex:1">' + s.name + '</span>'
+       + '<span style="color:#888;margin:0 8px">[' + s.type + ' | ' + s.emps + ' emp.]</span>'
+       + '<span>' + F(s.neto) + '</span>'
+       + '</div>';
+  });
+  h += '</div></div>';
+
+  return h;
 }
 
 // ────────────────────────────────────────────
