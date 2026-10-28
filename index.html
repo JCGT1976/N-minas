@@ -365,17 +365,31 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
             </select>
           </div>
         </div>
+        <div class="calc-field">
+          <label>Tipo de trabajador</label>
+          <select id="calcTipo">
+            <option value="regular">Regular (con retenciones)</option>
+            <option value="proyecto">Proyecto (flujo neto)</option>
+          </select>
+        </div>
         <div class="calc-2col">
           <div class="calc-field">
-            <label>Tipo de trabajador</label>
-            <select id="calcTipo">
-              <option value="regular">Regular (con retenciones)</option>
-              <option value="proyecto">Proyecto (flujo neto)</option>
-            </select>
+            <label>Bono Puntualidad</label>
+            <input type="number" id="calcBonoP" value="0" step="0.01" min="0" placeholder="0.00">
           </div>
           <div class="calc-field">
-            <label>Perc. extras gravables</label>
-            <input type="number" id="calcPercExtra" value="0" step="0.01" min="0">
+            <label>Bono Asistencia</label>
+            <input type="number" id="calcBonoA" value="0" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div class="calc-2col">
+          <div class="calc-field">
+            <label>Vales despensa (exentos)</label>
+            <input type="number" id="calcVales" value="0" step="0.01" min="0" placeholder="0.00">
+          </div>
+          <div class="calc-field">
+            <label>Otras perc. extras gravables</label>
+            <input type="number" id="calcPercExtra" value="0" step="0.01" min="0" placeholder="0.00">
           </div>
         </div>
         <button class="calc-btn" onclick="calcEjecutar()">Calcular</button>
@@ -1500,6 +1514,20 @@ window.nomSwitchTab = function nomSwitchTab(tab) {
   if (pan) { pan.style.display  = tab === 'calc' ? 'block' : 'none'; }
 };
 
+// Tabla ISR mensual 2026 — criterio Tress (Art. 96 LISR, Anexo 8 RMF 2026)
+var CALC_ISR_MEN = [
+  {li:0.01,        ls:10135.11,   cf:0,          t:0.0192},
+  {li:10135.12,    ls:86022.11,   cf:194.59,     t:0.0640},
+  {li:86022.12,    ls:151176.19,  cf:5051.37,    t:0.1088},
+  {li:151176.20,   ls:175735.66,  cf:12140.13,   t:0.1600},
+  {li:175735.67,   ls:210403.69,  cf:16069.64,   t:0.1792},
+  {li:210403.70,   ls:424353.97,  cf:22282.14,   t:0.2136},
+  {li:424353.98,   ls:669229.62,  cf:67401.62,   t:0.2352},
+  {li:669229.63,   ls:1277566.06, cf:125586.86,  t:0.3000},
+  {li:1277566.07,  ls:1703461.44, cf:308283.06,  t:0.3200},
+  {li:1703461.45,  ls:5110384.42, cf:444377.51,  t:0.3400},
+  {li:5110384.43,  ls:1e15,       cf:1601881.34, t:0.3500}
+];
 // Tabla ISR semanal 2026  (Art. 96 LISR, Anexo 8 RMF 2026, mensual / 4.3333)
 var CALC_ISR_SEM = [
   {li:0.01,       ls:2339.26,    cf:0,          t:0.0192},
@@ -1547,17 +1575,40 @@ function calcISRSemanal(ingGrav) {
   return {isr:isr, isrBruto:isrBruto, sub:sub, tramo:tr};
 }
 
+function calcISRMensualBase(ingGravSemanal) {
+  if (ingGravSemanal <= 0) { return {isr:0, isrBruto:0, sub:0, tramo:CALC_ISR_MEN[0], ingMensual:0, isrMensual:0}; }
+  var f = 4.3333;
+  var ingM = ingGravSemanal * f;
+  var tr = CALC_ISR_MEN[CALC_ISR_MEN.length - 1];
+  for (var i = 0; i < CALC_ISR_MEN.length; i++) {
+    if (ingM >= CALC_ISR_MEN[i].li && ingM <= CALC_ISR_MEN[i].ls) { tr = CALC_ISR_MEN[i]; break; }
+  }
+  var isrMensual = tr.cf + (ingM - tr.li) * tr.t;
+  var isrSemanal = isrMensual / f;
+  var subMensual = ingM <= 9081 ? Math.min(406.83, isrMensual) : 0;
+  var subSemanal = subMensual / f;
+  var isr = Math.max(0, isrSemanal - subSemanal);
+  return {isr:isr, isrBruto:isrSemanal, sub:subSemanal, tramo:tr, ingMensual:ingM, isrMensual:isrMensual};
+}
+
 window.calcEjecutar = function calcEjecutar() {
   var sd     = parseFloat(document.getElementById('calcSD').value)        || 0;
   var sdi    = parseFloat(document.getElementById('calcSDI').value)       || 0;
   var dias   = parseFloat(document.getElementById('calcDias').value)      || 7;
   var ciudad = document.getElementById('calcCiudad').value;
   var tipo   = document.getElementById('calcTipo').value;
+  var bonoP  = parseFloat(document.getElementById('calcBonoP').value)     || 0;
+  var bonoA  = parseFloat(document.getElementById('calcBonoA').value)     || 0;
+  var vales  = parseFloat(document.getElementById('calcVales').value)     || 0;
   var extra  = parseFloat(document.getElementById('calcPercExtra').value) || 0;
   if (!sdi || sdi < sd) { sdi = sd * 1.0493; }
   if (sd <= 0) { alert('Ingresa el Salario Diario.'); return; }
 
-  var perc    = sd * dias + extra;
+  var percSueldo = sd * dias;
+  var percBonos  = bonoP + bonoA;
+  var percExtras = extra;
+  var perc       = percSueldo + percBonos + percExtras;
+  var baseISR    = perc;
   var res     = document.getElementById('calcResult');
   res.style.display = 'block';
 
@@ -1567,15 +1618,19 @@ window.calcEjecutar = function calcEjecutar() {
     return;
   }
 
-  var isrData = calcISRSemanal(perc);
+  var isrData = calcISRMensualBase(baseISR);
   var isr     = isrData.isr;
   var isrB    = isrData.isrBruto;
   var sub     = isrData.sub;
   var tr      = isrData.tramo;
 
   var sbcD    = Math.min(sdi, CALC_UMA_TOP);
+  var topeBonoIMSS = 0.10 * sd * dias;
+  var bonoP_exIMSS = bonoP <= topeBonoIMSS;
+  var bonoA_exIMSS = bonoA <= topeBonoIMSS;
+  var valesExIMSS  = Math.min(vales, 0.40 * CALC_UMA * dias);
   var imssObr = sbcD * dias * CALC_IMSS_OBR;
-  var neto    = perc - isr - imssObr;
+  var neto    = perc + vales - isr - imssObr;
 
   var f = 4.3333;
   var sbcM    = sbcD * 30.4;
@@ -1601,24 +1656,39 @@ window.calcEjecutar = function calcEjecutar() {
     total: isr + imssObr + pat.total + infoP + isn
   };
 
-  res.innerHTML = calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva);
+  res.innerHTML = calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva, {percSueldo:percSueldo,bonoP:bonoP,bonoA:bonoA,vales:vales,extra:percExtras,topeBonoIMSS:topeBonoIMSS,bonoP_exIMSS:bonoP_exIMSS,bonoA_exIMSS:bonoA_exIMSS,valesExIMSS:valesExIMSS,ingMensual:isrData.ingMensual,isrMensual:isrData.isrMensual});
 };
 
-function calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva) {
+function calcHtmlRegular(perc, isrB, sub, isr, tr, sbcD, dias, imssObr, neto, pat, infoP, isnRate, isn, ciudad, costo, reserva, det) {
   var F   = nomFmt;
   var pct = function(x){ return (x * 100).toFixed(2) + '%'; };
   var h   = '';
+  if (!det) det = {};
 
   h += '<div class="calc-block">'
      + '<div class="calc-block-title">Percepciones del periodo</div>'
-     + '<div class="calc-line"><span class="c-lbl">Sueldo bruto (SD x ' + dias + ' dias + extras)</span><span class="c-val">' + F(perc) + '</span></div>'
+     + '<div class="calc-line"><span class="c-lbl">Sueldo (SD x ' + dias + ' dias)</span><span class="c-val">' + F(det.percSueldo||perc) + '</span></div>';
+  if (det.bonoP > 0) {
+    h += '<div class="calc-line"><span class="c-lbl">Bono Puntualidad ' + (det.bonoP_exIMSS ? '<span style=\"font-size:10px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 4px\">Exento IMSS</span>' : '') + '</span><span class="c-val">' + F(det.bonoP) + '</span></div>';
+  }
+  if (det.bonoA > 0) {
+    h += '<div class="calc-line"><span class="c-lbl">Bono Asistencia ' + (det.bonoA_exIMSS ? '<span style=\"font-size:10px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 4px\">Exento IMSS</span>' : '') + '</span><span class="c-val">' + F(det.bonoA) + '</span></div>';
+  }
+  if (det.extra > 0) {
+    h += '<div class="calc-line"><span class="c-lbl">Otras percepciones gravables</span><span class="c-val">' + F(det.extra) + '</span></div>';
+  }
+  if (det.vales > 0) {
+    h += '<div class="calc-line"><span class="c-lbl">Vales despensa <span style=\"font-size:10px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 4px\">Exento ISR/IMSS</span></span><span class="c-val">' + F(det.vales) + '</span></div>'
+       + '<div class="calc-cite">Art. 27 fracc. VI LSS | monedero electronico autorizado SAT</div>';
+  }
+  h += '<div class="calc-line" style="font-weight:700"><span class="c-lbl">Total percepciones</span><span class="c-val">' + F(perc + (det.vales||0)) + '</span></div>'
      + '<div class="calc-cite">Art. 84 LFT | SBC diario ' + F(sbcD) + ' (tope 25 UMA = ' + F(CALC_UMA_TOP) + ') | UMA 2026: $' + CALC_UMA + '</div>'
      + '</div>';
 
   h += '<div class="calc-block">'
      + '<div class="calc-block-title">Deducciones del trabajador</div>'
      + '<div class="calc-line"><span class="c-lbl">ISR bruto (Art. 96 LISR, Anexo 8 RMF 2026)</span><span class="c-val neg">' + F(isrB) + '</span></div>'
-     + '<div class="calc-cite">Tramo ' + pct(tr.t) + ' | CF semanal $' + tr.cf.toFixed(2) + ' | Factor semanal 4.3333 (52 sem / 12 meses)</div>'
+     + '<div class="calc-cite">Metodo base mensual (criterio Tress) | Ing. mensual equiv. ' + F(det.ingMensual||0) + ' | ISR mensual ' + F(det.isrMensual||0) + ' | Tramo ' + pct(tr.t) + '</div>'
      + (sub > 0 ? '<div class="calc-line"><span class="c-lbl">Subsidio al empleo (Decreto DOF 31-dic-2025)</span><span class="c-val pos">+' + F(sub) + '</span></div>' : '')
      + '<div class="calc-line" style="font-weight:700"><span class="c-lbl">ISR neto retenido</span><span class="c-val neg">' + F(isr) + '</span></div>'
      + '<div class="calc-line"><span class="c-lbl">IMSS obrero 2.775% SBC x ' + dias + ' dias</span><span class="c-val neg">' + F(imssObr) + '</span></div>'
