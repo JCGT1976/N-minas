@@ -1741,10 +1741,11 @@ function calcSmartSheetRows(sh) {
   return rows;
 }
 
-function calcParseRegSheet(rows) {
+function calcParseRegSheet(rows, idSet) {
   var out = {neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0, percep:0, emps:0};
   if (!rows.length) return out;
   var s = rows[0];
+  var kNum   = calcFindKey(s, ['numero','number','n']);
   var kNeto  = calcFindKey(s, ['total neto','neto total','neto transferir']);
   var kPercep= calcFindKey(s, ['tot.percep','tot. percep','total percep']);
   var kISR   = calcFindKey(s, ['51.ispt','ispt','isr']);
@@ -1766,11 +1767,12 @@ function calcParseRegSheet(rows) {
     if (kInfo)  out.infoCredit += nomParseMoney(r[kInfo]);
     if (kVales) out.vales      += nomParseMoney(r[kVales]);
     out.emps++;
+    if (idSet && kNum) { var id = String(r[kNum]||'').trim(); if (id) idSet[id] = true; }
   });
   return out;
 }
 
-function calcParseSimpSheet(rows) {
+function calcParseSimpSheet(rows, idSet) {
   var out = {neto:0, emps:0};
   if (!rows.length) return out;
   var s = rows[0];
@@ -1782,7 +1784,7 @@ function calcParseSimpSheet(rows) {
       var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
       if (!nom) return;
       var v = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kCompSuel]) + nomParseMoney(r[kHrsDob]);
-      if (v > 0 && v <= 200000) { out.neto += v; out.emps++; }
+      if (v > 0 && v <= 200000) { out.neto += v; out.emps++; var id2 = String(r[calcFindKey(r,['# empleado','#empleado','numero','number'])]||'').trim(); if (idSet && id2) idSet[id2]=true; }
     });
     return out;
   }
@@ -1795,8 +1797,8 @@ function calcParseSimpSheet(rows) {
     if (strNom.indexOf('TOTAL') >= 0 || strNom.indexOf('SUBTOTAL') >= 0) return;
     var v = nomParseMoney(r[kNeto]);
     if (v <= 0 || v > 200000) return;
-    out.neto += v;
-    out.emps++;
+    out.neto += v; out.emps++;
+    if (idSet) { var kId2 = calcFindKey(r,['# empleado','#empleado','numero','number']); var id3 = kId2 ? String(r[kId2]||'').trim() : ''; if (id3) idSet[id3]=true; }
   });
   return out;
 }
@@ -1844,6 +1846,7 @@ function calcProcessWorkbook(wb, fileName) {
     {pat:'BONO ASISTENCIA', tipo:'Bonos MTY',    concepto:'Bono Asistencia Monterrey', checkDup:true},
     {pat:'COMP. SUELDOS',   tipo:'Complemento',  concepto:'Complemento Sueldos'}
   ];
+  var allIds = {};
   var regular = [];
   EMPRESA_DEFS.forEach(function(def) {
     var co = {empresa:def.empresa, color:def.color, emps:0, percep:0, isr:0, imss:0, sub:0, info:0, vales:0, neto:0, labels:[]};
@@ -1852,7 +1855,7 @@ function calcProcessWorkbook(wb, fileName) {
       if (!found) return;
       var rows = calcSmartSheetRows(found.sh);
       if (!rows.length) return;
-      var p = calcParseRegSheet(rows);
+      var p = calcParseRegSheet(rows, allIds);
       co.emps   += p.emps; co.percep += p.percep; co.isr  += p.isr;
       co.imss   += p.imssObr; co.sub += p.sub; co.info   += p.infoCredit;
       co.vales  += p.vales;   co.neto += p.neto;
@@ -1870,7 +1873,7 @@ function calcProcessWorkbook(wb, fileName) {
     if (!found) return;
     var rows = calcSmartSheetRows(found.sh);
     if (!rows.length) return;
-    var p = calcParseSimpSheet(rows);
+    var p = calcParseSimpSheet(rows, allIds);
     if (!p.emps) return;
     if (def.checkDup) {
       var kId = calcFindKey(rows[0], ['numero','number','num']);
@@ -1947,9 +1950,13 @@ function calcProcessWorkbook(wb, fileName) {
   var infoTotal   = infoPatron + fin.info;
   var reservaTotal = retenciones + cuotas + infoTotal;
   var costoReal   = totalEfectivo + cuotas + infoTotal;
+  var uniqueEmps = Object.keys(allIds).length;
+  var en2mas = 0;
+  // Empleados que aparecen en >1 fuente se reflejan en uniqueEmps
   return {
     semana:semana, fileName:fileName||'',
     regular:regular, flujoNeto:flujoNeto, finiquitos:fin, duplicates:duplicates,
+    uniqueEmps:uniqueEmps,
     totals:{
       regEmps:totReg.emps, regPercep:totReg.percep, regISR:totReg.isr, regIMSS:totReg.imss, regNeto:totReg.neto,
       flujoTotal:flujoTotal, flujoEmps:flujoEmps,
@@ -1967,8 +1974,9 @@ function calcHtmlCompleta(R) {
   var T = R.totals;
   var h = '';
   // KPI strip
+  var totalColabs = R.uniqueEmps > 0 ? R.uniqueEmps : T.regEmps;
   h += '<div class="calc-kpi-strip">'
-     + '<div class="calc-kpi-box"><div class="ck-lbl">Colaboradores</div><div class="ck-val">' + (T.regEmps + T.flujoEmps + R.finiquitos.emps) + '</div></div>'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Colaboradores</div><div class="ck-val">' + totalColabs + '</div></div>'
      + '<div class="calc-kpi-box"><div class="ck-lbl">Efectivo total hoy</div><div class="ck-val green">' + F(T.totalEfectivo) + '</div></div>'
      + '<div class="calc-kpi-box"><div class="ck-lbl">Retenciones ISR+IMSS</div><div class="ck-val red">' + F(T.retenciones) + '</div></div>'
      + '<div class="calc-kpi-box"><div class="ck-lbl">Carga patronal</div><div class="ck-val amber">' + F(T.cuotas + T.infoTotal) + '</div></div>'
