@@ -1627,6 +1627,33 @@ function calcSheetRows(sh) {
   return XLSX.utils.sheet_to_json(sh, {defval:'', raw:false});
 }
 
+function calcSmartSheetRows(sh) {
+  if (!sh) return [];
+  var rawRows = XLSX.utils.sheet_to_json(sh, {header:1, defval:'', raw:false});
+  if (!rawRows.length) return [];
+  var hdrIdx = -1;
+  for (var i = 0; i < Math.min(rawRows.length, 12); i++) {
+    var nonEmpty = rawRows[i].filter(function(v){ return v !== null && v !== undefined && String(v).trim() !== ''; });
+    if (nonEmpty.length >= 3) { hdrIdx = i; break; }
+  }
+  if (hdrIdx < 0) return [];
+  var seen = {};
+  var headers = rawRows[hdrIdx].map(function(h, idx) {
+    var s = String(h || '').trim() || ('_col' + idx);
+    if (seen[s] === undefined) { seen[s] = 0; return s; }
+    seen[s]++;
+    return s + '_' + seen[s];
+  });
+  var rows = [];
+  for (var j = hdrIdx + 1; j < rawRows.length; j++) {
+    var arr = rawRows[j];
+    var obj = {};
+    headers.forEach(function(h, idx){ obj[h] = arr[idx] !== undefined ? arr[idx] : ''; });
+    rows.push(obj);
+  }
+  return rows;
+}
+
 function calcParseRegSheet(rows) {
   var out = {neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0, emps:0};
   if (!rows.length) return out;
