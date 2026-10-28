@@ -182,6 +182,92 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .calc-sheet-list{margin-top:10px}
 .calc-sheet-row{display:flex;justify-content:space-between;padding:3px 8px;font-size:12px;border-radius:4px}
 .calc-sheet-row:nth-child(odd){background:#f5f7fa}
+
+/* ═══ CALC FULL RESULT ═══ */
+.calc-kpi-strip{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.calc-kpi-box{background:#fff;border-radius:10px;padding:14px 18px;flex:1;min-width:130px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.calc-kpi-box .ck-lbl{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.calc-kpi-box .ck-val{font-size:20px;font-weight:800;color:#0d3d6b;line-height:1.1}
+.calc-kpi-box .ck-val.green{color:#1a7a4a}
+.calc-kpi-box .ck-val.amber{color:#b86b00}
+.calc-kpi-box .ck-val.red{color:#c0392b}
+.calc-warn-banner{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.calc-warn-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.calc-file-bar{font-size:12px;font-weight:700;color:#555;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.calc-file-bar svg{flex-shrink:0}
+/* Section cards */
+.c-sec{border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.c-sec-hdr{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;user-select:none;flex-wrap:wrap}
+.c-sec-hdr-title{font-size:14px;font-weight:800;color:#fff;flex:1;min-width:120px}
+.c-sec-badge{background:rgba(255,255,255,.18);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.c-sec-nums{margin-left:auto;display:flex;gap:20px;align-items:center}
+.c-sec-num{text-align:right}
+.c-sec-num .n-lbl{font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.4px}
+.c-sec-num .n-val{font-size:13px;font-weight:700;color:#fff}
+.c-sec-num .n-val.hi{color:#fde68a}
+.c-collapse-btn{color:rgba(255,255,255,.8);font-size:16px;flex-shrink:0;margin-left:6px}
+.c-sec-body{background:#fff;padding:0}
+/* Company rows */
+.c-cmp-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f2f5;flex-wrap:wrap}
+.c-cmp-row:last-child{border-bottom:none}
+.c-cmp-badge{border-radius:5px;padding:2px 8px;font-size:11px;font-weight:800;color:#fff;white-space:nowrap;flex-shrink:0}
+.c-cmp-desc{flex:1;font-size:12px;color:#666;min-width:100px}
+.c-cmp-nums{display:flex;gap:14px;flex-wrap:wrap}
+.c-cmp-num{text-align:right;min-width:80px}
+.c-cmp-num .cn-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.3px}
+.c-cmp-num .cn-val{font-size:12px;font-weight:700;color:#1a1a1a}
+.c-cmp-num .cn-val.red{color:#c0392b}
+.c-cmp-num .cn-val.blue{color:#1d4ed8}
+.c-tot-row{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#f5f7fa;flex-wrap:wrap;font-weight:700;font-size:12px;color:#555}
+.c-tot-row .ct-nums{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap}
+.c-tot-row .ct-num{text-align:right;min-width:80px;font-size:13px;font-weight:800;color:#0d3d6b}
+/* Flujo neto rows */
+.c-fn-table{width:100%;font-size:12px}
+.c-fn-table th{background:#f9f5f2;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px}
+.c-fn-table td{padding:8px 12px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+.c-fn-table tr:last-child td{border-bottom:none}
+.c-tipo-badge{display:inline-block;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;background:#f0f2f5;color:#555}
+/* Finiquitos table */
+.c-fin-table{width:100%;font-size:12px;border-collapse:collapse}
+.c-fin-table th{background:#fdf2f2;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px}
+.c-fin-table td{padding:7px 12px;border-bottom:1px solid #fef2f2;vertical-align:middle}
+.c-fin-table tr:last-child td{border-bottom:none}
+.c-fin-tot{background:#fdf2f2;font-weight:800}
+.c-subemp-tag{font-size:10px;background:#d1fae5;color:#065f46;border-radius:3px;padding:1px 5px}
+/* Summary bar */
+.c-sum-bar{background:#0d3d6b;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.c-sum-bar-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.8);flex:1;min-width:120px}
+.c-sum-item{text-align:right}
+.c-sum-item .si-lbl{font-size:10px;color:rgba(255,255,255,.6);text-transform:uppercase}
+.c-sum-item .si-val{font-size:12px;font-weight:700;color:#fff}
+.c-sum-total{text-align:right}
+.c-sum-total .st-lbl{font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase}
+.c-sum-total .st-val{font-size:18px;font-weight:900;color:#fff}
+/* Reserve section */
+.c-rsv{background:#0d3d6b;border-radius:12px;overflow:hidden;margin-bottom:10px}
+.c-rsv-hdr{padding:14px 16px 8px;font-size:13px;font-weight:800;color:#fff}
+.c-rsv-total-line{padding:4px 16px 12px;font-size:12px;color:rgba(255,255,255,.7)}
+.c-rsv-total-line span{color:#fde68a;font-weight:700;margin-left:6px}
+.c-rsv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#ffffff22}
+.c-rsv-col{background:#0d3d6b;padding:14px 16px}
+.c-rsv-col-title{font-size:9.5px;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:6px}
+.c-rsv-item{display:flex;justify-content:space-between;margin-bottom:6px}
+.c-rsv-item .ri-lbl{font-size:11px;color:rgba(255,255,255,.75);flex:1;padding-right:8px}
+.c-rsv-item .ri-sub{font-size:10px;color:rgba(255,255,255,.5);display:block;margin-top:-2px}
+.c-rsv-item .ri-val{font-size:12px;font-weight:700;color:#fde68a;white-space:nowrap}
+.c-rsv-sub{display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.2);padding-top:8px;margin-top:6px}
+.c-rsv-sub .rs-lbl{font-size:11px;color:rgba(255,255,255,.7);font-weight:700}
+.c-rsv-sub .rs-val{font-size:13px;font-weight:800;color:#f97316}
+.c-rsv-prog{background:rgba(255,255,255,.15);border-radius:4px;height:6px;margin:8px 0 4px;overflow:hidden}
+.c-rsv-prog-bar{height:100%;background:#fbbf24;border-radius:4px;transition:width .4s}
+.c-rsv-sem-label{font-size:10px;color:rgba(255,255,255,.6);margin-bottom:6px}
+.c-rsv-bot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;align-items:center}
+.c-rsv-bot .rb-lbl{font-size:12px;font-weight:700;color:rgba(255,255,255,.8)}
+.c-rsv-bot .rb-val{font-size:16px;font-weight:900;color:#fff}
+.c-costo-final{background:#fff;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.c-costo-final .cf-lbl{font-size:13px;font-weight:700;color:#555}
+.c-costo-final .cf-val{font-size:20px;font-weight:900;color:#0d3d6b}
+@media(max-width:640px){.c-rsv-grid{grid-template-columns:1fr}.c-cmp-nums{gap:8px}.c-sec-nums{gap:10px}}
 </style>
 </head><body>
 
@@ -1599,10 +1685,11 @@ window.calcNominaCompleta = function calcNominaCompleta(ev) {
   reader.onload = function(e) {
     try {
       var wb = XLSX.read(e.target.result, {type:'array', cellFormula:true, raw:false});
-      var totals = calcProcessWorkbook(wb);
-      document.getElementById('calcFullResult').innerHTML = calcHtmlCompleta(totals);
+      var result = calcProcessWorkbook(wb, file.name);
+      document.getElementById('calcFullResult').innerHTML = calcHtmlCompleta(result);
       document.getElementById('calcFullResult').style.display = 'block';
-      status.textContent = 'OK. ' + totals.emps + ' colaboradores en ' + totals.sheets.length + ' hojas procesadas.';
+      var totE = result.totals.regEmps + result.totals.flujoEmps + result.finiquitos.emps;
+      status.textContent = 'OK. ' + totE + ' colaboradores procesados.';
     } catch(ex) {
       console.error('calcNominaCompleta', ex);
       status.textContent = 'Error: ' + ex.message;
@@ -1655,27 +1742,29 @@ function calcSmartSheetRows(sh) {
 }
 
 function calcParseRegSheet(rows) {
-  var out = {neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0, emps:0};
+  var out = {neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0, percep:0, emps:0};
   if (!rows.length) return out;
   var s = rows[0];
-  var kNeto  = calcFindKey(s, ['total neto', 'neto total', 'total a pagar', 'neto']);
-  var kISR   = calcFindKey(s, ['51.ispt', 'ispt', 'i.s.r', 'isr']);
-  var kIMSS  = calcFindKey(s, ['52.imss', 'imss obrero', 'imss']);
-  var kSub   = calcFindKey(s, ['53.subemp', 'subemp', 'subsidio']);
-  var kInfo  = calcFindKey(s, ['54.infonavit', 'infonavit cred', 'infonavit']);
-  var kVales = calcFindKey(s, ['vale', 'despensa']);
+  var kNeto  = calcFindKey(s, ['total neto','neto total','neto transferir']);
+  var kPercep= calcFindKey(s, ['tot.percep','tot. percep','total percep']);
+  var kISR   = calcFindKey(s, ['51.ispt','ispt','isr']);
+  var kIMSS  = calcFindKey(s, ['52.imss','imss']);
+  var kSub   = calcFindKey(s, ['53.subemp','subemp','subsidio']);
+  var kInfo  = calcFindKey(s, ['54.infonavit','infonavit']);
+  var kVales = calcFindKey(s, ['v.despensa','despensa','vale']);
   if (!kNeto) return out;
   rows.forEach(function(r) {
-    var nom = String(r[calcFindKey(r, ['nombre','name'])] || '').toUpperCase();
-    if (nom.indexOf('TOTAL') >= 0 || nom.indexOf('SUBTOTAL') >= 0) { return; }
+    var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim().toUpperCase();
+    if (!nom || nom.indexOf('TOTAL') >= 0 || nom.indexOf('SUBTOTAL') >= 0) return;
     var neto = nomParseMoney(r[kNeto]);
-    if (neto <= 0 || neto > 150000) { return; }
-    out.neto       += neto;
-    if (kISR)   { out.isr        += nomParseMoney(r[kISR]);  }
-    if (kIMSS)  { out.imssObr    += nomParseMoney(r[kIMSS]); }
-    if (kSub)   { out.sub        += nomParseMoney(r[kSub]);  }
-    if (kInfo)  { out.infoCredit += nomParseMoney(r[kInfo]); }
-    if (kVales) { out.vales      += nomParseMoney(r[kVales]);}
+    if (neto <= 0 || neto > 200000) return;
+    out.neto        += neto;
+    if (kPercep) out.percep    += nomParseMoney(r[kPercep]);
+    if (kISR)   out.isr        += nomParseMoney(r[kISR]);
+    if (kIMSS)  out.imssObr    += nomParseMoney(r[kIMSS]);
+    if (kSub)   out.sub        += nomParseMoney(r[kSub]);
+    if (kInfo)  out.infoCredit += nomParseMoney(r[kInfo]);
+    if (kVales) out.vales      += nomParseMoney(r[kVales]);
     out.emps++;
   });
   return out;
@@ -1685,8 +1774,8 @@ function calcParseSimpSheet(rows) {
   var out = {neto:0, emps:0};
   if (!rows.length) return out;
   var s = rows[0];
-  var kHrsEsp  = calcFindKey(s, ['total de hrs esp','total hrs esp']);
-  var kCompSuel = calcFindKey(s, ['complemento sueldo']);
+  var kHrsEsp   = calcFindKey(s, ['total de hrs esp','total hrs esp']);
+  var kCompSuel  = calcFindKey(s, ['complemento sueldo']);
   if (kHrsEsp || kCompSuel) {
     rows.forEach(function(r) {
       var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
@@ -1702,115 +1791,329 @@ function calcParseSimpSheet(rows) {
     var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
     if (!nom) return;
     var strNom = nom.toUpperCase();
-    if (strNom.indexOf('TOTAL') >= 0 || strNom.indexOf('SUBTOTAL') >= 0) { return; }
+    if (strNom.indexOf('TOTAL') >= 0 || strNom.indexOf('SUBTOTAL') >= 0) return;
     var v = nomParseMoney(r[kNeto]);
-    if (v <= 0 || v > 200000) { return; }
+    if (v <= 0 || v > 200000) return;
     out.neto += v;
     out.emps++;
   });
   return out;
 }
 
-function calcProcessWorkbook(wb) {
-  var REG_PATS  = ['INT. TRANSFERENCIA','INT. EFECTIVO','NOM. COMERCIAL','NOM. AUTOBOT','NOM. ARIITRANST'];
-  var SIMP_PATS = ['PRENOMINA','HORAS EXTRAS','PROY. TIJUANA','PROY. MTY','BONO ASISTENCIA','COMP. SUELDOS','COMPLEMENTO'];
-  var FIN_PAT   = 'FINIQUITO';
-
-  var T = { neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0,
-            netoProy:0, netoFiniq:0, isrFiniq:0, imssFiniq:0, infoFiniq:0,
-            emps:0, sheets:[] };
-
-  wb.SheetNames.forEach(function(sn) {
-    var snU = sn.toUpperCase().trim();
-    var rows = calcSmartSheetRows(wb.Sheets[sn]);
-    if (!rows.length) return;
-
-    var isReg  = REG_PATS.some(function(p){ return snU.indexOf(p) >= 0; });
-    var isSimp = SIMP_PATS.some(function(p){ return snU.indexOf(p) >= 0; });
-    var isFin  = snU.indexOf(FIN_PAT) >= 0;
-
-    if (!isReg && !isSimp && !isFin) {
-      var keys = Object.keys(rows[0] || {}).map(function(k){ return k.toUpperCase(); });
-      var hasISR  = keys.some(function(k){ return k.indexOf('ISPT') >= 0; });
-      var hasNeto = keys.some(function(k){ return k.indexOf('NETO') >= 0; });
-      if (hasISR && hasNeto) { isReg = true; }
-      else if (hasNeto)      { isSimp = true; }
-      else                   { return; }
+function calcDetectSemana(wb) {
+  var sh = wb.Sheets['Nomina a Pagar'];
+  if (!sh) return '?';
+  var rawRows = XLSX.utils.sheet_to_json(sh, {header:1, defval:'', raw:false});
+  for (var i = 0; i < Math.min(rawRows.length, 8); i++) {
+    for (var j = 0; j < rawRows[i].length; j++) {
+      var v = String(rawRows[i][j] || '');
+      var m = v.match(/#\s*(\d+)/);
+      if (m) return m[1];
     }
-
-    if (isReg) {
-      var p = calcParseRegSheet(rows);
-      T.neto       += p.neto;  T.isr      += p.isr;  T.imssObr    += p.imssObr;
-      T.sub        += p.sub;   T.infoCredit += p.infoCredit; T.vales += p.vales;
-      T.emps       += p.emps;
-      T.sheets.push({name:sn, type:'Regular', emps:p.emps, neto:p.neto, isr:p.isr});
-    } else if (isFin) {
-      var fp = calcParseRegSheet(rows);
-      T.netoFiniq  += fp.neto; T.isrFiniq  += fp.isr; T.imssFiniq += fp.imssObr;
-      T.infoFiniq  += fp.infoCredit; T.emps += fp.emps;
-      T.sheets.push({name:sn, type:'Finiquito', emps:fp.emps, neto:fp.neto, isr:fp.isr});
-    } else if (isSimp) {
-      var sp = calcParseSimpSheet(rows);
-      T.netoProy   += sp.neto; T.emps += sp.emps;
-      T.sheets.push({name:sn, type:'Simple', emps:sp.emps, neto:sp.neto, isr:0});
-    }
-  });
-
-  var f = 4.3333;
-  var patFactor = CALC_PAT_TOTAL / CALC_IMSS_OBR;
-  var infoFactor = CALC_INFO_PAT / CALC_IMSS_OBR;
-  T.imssPatEst   = (T.imssObr + T.imssFiniq) * patFactor;
-  T.infoPatEst   = (T.imssObr + T.imssFiniq) * infoFactor;
-  T.totalNeto    = T.neto + T.vales + T.netoProy + T.netoFiniq;
-  T.isnEst       = (T.neto + T.vales) * 0.0425 + T.netoProy * 0.03;
-  T.isrTotal     = T.isr + T.isrFiniq;
-  T.imssObrTotal = T.imssObr + T.imssFiniq;
-  T.infoCredTotal = T.infoCredit + T.infoFiniq;
-  T.reservaTotal = T.isrTotal + T.imssObrTotal + T.imssPatEst + T.infoPatEst + T.infoCredTotal + T.isnEst;
-  T.costoTotal   = T.totalNeto + T.imssPatEst + T.infoPatEst + T.isnEst;
-  return T;
+  }
+  return '?';
 }
 
-function calcHtmlCompleta(T) {
-  var F = nomFmt;
-  var h = '';
+function calcFindSheet(wb, name) {
+  var n = name.toUpperCase();
+  var sn = wb.SheetNames.find(function(s){ return s.toUpperCase().indexOf(n) >= 0; });
+  return sn ? {sh: wb.Sheets[sn], name: sn} : null;
+}
 
-  h += '<div class="calc-block">'
-     + '<div class="calc-block-title">Neto a pagar</div>'
-     + (T.neto > 0     ? '<div class="calc-line"><span class="c-lbl">Nomina regular (prestaciones incluidas)</span><span class="c-val">' + F(T.neto) + '</span></div>' : '')
-     + (T.vales > 0    ? '<div class="calc-line"><span class="c-lbl">Vales de despensa</span><span class="c-val">' + F(T.vales) + '</span></div>' : '')
-     + (T.netoProy > 0 ? '<div class="calc-line"><span class="c-lbl">Proyectos (flujo neto)</span><span class="c-val">' + F(T.netoProy) + '</span></div>' : '')
-     + (T.netoFiniq > 0 ? '<div class="calc-line"><span class="c-lbl">Finiquitos neto</span><span class="c-val">' + F(T.netoFiniq) + '</span></div>' : '')
-     + '</div>'
-     + '<div class="calc-total-line"><span>Total efectivo a salir</span><span>' + F(T.totalNeto) + '</span></div>';
+function calcDetectForma(r, sample) {
+  var kCh = calcFindKey(sample, ['cheque']);
+  var kEf = calcFindKey(sample, ['efectivo']);
+  if (kCh && nomParseMoney(r[kCh]) > 0) return 'Cheque';
+  if (kEf && nomParseMoney(r[kEf]) > 0) return 'Efectivo';
+  return '';
+}
 
-  h += '<div class="calc-block" style="margin-top:14px">'
-     + '<div class="calc-block-title">Reserva de gobierno (estimada)</div>'
-     + '<div class="calc-line"><span class="c-lbl">ISR retenido - SAT (mensual)</span><span class="c-val warn">' + F(T.isrTotal) + '</span></div>'
-     + '<div class="calc-line"><span class="c-lbl">IMSS obrero - IMSS (mensual)</span><span class="c-val warn">' + F(T.imssObrTotal) + '</span></div>'
-     + '<div class="calc-line"><span class="c-lbl">IMSS patronal est. ' + (CALC_PAT_TOTAL*100).toFixed(2) + '% - IMSS (mensual)</span><span class="c-val warn">' + F(T.imssPatEst) + '</span></div>'
-     + '<div class="calc-line"><span class="c-lbl">INFONAVIT patronal est. - INFONAVIT (bimestral)</span><span class="c-val warn">' + F(T.infoPatEst) + '</span></div>'
-     + (T.infoCredTotal > 0 ? '<div class="calc-line"><span class="c-lbl">INFONAVIT credito (descuento a empleado)</span><span class="c-val warn">' + F(T.infoCredTotal) + '</span></div>' : '')
-     + '<div class="calc-line"><span class="c-lbl">ISN est. (BC 4.25% reg. / 3% proy.) - Estado (mensual)</span><span class="c-val warn">' + F(T.isnEst) + '</span></div>'
-     + '</div>'
-     + '<div class="calc-total-line" style="color:#b86b00;border-color:#fbbf24"><span>Reserva total</span><span>' + F(T.reservaTotal) + '</span></div>';
-
-  h += '<div class="calc-total-line" style="margin-top:8px"><span>Costo real de la semana</span><span>' + F(T.costoTotal) + '</span></div>';
-
-  h += '<div class="calc-block" style="margin-top:14px">'
-     + '<div class="calc-block-title">Hojas procesadas</div>'
-     + '<div class="calc-sheet-list">';
-  T.sheets.forEach(function(s) {
-    h += '<div class="calc-sheet-row">'
-       + '<span style="flex:1">' + s.name + '</span>'
-       + '<span style="color:#888;margin:0 8px">[' + s.type + ' | ' + s.emps + ' emp.]</span>'
-       + '<span>' + F(s.neto) + '</span>'
-       + '</div>';
+function calcProcessWorkbook(wb, fileName) {
+  var semana = calcDetectSemana(wb);
+  var EMPRESA_DEFS = [
+    {empresa:'Internacional', color:'#1d4ed8', sheets:['INT. TRANSFERENCIA','INT. EFECTIVO']},
+    {empresa:'Comercial',     color:'#7c3aed', sheets:['NOM. COMERCIAL']},
+    {empresa:'Autobot',       color:'#059669', sheets:['NOM. AUTOBOT']},
+    {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST']}
+  ];
+  var FLUJO_DEFS = [
+    {pat:'HORAS EXTRAS',    tipo:'Hrs extras',   concepto:'Horas extras y complementos TJ'},
+    {pat:'PROY. TIJUANA',   tipo:'Proyectos TJ', concepto:'Proyectos Tijuana'},
+    {pat:'PROY. MTY',       tipo:'Proyectos MTY',concepto:'Proyectos Monterrey'},
+    {pat:'BONO ASISTENCIA', tipo:'Bonos MTY',    concepto:'Bono Asistencia Monterrey', checkDup:true},
+    {pat:'COMP. SUELDOS',   tipo:'Complemento',  concepto:'Complemento Sueldos'}
+  ];
+  var regular = [];
+  EMPRESA_DEFS.forEach(function(def) {
+    var co = {empresa:def.empresa, color:def.color, emps:0, percep:0, isr:0, imss:0, sub:0, info:0, vales:0, neto:0, labels:[]};
+    def.sheets.forEach(function(sn) {
+      var found = calcFindSheet(wb, sn);
+      if (!found) return;
+      var rows = calcSmartSheetRows(found.sh);
+      if (!rows.length) return;
+      var p = calcParseRegSheet(rows);
+      co.emps   += p.emps; co.percep += p.percep; co.isr  += p.isr;
+      co.imss   += p.imssObr; co.sub += p.sub; co.info   += p.infoCredit;
+      co.vales  += p.vales;   co.neto += p.neto;
+      var tag = found.name.toUpperCase().indexOf('TRANSFERENCIA') >= 0 ? 'Transf. (' + p.emps + ')' :
+                found.name.toUpperCase().indexOf('EFECTIVO')       >= 0 ? 'Efect. (' + p.emps + ')' :
+                'Mix (' + p.emps + ')';
+      co.labels.push(tag);
+    });
+    if (co.emps > 0) { co.label = co.labels.join(' + '); regular.push(co); }
   });
-  h += '</div></div>';
+  var flujoNeto = [];
+  var duplicates = [];
+  FLUJO_DEFS.forEach(function(def) {
+    var found = calcFindSheet(wb, def.pat);
+    if (!found) return;
+    var rows = calcSmartSheetRows(found.sh);
+    if (!rows.length) return;
+    var p = calcParseSimpSheet(rows);
+    if (!p.emps) return;
+    if (def.checkDup) {
+      var kId = calcFindKey(rows[0], ['numero','number','num']);
+      if (kId) {
+        var seenD = {}, dups = [];
+        rows.forEach(function(r) {
+          var id = String(r[kId] || '').trim();
+          if (!id) return;
+          if (seenD[id]) { dups.push(id); } else { seenD[id] = true; }
+        });
+        if (dups.length) duplicates.push({sheet:found.name, count:dups.length, ids:dups.slice(0,6)});
+      }
+    }
+    flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, total:p.neto});
+  });
+  var fin = {emps:0, regPat:'', percep:0, isr:0, imss:0, info:0, neto:0, rows:[]};
+  var finFound = calcFindSheet(wb, 'FINIQUITO');
+  if (finFound) {
+    var finRows = calcSmartSheetRows(finFound.sh);
+    if (finRows.length) {
+      var fp = calcParseRegSheet(finRows);
+      fin.emps = fp.emps; fin.percep = fp.percep; fin.isr = fp.isr;
+      fin.imss = fp.imssObr; fin.info = fp.infoCredit; fin.neto = fp.neto;
+      var s0 = finRows[0];
+      var kReg = calcFindKey(s0, ['reg. pat','reg.pat','registro pat']);
+      if (kReg) {
+        var rv = finRows.map(function(r){ return String(r[kReg]||'').trim(); }).filter(Boolean);
+        fin.regPat = rv[0] || '';
+      }
+      var kNum  = calcFindKey(s0, ['numero','n']);
+      var kNom  = calcFindKey(s0, ['nombre']);
+      var kPerc = calcFindKey(s0, ['tot.percep','total perc','percep']);
+      var kISR2 = calcFindKey(s0, ['51.ispt','ispt','isr']);
+      var kSub2 = calcFindKey(s0, ['53.subemp','subemp']);
+      var kIMSS2= calcFindKey(s0, ['52.imss','imss']);
+      var kInfo2= calcFindKey(s0, ['54.infonavit','infonavit']);
+      var kNet2 = calcFindKey(s0, ['total neto','neto']);
+      finRows.forEach(function(r) {
+        var nom = String(r[kNom]||'').trim();
+        if (!nom || fin.rows.length >= 20) return;
+        var neto = nomParseMoney(r[kNet2]);
+        if (neto <= 0) return;
+        var isr2 = nomParseMoney(r[kISR2]);
+        var sub2 = nomParseMoney(r[kSub2]);
+        fin.rows.push({
+          num: String(r[kNum]||''),
+          nombre: nom,
+          percep: nomParseMoney(r[kPerc]),
+          isrLabel: (isr2 <= 0 && sub2 > 0) ? 'SubEmp' : nomFmt(isr2),
+          isr: isr2, imss: nomParseMoney(r[kIMSS2]),
+          info: nomParseMoney(r[kInfo2]), neto: neto,
+          forma: calcDetectForma(r, s0)
+        });
+      });
+    }
+  }
+  var totReg = {emps:0, percep:0, isr:0, imss:0, neto:0};
+  regular.forEach(function(co) {
+    totReg.emps+=co.emps; totReg.percep+=co.percep; totReg.isr+=co.isr; totReg.imss+=co.imss; totReg.neto+=co.neto;
+  });
+  var flujoTotal = flujoNeto.reduce(function(s,x){ return s+x.total; }, 0);
+  var flujoEmps  = flujoNeto.reduce(function(s,x){ return s+x.emps;  }, 0);
+  var totalEfectivo = totReg.neto + flujoTotal + fin.neto;
+  var imssPatron = (totReg.imss + fin.imss) * (CALC_PAT_TOTAL / CALC_IMSS_OBR);
+  var isn        = totReg.percep * 0.0425;
+  var infoPatron = totReg.imss * (CALC_INFO_PAT / CALC_IMSS_OBR);
+  var retenciones = totReg.isr + fin.isr + totReg.imss + fin.imss;
+  var cuotas      = imssPatron + isn;
+  var infoTotal   = infoPatron + fin.info;
+  var reservaTotal = retenciones + cuotas + infoTotal;
+  var costoReal   = totalEfectivo + cuotas + infoTotal;
+  return {
+    semana:semana, fileName:fileName||'',
+    regular:regular, flujoNeto:flujoNeto, finiquitos:fin, duplicates:duplicates,
+    totals:{
+      regEmps:totReg.emps, regPercep:totReg.percep, regISR:totReg.isr, regIMSS:totReg.imss, regNeto:totReg.neto,
+      flujoTotal:flujoTotal, flujoEmps:flujoEmps,
+      finNeto:fin.neto, finISR:fin.isr, finIMSS:fin.imss, finInfo:fin.info,
+      totalEfectivo:totalEfectivo,
+      imssPatron:imssPatron, isn:isn, infoPatron:infoPatron,
+      retenciones:retenciones, cuotas:cuotas, infoTotal:infoTotal,
+      reservaTotal:reservaTotal, costoReal:costoReal
+    }
+  };
+}
 
+function calcHtmlCompleta(R) {
+  var F = nomFmt;
+  var T = R.totals;
+  var h = '';
+  // KPI strip
+  h += '<div class="calc-kpi-strip">'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Colaboradores</div><div class="ck-val">' + (T.regEmps + T.flujoEmps + R.finiquitos.emps) + '</div></div>'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Efectivo total hoy</div><div class="ck-val green">' + F(T.totalEfectivo) + '</div></div>'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Retenciones ISR+IMSS</div><div class="ck-val red">' + F(T.retenciones) + '</div></div>'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Carga patronal</div><div class="ck-val amber">' + F(T.cuotas + T.infoTotal) + '</div></div>'
+     + '<div class="calc-kpi-box"><div class="ck-lbl">Costo real semana</div><div class="ck-val">' + F(T.costoReal) + '</div></div>'
+     + '</div>';
+  // Duplicados
+  if (R.duplicates.length) {
+    var d = R.duplicates[0];
+    h += '<div class="calc-warn-banner"><div class="calc-warn-icon">&#9651;</div><div>'
+       + '<strong>' + d.count + ' colaboradores con registro duplicado en ' + d.sheet + '</strong> &mdash; '
+       + 'empls. ' + d.ids.map(function(x){ return '#' + x; }).join(', ') + '... Revisar antes de autorizar.'
+       + '</div></div>';
+  }
+  // File bar
+  if (R.fileName) {
+    h += '<div class="calc-file-bar">'
+       + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7h8M8 12h8M8 17h4"/></svg>'
+       + 'Archivo: <strong>' + R.fileName + '</strong>'
+       + (R.semana !== '?' ? ' &mdash; Semana ' + R.semana : '')
+       + '</div>';
+  }
+  // Nomina regular
+  var regEmpresas = R.regular.length + ' empresa' + (R.regular.length !== 1 ? 's' : '');
+  h += '<div class="c-sec"><div class="c-sec-hdr" style="background:#0d3d6b" onclick="this.parentNode.querySelector(\'.c-sec-body\').style.display=this.parentNode.querySelector(\'.c-sec-body\').style.display===\'none\'?\'\':\' none\'">'
+     + '<span class="c-sec-hdr-title">Nomina regular con obligaciones</span>'
+     + '<span class="c-sec-badge">' + regEmpresas + ' &middot; ' + T.regEmps + ' colaboradores</span>'
+     + '<div class="c-sec-nums">'
+     + '<div class="c-sec-num"><div class="n-lbl">Percepciones</div><div class="n-val">' + F(T.regPercep) + '</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">ISR + IMSS ret.</div><div class="n-val hi">' + F(T.regISR + T.regIMSS) + '</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">Neto</div><div class="n-val">' + F(T.regNeto) + '</div></div>'
+     + '</div><span class="c-collapse-btn">&#8964;</span></div>'
+     + '<div class="c-sec-body">';
+  R.regular.forEach(function(co) {
+    h += '<div class="c-cmp-row">'
+       + '<span class="c-cmp-badge" style="background:' + co.color + '">' + co.empresa + '</span>'
+       + '<span class="c-cmp-desc">' + co.label + ' (' + co.emps + ')</span>'
+       + '<div class="c-cmp-nums">'
+       + '<div class="c-cmp-num"><div class="cn-lbl">Percep.</div><div class="cn-val">' + F(co.percep) + '</div></div>'
+       + '<div class="c-cmp-num"><div class="cn-lbl">ISR ret.</div><div class="cn-val red">' + F(co.isr) + '</div></div>'
+       + '<div class="c-cmp-num"><div class="cn-lbl">IMSS</div><div class="cn-val red">' + F(co.imss) + '</div></div>'
+       + '<div class="c-cmp-num"><div class="cn-lbl">Neto</div><div class="cn-val blue">' + F(co.neto) + '</div></div>'
+       + '</div></div>';
+  });
+  h += '<div class="c-tot-row"><span>Total nomina regular &mdash; ' + R.regular.length + ' empresas (' + T.regEmps + ' colab.)</span>'
+     + '<div class="ct-nums">'
+     + '<div class="c-cmp-num"><div class="cn-lbl">Percepciones</div><div class="ct-num">' + F(T.regPercep) + '</div></div>'
+     + '<div class="c-cmp-num"><div class="cn-lbl">ISR+IMSS retenido</div><div class="ct-num">' + F(T.regISR + T.regIMSS) + '</div></div>'
+     + '<div class="c-cmp-num"><div class="cn-lbl">Neto a transferir/pagar</div><div class="ct-num">' + F(T.regNeto) + '</div></div>'
+     + '</div></div>'
+     + '</div></div>';
+  // Flujo neto
+  var fnConceptos = R.flujoNeto.length + ' concepto' + (R.flujoNeto.length !== 1 ? 's' : '');
+  h += '<div class="c-sec"><div class="c-sec-hdr" style="background:#78350f" onclick="this.parentNode.querySelector(\'.c-sec-body\').style.display=this.parentNode.querySelector(\'.c-sec-body\').style.display===\'none\'?\'\':\' none\'">'
+     + '<span class="c-sec-hdr-title">Pagos flujo neto &mdash; sin obligaciones</span>'
+     + '<span class="c-sec-badge">' + fnConceptos + ' &middot; ' + T.flujoEmps + ' pagos</span>'
+     + '<div class="c-sec-nums">'
+     + '<div class="c-sec-num"><div class="n-lbl">Retenciones</div><div class="n-val">$0.00</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">Carga patronal</div><div class="n-val">$0.00</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">Total neto</div><div class="n-val">' + F(T.flujoTotal) + '</div></div>'
+     + '</div><span class="c-collapse-btn">&#8964;</span></div>'
+     + '<div class="c-sec-body">'
+     + '<table class="c-fn-table"><thead><tr><th>Tipo</th><th>Concepto</th><th>#</th><th>Total neto</th></tr></thead><tbody>';
+  R.flujoNeto.forEach(function(fn) {
+    h += '<tr><td><span class="c-tipo-badge">' + fn.tipo + '</span></td>'
+       + '<td>' + fn.concepto + '</td>'
+       + '<td>' + fn.emps + ' pagos</td>'
+       + '<td style="font-weight:700;text-align:right">' + F(fn.total) + '</td></tr>';
+  });
+  h += '<tr style="font-weight:800;background:#fdf5ee"><td colspan="3">Total pagos flujo neto</td><td style="text-align:right">' + F(T.flujoTotal) + '</td></tr>'
+     + '</tbody></table></div></div>';
+  // Finiquitos
+  var fin = R.finiquitos;
+  var finHdr = fin.emps + ' colaborador' + (fin.emps !== 1 ? 'es' : '');
+  if (fin.regPat) finHdr += ' &middot; ' + fin.regPat;
+  h += '<div class="c-sec"><div class="c-sec-hdr" style="background:#7f1d1d" onclick="this.parentNode.querySelector(\'.c-sec-body\').style.display=this.parentNode.querySelector(\'.c-sec-body\').style.display===\'none\'?\'\':\' none\'">'
+     + '<span class="c-sec-hdr-title">Finiquitos &mdash; retenciones pre-calculadas</span>'
+     + '<span class="c-sec-badge">' + finHdr + '</span>'
+     + '<div class="c-sec-nums">'
+     + '<div class="c-sec-num"><div class="n-lbl">ISR + IMSS ret.</div><div class="n-val hi">' + F(fin.isr + fin.imss) + '</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">INFONAVIT desc.</div><div class="n-val">' + F(fin.info) + '</div></div>'
+     + '<div class="c-sec-num"><div class="n-lbl">Neto</div><div class="n-val">' + F(fin.neto) + '</div></div>'
+     + '</div><span class="c-collapse-btn">&#8964;</span></div>'
+     + '<div class="c-sec-body">'
+     + '<table class="c-fin-table"><thead><tr><th>#</th><th>Nombre</th><th>Percep.</th><th>ISR</th><th>IMSS</th><th>INFONAV</th><th>Neto</th><th>Forma</th></tr></thead><tbody>';
+  var displayRows = fin.rows.slice(0, 3);
+  displayRows.forEach(function(r) {
+    h += '<tr><td style="color:#888">' + r.num + '</td><td>' + r.nombre + '</td>'
+       + '<td>' + F(r.percep) + '</td>'
+       + '<td>' + (r.isrLabel === 'SubEmp' ? '<span class="c-subemp-tag">SubEmp</span>' : r.isrLabel) + '</td>'
+       + '<td>' + F(r.imss) + '</td>'
+       + '<td>' + F(r.info) + '</td>'
+       + '<td style="font-weight:700">' + F(r.neto) + '</td>'
+       + '<td style="color:#888">' + r.forma + '</td></tr>';
+  });
+  if (fin.rows.length > 3) {
+    h += '<tr><td colspan="8" style="text-align:center;color:#888;font-style:italic;padding:8px">... ' + (fin.rows.length - 3) + ' colaboradores mas ...</td></tr>';
+  }
+  h += '<tr class="c-fin-tot"><td colspan="2">Total finiquitos (' + fin.emps + ')</td>'
+     + '<td>' + F(fin.percep) + '</td><td>' + F(fin.isr) + '</td><td>' + F(fin.imss) + '</td>'
+     + '<td>' + F(fin.info) + '</td><td>' + F(fin.neto) + '</td><td></td></tr>'
+     + '</tbody></table></div></div>';
+  // Summary bar
+  h += '<div class="c-sum-bar">'
+     + '<span class="c-sum-bar-title">Efectivo total a salir esta semana</span>'
+     + '<div class="c-sum-item"><div class="si-lbl">Nomina regular</div><div class="si-val">' + F(T.regNeto) + '</div></div>'
+     + '<div class="c-sum-item"><div class="si-lbl">Pagos neto</div><div class="si-val">' + F(T.flujoTotal) + '</div></div>'
+     + '<div class="c-sum-item"><div class="si-lbl">Finiquitos</div><div class="si-val">' + F(fin.neto) + '</div></div>'
+     + '<div class="c-sum-total"><div class="st-lbl">Total efectivo</div><div class="st-val">' + F(T.totalEfectivo) + '</div></div>'
+     + '</div>';
+  // Reserve section
+  var pct20 = ((CALC_PAT_TOTAL)*100).toFixed(2);
+  var semNum = parseInt(R.semana, 10) || 1;
+  var bimSem = ((semNum - 1) % 8) + 1;
+  var bimNom = bimSem <= 4 ? 'Oct-Nov 2026' : 'Dic-Ene 2027';
+  var pctSem = Math.min((bimSem / 8) * 100, 100);
+  h += '<div class="c-rsv">'
+     + '<div class="c-rsv-hdr">Reserva semanal para gobierno &mdash; separar de tesoreria hoy</div>'
+     + '<div class="c-rsv-total-line">Efectivo total que sale hoy<span>' + F(T.totalEfectivo) + '</span></div>'
+     + '<div class="c-rsv-grid">'
+     // Col 1
+     + '<div class="c-rsv-col"><div class="c-rsv-col-title">Retenciones a enterar (Dia 17)</div>'
+     + '<div class="c-rsv-item"><span class="ri-lbl">ISR nomina regular<span class="ri-sub">Art. 96 LISR</span></span><span class="ri-val">' + F(T.regISR) + '</span></div>'
+     + (fin.isr > 0 ? '<div class="c-rsv-item"><span class="ri-lbl">ISR finiquitos<span class="ri-sub">Art. 112 LISR</span></span><span class="ri-val">' + F(fin.isr) + '</span></div>' : '')
+     + '<div class="c-rsv-item"><span class="ri-lbl">IMSS obrero regular<span class="ri-sub">Art. 25 LSS</span></span><span class="ri-val">' + F(T.regIMSS) + '</span></div>'
+     + (fin.imss > 0 ? '<div class="c-rsv-item"><span class="ri-lbl">IMSS obrero finiquitos<span class="ri-sub">Art. 25 LSS</span></span><span class="ri-val">' + F(fin.imss) + '</span></div>' : '')
+     + '<div class="c-rsv-sub"><span class="rs-lbl">Subtotal retenciones</span><span class="rs-val">' + F(T.retenciones) + '</span></div>'
+     + '</div>'
+     // Col 2
+     + '<div class="c-rsv-col"><div class="c-rsv-col-title">Cuotas patronales (Dia 17)</div>'
+     + '<div class="c-rsv-item"><span class="ri-lbl">IMSS patronal ~' + pct20 + '% SBC<span class="ri-sub">5 ramos LSS &middot; calculado sobre SDI</span></span><span class="ri-val">' + F(T.imssPatron) + '</span></div>'
+     + '<div class="c-rsv-item"><span class="ri-lbl">ISN Tijuana 4.25%<span class="ri-sub">Sobre percep. regulares TJ</span></span><span class="ri-val">' + F(T.isn) + '</span></div>'
+     + '<div class="c-rsv-sub"><span class="rs-lbl">Subtotal cuotas mens.</span><span class="rs-val">' + F(T.cuotas) + '</span></div>'
+     + '</div>'
+     // Col 3
+     + '<div class="c-rsv-col"><div class="c-rsv-col-title">INFONAVIT (Bimestral / 8)</div>'
+     + '<div class="c-rsv-item"><span class="ri-lbl">Aportacion patronal 5% SBC<span class="ri-sub">Art. 29 INFONAVIT &middot; solo regular</span></span><span class="ri-val">' + F(T.infoPatron) + '</span></div>'
+     + (fin.info > 0 ? '<div class="c-rsv-item"><span class="ri-lbl">Credito INFONAVIT finiquitos<span class="ri-sub">Descuento a enterar</span></span><span class="ri-val">' + F(fin.info) + '</span></div>' : '')
+     + '<div class="c-rsv-sem-label">Bimestre ' + bimNom + ' &middot; Sem. ' + bimSem + '/8 &middot; acumulado ' + F(T.infoTotal * bimSem) + '</div>'
+     + '<div class="c-rsv-prog"><div class="c-rsv-prog-bar" style="width:' + pctSem.toFixed(0) + '%"></div></div>'
+     + '<div class="c-rsv-sub"><span class="rs-lbl">Subtotal INFONAVIT</span><span class="rs-val">' + F(T.infoTotal) + '</span></div>'
+     + '</div>'
+     + '</div>'
+     + '<div class="c-rsv-bot"><span class="rb-lbl">Total a reservar esta semana</span><span class="rb-val">' + F(T.reservaTotal) + '</span></div>'
+     + '</div>';
+  h += '<div class="c-costo-final">'
+     + '<span class="cf-lbl">Costo real total empresa semana ' + R.semana + '</span>'
+     + '<span class="cf-val">' + F(T.costoReal) + '</span>'
+     + '</div>';
   return h;
 }
+
 
 // ────────────────────────────────────────────
 // ARRANQUE
