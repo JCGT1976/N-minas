@@ -1658,13 +1658,26 @@ function calcParseSimpSheet(rows) {
   var out = {neto:0, emps:0};
   if (!rows.length) return out;
   var s = rows[0];
-  var kNeto = calcFindKey(s, ['total','neto','monto']) ;
+  var kHrsEsp  = calcFindKey(s, ['total de hrs esp','total hrs esp']);
+  var kCompSuel = calcFindKey(s, ['complemento sueldo']);
+  if (kHrsEsp || kCompSuel) {
+    rows.forEach(function(r) {
+      var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
+      if (!nom) return;
+      var v = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kCompSuel]);
+      if (v > 0 && v <= 200000) { out.neto += v; out.emps++; }
+    });
+    return out;
+  }
+  var kNeto = calcFindKey(s, ['total','neto','monto','sueldo','cantidad','complemento']);
   if (!kNeto) return out;
   rows.forEach(function(r) {
-    var nom = String(r[calcFindKey(r, ['nombre','name'])] || '').toUpperCase();
-    if (nom.indexOf('TOTAL') >= 0 || nom.indexOf('SUBTOTAL') >= 0) { return; }
+    var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
+    if (!nom) return;
+    var strNom = nom.toUpperCase();
+    if (strNom.indexOf('TOTAL') >= 0 || strNom.indexOf('SUBTOTAL') >= 0) { return; }
     var v = nomParseMoney(r[kNeto]);
-    if (v <= 0 || v > 150000) { return; }
+    if (v <= 0 || v > 200000) { return; }
     out.neto += v;
     out.emps++;
   });
@@ -1673,7 +1686,7 @@ function calcParseSimpSheet(rows) {
 
 function calcProcessWorkbook(wb) {
   var REG_PATS  = ['INT. TRANSFERENCIA','INT. EFECTIVO','NOM. COMERCIAL','NOM. AUTOBOT','NOM. ARIITRANST'];
-  var SIMP_PATS = ['PRENOMINA','PROY. TIJUANA','PROY. MTY','BONO ASISTENCIA','COMP. SUELDOS','COMPLEMENTO'];
+  var SIMP_PATS = ['PRENOMINA','HORAS EXTRAS','PROY. TIJUANA','PROY. MTY','BONO ASISTENCIA','COMP. SUELDOS','COMPLEMENTO'];
   var FIN_PAT   = 'FINIQUITO';
 
   var T = { neto:0, isr:0, imssObr:0, sub:0, infoCredit:0, vales:0,
@@ -1682,7 +1695,7 @@ function calcProcessWorkbook(wb) {
 
   wb.SheetNames.forEach(function(sn) {
     var snU = sn.toUpperCase().trim();
-    var rows = calcSheetRows(wb.Sheets[sn]);
+    var rows = calcSmartSheetRows(wb.Sheets[sn]);
     if (!rows.length) return;
 
     var isReg  = REG_PATS.some(function(p){ return snU.indexOf(p) >= 0; });
