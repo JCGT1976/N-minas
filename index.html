@@ -1817,6 +1817,91 @@ function calcDetectSemana(wb) {
   return '?';
 }
 
+function calcReadNominaAPagar(wb) {
+  var sh = wb.Sheets['Nomina a Pagar'];
+  if (!sh) return null;
+  var rows = XLSX.utils.sheet_to_json(sh, {header:1, defval:null, raw:true});
+  var R = {
+    semana:'?', hasRef:true,
+    intTrans:0, intEfect:0,
+    hrsExtras:0, proyTJ:0, proyMTY:0, bonoMTY:0,
+    valesINT:0, valesCOM:0, valesAUT:0,
+    finMTY:0, finTJ:0, guardia:0,
+    autEfect:0, autTrans:0, comEfect:0, comTrans:0, comMisc:0,
+    ariEfect:0, ariTrans:0,
+    grandTotal:0
+  };
+  var section = 'INT';
+  rows.forEach(function(row) {
+    if (!row) return;
+    var colA = row[0]; var colB = row[1];
+    var descA = String(colA || '').trim();
+    var descB = String(colB || '').trim();
+    var descAU = descA.toUpperCase(); var descBU = descB.toUpperCase();
+    // Section headers
+    if (descAU === 'COMERCIAL'  && isNaN(parseFloat(descA))) { section='COM'; return; }
+    if (descAU === 'AUTOBOT'    && isNaN(parseFloat(descA))) { section='AUT'; return; }
+    if (descAU === 'ARIITRANST' && isNaN(parseFloat(descA))) { section='ARI'; return; }
+    // Semana
+    var mS = descBU.match(/#\s*(\d+)/);
+    if (mS && R.semana === '?') R.semana = mS[1];
+    // Amount
+    var n = parseFloat(colA);
+    if (isNaN(n) || n <= 0) return;
+    var desc = descBU || descAU;
+    if (!desc) return;
+    // Map
+    if (desc.indexOf('TOTAL NOMINA') >= 0 && desc.indexOf('CAJA') < 0) {
+      R.grandTotal = n;
+    } else if (desc.indexOf('PRENOMINA') >= 0 || desc.indexOf('HORAS EXTRAS ESPECIALES') >= 0) {
+      R.hrsExtras = n;
+    } else if ((desc.indexOf('TRANSFERENCIA') >= 0 && desc.indexOf('INTERN') >= 0) ||
+               (desc.indexOf('PAGO NOMINA') >= 0 && desc.indexOf('TRANSFERENCIA') >= 0)) {
+      R.intTrans = n;
+    } else if (desc.indexOf('EFECTIVO') >= 0 && desc.indexOf('INTERN') >= 0) {
+      R.intEfect = n;
+    } else if (desc.indexOf('PROYECTOS') >= 0 && desc.indexOf('TIJUANA') >= 0) {
+      R.proyTJ = n;
+    } else if ((desc.indexOf('PROYECTOS') >= 0 || desc.indexOf('TEMPORALES') >= 0) &&
+               (desc.indexOf('MONTERREY') >= 0 || desc.indexOf('MTY') >= 0)) {
+      R.proyMTY = n;
+    } else if (desc.indexOf('BONO ASISTENCIA') >= 0) {
+      R.bonoMTY = n;
+    } else if (desc.indexOf('VALES') >= 0 && desc.indexOf('DESPENSA') >= 0) {
+      if (section === 'INT')      R.valesINT = n;
+      else if (section === 'COM') R.valesCOM = n;
+      else if (section === 'AUT') R.valesAUT = n;
+    } else if (desc.indexOf('FINIQUITOS') >= 0 && (desc.indexOf('MTY') >= 0 || desc.indexOf('MONTERR') >= 0)) {
+      R.finMTY = n;
+    } else if (desc.indexOf('FINIQUITOS') >= 0 && desc.indexOf('TIJUANA') >= 0) {
+      R.finTJ = n;
+    } else if (desc.indexOf('GUARDIA') >= 0) {
+      R.guardia = n;
+    } else if (desc.indexOf('EFECTIVO AUTOBOT') >= 0) {
+      R.autEfect = n;
+    } else if (desc.indexOf('EFECTIVO COMERCIAL') >= 0) {
+      R.comEfect = n;
+    } else if (desc.indexOf('EFECTIVO ARIITRANST') >= 0) {
+      R.ariEfect = n;
+    } else if (section === 'COM' && desc.indexOf('TRANSFERENCIA') >= 0 && desc.indexOf('INTERN') < 0) {
+      R.comTrans = n;
+    } else if (section === 'AUT' && desc.indexOf('TRANSFERENCIA') >= 0 && desc.indexOf('INTERN') < 0) {
+      R.autTrans = n;
+    } else if (section === 'ARI' && desc.indexOf('TRANSFERENCIA') >= 0 && desc.indexOf('INTERN') < 0) {
+      R.ariTrans = n;
+    } else if (section === 'COM' && (desc.indexOf('CALLEJAS') >= 0 || desc.indexOf('PENSION') >= 0)) {
+      R.comMisc += n;
+    }
+  });
+  R.intNeto = R.intTrans + R.intEfect;
+  R.comNeto = R.comTrans + R.comEfect + R.valesCOM + R.comMisc;
+  R.autNeto = R.autTrans + R.autEfect + R.valesAUT;
+  R.ariNeto = R.ariTrans + R.ariEfect;
+  R.finNeto = R.finMTY + R.finTJ;
+  R.valesTotal = R.valesINT + R.valesCOM + R.valesAUT;
+  return R;
+}
+
 function calcFindSheet(wb, name) {
   var n = name.toUpperCase();
   var sn = wb.SheetNames.find(function(s){ return s.toUpperCase().indexOf(n) >= 0; });
@@ -1833,20 +1918,15 @@ function calcDetectForma(r, sample) {
 
 function calcProcessWorkbook(wb, fileName) {
   var semana = calcDetectSemana(wb);
-  var EMPRESA_DEFS = [
-    {empresa:'Internacional', color:'#1d4ed8', sheets:['INT. TRANSFERENCIA','INT. EFECTIVO']},
-    {empresa:'Comercial',     color:'#7c3aed', sheets:['NOM. COMERCIAL']},
-    {empresa:'Autobot',       color:'#059669', sheets:['NOM. AUTOBOT']},
-    {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST']}
-  ];
-  var FLUJO_DEFS = [
-    {pat:'HORAS EXTRAS',    tipo:'Hrs extras',   concepto:'Horas extras y complementos TJ'},
-    {pat:'PROY. TIJUANA',   tipo:'Proyectos TJ', concepto:'Proyectos Tijuana'},
-    {pat:'PROY. MTY',       tipo:'Proyectos MTY',concepto:'Proyectos Monterrey'},
-    {pat:'BONO ASISTENCIA', tipo:'Bonos MTY',    concepto:'Bono Asistencia Monterrey', checkDup:true},
-    {pat:'COMP. SUELDOS',   tipo:'Complemento',  concepto:'Complemento Sueldos'}
-  ];
+  var ref = calcReadNominaAPagar(wb);
+  if (ref && ref.semana !== '?') semana = ref.semana;
   var allIds = {};
+  var EMPRESA_DEFS = [
+    {empresa:'Internacional', color:'#1d4ed8', sheets:['INT. TRANSFERENCIA','INT. EFECTIVO'], refKey:'intNeto'},
+    {empresa:'Comercial',     color:'#7c3aed', sheets:['NOM. COMERCIAL'],                    refKey:'comNeto'},
+    {empresa:'Autobot',       color:'#059669', sheets:['NOM. AUTOBOT'],                      refKey:'autNeto'},
+    {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST'],                   refKey:'ariNeto'}
+  ];
   var regular = [];
   EMPRESA_DEFS.forEach(function(def) {
     var co = {empresa:def.empresa, color:def.color, emps:0, percep:0, isr:0, imss:0, sub:0, info:0, vales:0, neto:0, labels:[]};
@@ -1856,16 +1936,27 @@ function calcProcessWorkbook(wb, fileName) {
       var rows = calcSmartSheetRows(found.sh);
       if (!rows.length) return;
       var p = calcParseRegSheet(rows, allIds);
-      co.emps   += p.emps; co.percep += p.percep; co.isr  += p.isr;
-      co.imss   += p.imssObr; co.sub += p.sub; co.info   += p.infoCredit;
-      co.vales  += p.vales;   co.neto += p.neto;
-      var tag = found.name.toUpperCase().indexOf('TRANSFERENCIA') >= 0 ? 'Transf. (' + p.emps + ')' :
-                found.name.toUpperCase().indexOf('EFECTIVO')       >= 0 ? 'Efect. (' + p.emps + ')' :
-                'Mix (' + p.emps + ')';
+      co.emps   += p.emps;  co.percep += p.percep;
+      co.isr    += p.isr;   co.imss   += p.imssObr;
+      co.sub    += p.sub;   co.info   += p.infoCredit;
+      co.vales  += p.vales;
+      var tag = found.name.toUpperCase().indexOf('TRANSFERENCIA')>=0 ? 'Transf.('+p.emps+')' :
+                found.name.toUpperCase().indexOf('EFECTIVO')>=0 ? 'Efect.('+p.emps+')' : 'Mix('+p.emps+')';
       co.labels.push(tag);
     });
-    if (co.emps > 0) { co.label = co.labels.join(' + '); regular.push(co); }
+    if (co.emps > 0) {
+      co.label = co.labels.join(' + ');
+      co.neto = (ref && ref[def.refKey]) ? ref[def.refKey] : co.neto;
+      regular.push(co);
+    }
   });
+  var FLUJO_DEFS = [
+    {pat:'HORAS EXTRAS', tipo:'Hrs extras',   concepto:'Horas extras y complementos TJ',  refKey:'hrsExtras'},
+    {pat:'PROY. TIJUANA',tipo:'Proyectos TJ', concepto:'Proyectos Tijuana',                refKey:'proyTJ'},
+    {pat:'PROY. MTY',   tipo:'Proyectos MTY', concepto:'Proyectos Monterrey',              refKey:'proyMTY'},
+    {pat:'BONO ASISTENCIA',tipo:'Bonos MTY',  concepto:'Bono Asistencia Monterrey',        refKey:'bonoMTY', checkDup:true},
+    {pat:'COMP. SUELDOS',tipo:'Complemento',  concepto:'Complemento Sueldos',              refKey:null}
+  ];
   var flujoNeto = [];
   var duplicates = [];
   FLUJO_DEFS.forEach(function(def) {
@@ -1874,24 +1965,21 @@ function calcProcessWorkbook(wb, fileName) {
     var rows = calcSmartSheetRows(found.sh);
     if (!rows.length) return;
     var p = calcParseSimpSheet(rows, allIds);
-    if (!p.emps) return;
     if (def.checkDup) {
       var kId = calcFindKey(rows[0], ['numero','number','num']);
       if (kId) {
         var seenD = {}, dups = [];
-        rows.forEach(function(r) {
-          var id = String(r[kId] || '').trim();
-          if (!id) return;
-          if (seenD[id]) { dups.push(id); } else { seenD[id] = true; }
-        });
+        rows.forEach(function(r) { var id=String(r[kId]||'').trim(); if(!id)return; if(seenD[id]){dups.push(id);}else{seenD[id]=true;} });
         if (dups.length) duplicates.push({sheet:found.name, count:dups.length, ids:dups.slice(0,6)});
       }
     }
-    flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, total:p.neto});
+    var total = (def.refKey && ref && ref[def.refKey]) ? ref[def.refKey] : p.neto;
+    if (total <= 0 && p.emps <= 0) return;
+    flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, total:total});
   });
-  var totVales = regular.reduce(function(s,co){ return s+co.vales; }, 0);
+  var totVales = (ref && ref.valesTotal > 0) ? ref.valesTotal : regular.reduce(function(s,co){return s+co.vales;},0);
   if (totVales > 0) {
-    var valesEmps = regular.reduce(function(s,co){ return s+(co.vales>0?co.emps:0); }, 0);
+    var valesEmps = regular.reduce(function(s,co){return s+(co.vales>0?co.emps:0);},0);
     flujoNeto.push({tipo:'Vales', concepto:'Vales de Despensa (monedero)', emps:valesEmps, total:totVales});
   }
   var fin = {emps:0, regPat:'', percep:0, isr:0, imss:0, info:0, neto:0, rows:[]};
@@ -1899,60 +1987,44 @@ function calcProcessWorkbook(wb, fileName) {
   if (finFound) {
     var finRows = calcSmartSheetRows(finFound.sh);
     if (finRows.length) {
-      var fp = calcParseRegSheet(finRows);
-      fin.emps = fp.emps; fin.percep = fp.percep; fin.isr = fp.isr;
-      fin.imss = fp.imssObr; fin.info = fp.infoCredit; fin.neto = fp.neto;
-      var s0 = finRows[0];
-      var kReg = calcFindKey(s0, ['reg. pat','reg.pat','registro pat']);
-      if (kReg) {
-        var rv = finRows.map(function(r){ return String(r[kReg]||'').trim(); }).filter(Boolean);
-        fin.regPat = rv[0] || '';
-      }
-      var kNum  = calcFindKey(s0, ['numero','n']);
-      var kNom  = calcFindKey(s0, ['nombre']);
-      var kPerc = calcFindKey(s0, ['tot.percep','total perc','percep']);
-      var kISR2 = calcFindKey(s0, ['51.ispt','ispt','isr']);
-      var kSub2 = calcFindKey(s0, ['53.subemp','subemp']);
-      var kIMSS2= calcFindKey(s0, ['52.imss','imss']);
-      var kInfo2= calcFindKey(s0, ['54.infonavit','infonavit']);
-      var kNet2 = calcFindKey(s0, ['total neto','neto']);
+      var fp = calcParseRegSheet(finRows, allIds);
+      fin.emps=fp.emps; fin.percep=fp.percep; fin.isr=fp.isr;
+      fin.imss=fp.imssObr; fin.info=fp.infoCredit;
+      fin.neto = (ref && ref.finNeto > 0) ? ref.finNeto : fp.neto;
+      var s0=finRows[0];
+      var kReg=calcFindKey(s0,['reg. pat','reg.pat']);
+      if (kReg) { var rv=finRows.map(function(r){return String(r[kReg]||'').trim();}).filter(Boolean); fin.regPat=rv[0]||''; }
+      var kNum2=calcFindKey(s0,['numero','n']); var kNom2=calcFindKey(s0,['nombre']);
+      var kPerc2=calcFindKey(s0,['tot.percep','percep']); var kISR2=calcFindKey(s0,['51.ispt','ispt','isr']);
+      var kSub2=calcFindKey(s0,['53.subemp','subemp']); var kIMSS2=calcFindKey(s0,['52.imss','imss']);
+      var kInfo2=calcFindKey(s0,['54.infonavit','infonavit']); var kNet2=calcFindKey(s0,['total neto','neto']);
       finRows.forEach(function(r) {
-        var nom = String(r[kNom]||'').trim();
-        if (!nom || fin.rows.length >= 20) return;
-        var neto = nomParseMoney(r[kNet2]);
-        if (neto <= 0) return;
-        var isr2 = nomParseMoney(r[kISR2]);
-        var sub2 = nomParseMoney(r[kSub2]);
-        fin.rows.push({
-          num: String(r[kNum]||''),
-          nombre: nom,
-          percep: nomParseMoney(r[kPerc]),
-          isrLabel: (isr2 <= 0 && sub2 > 0) ? 'SubEmp' : nomFmt(isr2),
-          isr: isr2, imss: nomParseMoney(r[kIMSS2]),
-          info: nomParseMoney(r[kInfo2]), neto: neto,
-          forma: calcDetectForma(r, s0)
-        });
+        var nom=String(r[kNom2]||'').trim(); if(!nom||fin.rows.length>=20)return;
+        var neto=nomParseMoney(r[kNet2]); if(neto<=0)return;
+        var isr2=nomParseMoney(r[kISR2]); var sub2=nomParseMoney(r[kSub2]);
+        fin.rows.push({num:String(r[kNum2]||''),nombre:nom,percep:nomParseMoney(r[kPerc2]),
+          isrLabel:(isr2<=0&&sub2>0)?'SubEmp':nomFmt(isr2),isr:isr2,
+          imss:nomParseMoney(r[kIMSS2]),info:nomParseMoney(r[kInfo2]),neto:neto,
+          forma:calcDetectForma(r,s0)});
       });
     }
   }
-  var totReg = {emps:0, percep:0, isr:0, imss:0, neto:0};
-  regular.forEach(function(co) {
-    totReg.emps+=co.emps; totReg.percep+=co.percep; totReg.isr+=co.isr; totReg.imss+=co.imss; totReg.neto+=co.neto;
-  });
-  var flujoTotal = flujoNeto.reduce(function(s,x){ return s+x.total; }, 0);
-  var flujoEmps  = flujoNeto.reduce(function(s,x){ return s+x.emps;  }, 0);
-  var totalEfectivo = totReg.neto + flujoTotal + fin.neto;
-  var imssPatron = (totReg.imss + fin.imss) * (CALC_PAT_TOTAL / CALC_IMSS_OBR);
-  var isn        = totReg.percep * 0.0425;
-  var infoPatron = totReg.imss * (CALC_INFO_PAT / CALC_IMSS_OBR);
-  var retenciones = totReg.isr + fin.isr + totReg.imss + fin.imss;
-  var cuotas      = imssPatron + isn;
-  var infoTotal   = infoPatron + fin.info;
-  var reservaTotal = retenciones + cuotas + infoTotal;
-  var costoReal   = totalEfectivo + cuotas + infoTotal;
   var uniqueEmps = Object.keys(allIds).length;
-  var en2mas = 0;
-  // Empleados que aparecen en >1 fuente se reflejan en uniqueEmps
+  var totReg={emps:0,percep:0,isr:0,imss:0,neto:0};
+  regular.forEach(function(co){totReg.emps+=co.emps;totReg.percep+=co.percep;totReg.isr+=co.isr;totReg.imss+=co.imss;totReg.neto+=co.neto;});
+  var flujoTotal=flujoNeto.reduce(function(s,x){return s+x.total;},0);
+  var flujoEmps=flujoNeto.reduce(function(s,x){return s+x.emps;},0);
+  var totalEfectivo = (ref && ref.grandTotal > 0)
+    ? ref.grandTotal
+    : totReg.neto + flujoTotal + fin.neto;
+  var imssPatron=(totReg.imss+fin.imss)*(CALC_PAT_TOTAL/CALC_IMSS_OBR);
+  var isn=totReg.percep*0.0425;
+  var infoPatron=totReg.imss*(CALC_INFO_PAT/CALC_IMSS_OBR);
+  var retenciones=totReg.isr+fin.isr+totReg.imss+fin.imss;
+  var cuotas=imssPatron+isn;
+  var infoTotal=infoPatron+fin.info;
+  var reservaTotal=retenciones+cuotas+infoTotal;
+  var costoReal=totalEfectivo+cuotas+infoTotal;
   return {
     semana:semana, fileName:fileName||'',
     regular:regular, flujoNeto:flujoNeto, finiquitos:fin, duplicates:duplicates,
@@ -1968,6 +2040,7 @@ function calcProcessWorkbook(wb, fileName) {
     }
   };
 }
+
 
 function calcHtmlCompleta(R) {
   var F = nomFmt;
