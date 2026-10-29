@@ -1042,162 +1042,163 @@ function nomRenderDashboard() {
 
 function nomBuildStateData(R) {
   if (!R) return {};
-  var F = nomFmt;
-  var T = R.totals;
-  var bcEmps = T.regEmps, bcMonto = T.regNeto;
-  var nlEmps = 0, nlMonto = 0, emEmps = 0, emMonto = 0;
-  R.flujoNeto.forEach(function(fn) {
-    if (fn.tipo === 'Hrs extras' || fn.tipo === 'Proyectos TJ') { bcEmps += fn.emps; bcMonto += fn.total; }
-    else if (fn.tipo === 'Proyectos MTY' || fn.tipo === 'Bonos MTY') { nlEmps += fn.emps; nlMonto += fn.total; }
-    else if (fn.tipo === 'Complemento') { emEmps += fn.emps; emMonto += fn.total; }
+  var F = nomFmt; var T = R.totals;
+  var bcEmps=T.regEmps, bcMonto=T.regNeto;
+  var nlEmps=0, nlMonto=0, emEmps=0, emMonto=0;
+  R.flujoNeto.forEach(function(fn){
+    if(fn.tipo==='Hrs extras'||fn.tipo==='Proyectos TJ'){bcEmps+=fn.emps;bcMonto+=fn.total;}
+    else if(fn.tipo==='Proyectos MTY'||fn.tipo==='Bonos MTY'){nlEmps+=fn.emps;nlMonto+=fn.total;}
+    else if(fn.tipo==='Complemento'){emEmps+=fn.emps;emMonto+=fn.total;}
   });
-  var fin = R.finiquitos;
-  var sd = {};
-  sd['MX.BC']  = {label:'Baja California',   personas:bcEmps,  monto:F(bcMonto),  color:'#1d4ed8', hover:'#2563eb'};
-  sd['MX.NL']  = {label:'Nuevo Le\u00f3n',   personas:nlEmps,  monto:F(nlMonto),  color:'#b91c1c', hover:'#dc2626'};
-  sd['MX.EM']  = {label:'Estado de M\u00e9xico', personas:emEmps, monto:F(emMonto), color:'#15803d', hover:'#16a34a'};
-  sd['MX.DF']  = sd['MX.EM'];
-  if (fin.emps > 0) {
-    sd['MX.JA'] = {label:'Jalisco', personas:fin.emps, monto:F(fin.neto), color:'#d97706', hover:'#e5920c'};
-  }
-  return sd;
+  var fin=R.finiquitos;
+  // Mapeado por nombre exacto del estado (propiedad name_1 del TopoJSON)
+  return {
+    'Baja California':     {personas:bcEmps,  monto:F(bcMonto),  color:'#1d4ed8',hover:'#2563eb'},
+    'Nuevo Le\u00f3n':     {personas:nlEmps,  monto:F(nlMonto),  color:'#b91c1c',hover:'#dc2626'},
+    'M\u00e9xico':         {personas:emEmps,  monto:F(emMonto),  color:'#15803d',hover:'#16a34a'},
+    'Distrito Federal':    {personas:emEmps,  monto:F(emMonto),  color:'#15803d',hover:'#16a34a'},
+    'Jalisco':             fin.emps>0 ? {personas:fin.emps,monto:F(fin.neto),color:'#d97706',hover:'#e5920c'} : null,
+  };
 }
 
 function nomInitMap3D() {
-  var container = document.getElementById('nom-map-3d-container');
-  if (!container || container.dataset.init) return;
-  container.dataset.init = '1';
-  var R = window.__nomLastResult;
-  var sd = nomBuildStateData(R);
-  container.innerHTML = '<span style="color:#555;font-size:11px">Cargando mapa de estados...</span>';
-
-  // Crear tooltip global
-  var tipId = 'nom-map-tip';
-  if (!document.getElementById(tipId)) {
-    var tip = document.createElement('div');
-    tip.id = tipId;
-    tip.style.cssText = 'position:fixed;display:none;background:rgba(5,12,26,.95);border:1px solid rgba(42,120,214,.4);border-radius:8px;padding:10px 14px;color:#fff;font-size:12px;pointer-events:none;z-index:9999;backdrop-filter:blur(4px);min-width:160px;line-height:1.5';
-    document.body.appendChild(tip);
-  }
-
+  var container=document.getElementById('nom-map-3d-container');
+  if(!container||container.dataset.init) return;
+  container.dataset.init='1';
+  container.innerHTML='<span style="color:#555;font-size:11px">Cargando mapa...</span>';
+  var R=window.__nomLastResult;
+  var sd=nomBuildStateData(R);
   fetch('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/mex.topo.json')
-    .then(function(r){ return r.json(); })
-    .then(function(topo){ nomDrawStateChoropleth(container, topo, sd); })
-    .catch(function() {
+    .then(function(r){return r.json();})
+    .then(function(topo){nomDrawStateChoropleth(container,topo,sd);})
+    .catch(function(){
       fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
-        .then(function(r){ return r.json(); })
-        .then(function(world){ nomDrawWorldWithStubs(container, world, sd); })
-        .catch(function(){ container.innerHTML = '<span style="color:#555;font-size:11px">Sin conexion al mapa</span>'; });
+        .then(function(r){return r.json();})
+        .then(function(world){nomDrawWorldWithStubs(container,world,sd);})
+        .catch(function(){container.innerHTML='<span style="color:#555;font-size:11px">Sin conexion al mapa</span>';});
     });
 }
 
-function nomDrawStateChoropleth(container, topo, sd) {
-  var W = container.offsetWidth  || 380;
-  var H = container.offsetHeight || 340;
-  var proj = d3.geoMercator().center([-102, 23.5]).scale(W * 1.42).translate([W/2, H/2]);
-  var pathGen = d3.geoPath(proj);
-  var geo = topojson.feature(topo, topo.objects.MEX_adm1);
-  var tip = document.getElementById('nom-map-tip');
+function nomDrawStateChoropleth(container,topo,sd) {
+  container.innerHTML='';
+  container.style.position='relative';
+  var W=container.offsetWidth||380;
+  var H=container.offsetHeight||340;
+  if(H<100) H=340;
 
-  var svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svgEl.setAttribute('width', W); svgEl.setAttribute('height', H);
-  svgEl.style.overflow = 'visible';
+  var proj=d3.geoMercator().center([-102,23.5]).scale(W*1.42).translate([W/2,H/2]);
+  var pathGen=d3.geoPath(proj);
 
-  var svg = d3.select(svgEl);
+  // Detectar la key correcta del objeto topoJSON
+  var objKey=Object.keys(topo.objects)[0];
+  var geo=topojson.feature(topo,topo.objects[objKey]);
 
-  svg.selectAll('path.state-fill')
-    .data(geo.features)
-    .join('path')
-    .attr('class','state-fill')
-    .attr('fill', function(d) {
-      var hasc = (d.properties.HASC_1 || '').trim();
-      return (sd[hasc] ? sd[hasc].color : '#454b52');
-    })
-    .attr('stroke','#5a6169').attr('stroke-width',0.5)
-    .attr('d', pathGen)
-    .style('cursor', function(d){
-      return sd[(d.properties.HASC_1||'').trim()] ? 'pointer' : 'default';
-    })
-    .style('transition','fill .18s')
-    .on('mouseover', function(event, d) {
-      var hasc = (d.properties.HASC_1 || '').trim();
-      var data = sd[hasc];
-      if (!data) return;
-      d3.select(this).attr('fill', data.hover);
-      if (tip) {
-        tip.style.display = 'block';
-        tip.innerHTML = '<strong style="font-size:13px">' + data.label + '</strong><br>'
-          + '<span style="color:#60a5fa">' + data.personas + ' personas</span>'
-          + '&nbsp;&nbsp;<span style="color:#34d399">' + data.monto + '</span>';
-      }
-    })
-    .on('mousemove', function(event) {
-      if (tip) { tip.style.left=(event.clientX+14)+'px'; tip.style.top=(event.clientY-10)+'px'; }
-    })
-    .on('mouseout', function(event, d) {
-      var hasc = (d.properties.HASC_1 || '').trim();
-      var data = sd[hasc];
-      if (data) d3.select(this).attr('fill', data.color);
-      if (tip) tip.style.display = 'none';
-    });
+  // Crear SVG
+  var svgEl=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.style.cssText='width:100%;height:100%;display:block;overflow:visible';
+  svgEl.setAttribute('viewBox','0 0 '+W+' '+H);
+  svgEl.setAttribute('preserveAspectRatio','xMidYMid meet');
 
-  // State borders
-  try {
-    svg.append('path')
-      .datum(topojson.mesh(topo, topo.objects.MEX_adm1, function(a,b){ return a!==b; }))
-      .attr('fill','none').attr('stroke','#6b7280').attr('stroke-width',0.35).attr('d', pathGen);
-  } catch(e) {}
-
-  container.style.position = 'relative';
-  container.innerHTML = '';
+  // Tooltip inline (dentro del contenedor para evitar problemas de z-index)
+  var tipDiv=document.createElement('div');
+  tipDiv.style.cssText='position:absolute;display:none;background:rgba(5,12,26,.96);border:1.5px solid rgba(42,120,214,.5);'
+    +'border-radius:9px;padding:10px 14px;color:#fff;font-size:12px;pointer-events:none;z-index:9999;'
+    +'backdrop-filter:blur(6px);min-width:155px;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.5)';
+  container.appendChild(tipDiv);
   container.appendChild(svgEl);
 
-  // Legend
-  var leg = document.createElement('div');
-  leg.style.cssText = 'position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:6px 10px;backdrop-filter:blur(4px)';
-  var lh = '';
-  var seen = {};
-  Object.keys(sd).forEach(function(key) {
-    var d = sd[key];
-    if (!d || seen[d.label]) return;
-    seen[d.label] = true;
-    if (d.personas <= 0) return;
-    lh += '<div style="display:flex;align-items:center;gap:6px;font-size:9.5px;color:#fff;margin-bottom:3px">'
-       + '<div style="width:9px;height:9px;border-radius:2px;background:' + d.color + ';flex-shrink:0"></div>'
-       + d.label + ' &mdash; ' + d.personas + ' personas</div>';
+  var svg=d3.select(svgEl);
+
+  svg.selectAll('path.mxs')
+    .data(geo.features)
+    .join('path')
+    .attr('class','mxs')
+    .attr('d',pathGen)
+    .attr('fill',function(d){
+      var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
+      var data=sd[name];
+      return(data&&data.color)?data.color:'#454b52';
+    })
+    .attr('stroke','#5a6169')
+    .attr('stroke-width',0.5)
+    .style('cursor',function(d){
+      var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
+      return(sd[name]&&sd[name].color)?'pointer':'default';
+    })
+    .on('mouseover',function(event,d){
+      var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
+      var data=sd[name];
+      if(!data||!data.color) return;
+      d3.select(this).attr('fill',data.hover);
+      var rect=container.getBoundingClientRect();
+      tipDiv.innerHTML='<strong style="font-size:13px">'+name+'</strong><br>'
+        +'<span style="color:#93c5fd">'+data.personas+' personas</span>'
+        +'&emsp;<span style="color:#6ee7b7">'+data.monto+'</span>';
+      tipDiv.style.display='block';
+      tipDiv.style.left=(event.clientX-rect.left+10)+'px';
+      tipDiv.style.top=(event.clientY-rect.top-10)+'px';
+    })
+    .on('mousemove',function(event){
+      var rect=container.getBoundingClientRect();
+      tipDiv.style.left=(event.clientX-rect.left+10)+'px';
+      tipDiv.style.top=(event.clientY-rect.top-10)+'px';
+    })
+    .on('mouseout',function(event,d){
+      var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
+      var data=sd[name];
+      if(data&&data.color) d3.select(this).attr('fill',data.color);
+      tipDiv.style.display='none';
+    });
+
+  // Bordes entre estados
+  try{
+    svg.append('path')
+      .datum(topojson.mesh(topo,topo.objects[objKey],function(a,b){return a!==b;}))
+      .attr('fill','none').attr('stroke','#5a6169').attr('stroke-width',0.35).attr('d',pathGen);
+  }catch(e){}
+
+  // Leyenda
+  var leg=document.createElement('div');
+  leg.style.cssText='position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);border-radius:7px;padding:7px 10px';
+  var lh=''; var seen={};
+  Object.keys(sd).forEach(function(k){
+    var d=sd[k]; if(!d||seen[k]||d.personas<=0) return; seen[k]=true;
+    lh+='<div style="display:flex;align-items:center;gap:6px;font-size:9.5px;color:#fff;margin-bottom:3px">'
+       +'<div style="width:9px;height:9px;border-radius:2px;background:'+d.color+'"></div>'
+       +k+' &mdash; '+d.personas+' personas</div>';
   });
-  leg.innerHTML = lh;
+  leg.innerHTML=lh;
   container.appendChild(leg);
 }
 
-function nomDrawWorldWithStubs(container, world, sd) {
-  var W = container.offsetWidth || 380;
-  var H = container.offsetHeight || 340;
-  var proj = d3.geoMercator().center([-102,23.5]).scale(W*1.42).translate([W/2,H/2]);
-  var pathGen = d3.geoPath(proj);
-  var countries = topojson.feature(world, world.objects.countries);
-  var mexico = countries.features.find(function(f){ return +f.id===484; });
-  if (!mexico) { container.innerHTML='<span style="color:#555;font-size:11px">No se pudo cargar el mapa</span>'; return; }
-  var svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svgEl.setAttribute('width',W); svgEl.setAttribute('height',H);
-  var svg = d3.select(svgEl);
-  svg.append('path').datum(mexico).attr('fill','#454b52').attr('stroke','#5a6169').attr('stroke-width',0.7).attr('d',pathGen);
-  // City markers as fallback
+function nomDrawWorldWithStubs(container,world,sd) {
+  container.innerHTML=''; container.style.position='relative';
+  var W=container.offsetWidth||380; var H=container.offsetHeight||340; if(H<100)H=340;
+  var proj=d3.geoMercator().center([-102,23.5]).scale(W*1.42).translate([W/2,H/2]);
+  var pathGen=d3.geoPath(proj);
+  var countries=topojson.feature(world,world.objects.countries);
+  var mexico=countries.features.find(function(f){return+f.id===484;});
+  var svgEl=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.style.cssText='width:100%;height:100%;display:block';
+  svgEl.setAttribute('viewBox','0 0 '+W+' '+H);
+  var svg=d3.select(svgEl);
+  if(mexico) svg.append('path').datum(mexico).attr('fill','#3d4248').attr('stroke','#5a6169').attr('stroke-width',0.7).attr('d',pathGen);
   var cities=[
-    {lon:-117.04,lat:32.52,label:'Tijuana (BC)',data:sd['MX.BC'],color:'#1d4ed8'},
-    {lon:-100.31,lat:25.68,label:'Monterrey (NL)',data:sd['MX.NL'],color:'#b91c1c'},
-    {lon:-99.13,lat:19.43,label:'CDMX/EdoMex',data:sd['MX.EM'],color:'#15803d'},
-    {lon:-103.35,lat:20.67,label:'Guadalajara (Jal)',data:sd['MX.JA'],color:'#d97706'},
+    {lon:-117.04,lat:32.52,name:'Baja California'},
+    {lon:-100.31,lat:25.68,name:'Nuevo Le\u00f3n'},
+    {lon:-99.13, lat:19.43,name:'M\u00e9xico'},
+    {lon:-103.35,lat:20.67,name:'Jalisco'},
   ];
+  var maxP=Math.max.apply(null,Object.values(sd).filter(Boolean).map(function(d){return d.personas;}),1);
   cities.forEach(function(city){
-    if (!city.data || city.data.personas<=0) return;
+    var d=sd[city.name]; if(!d||d.personas<=0) return;
     var pt=proj([city.lon,city.lat]); if(!pt) return;
-    var r=6+(city.data.personas/700)*20;
-    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r*1.5).attr('fill',city.color).attr('opacity',0.15);
-    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r).attr('fill',city.color).attr('opacity',0.85);
-    svg.append('text').attr('x',pt[0]).attr('y',pt[1]-r-4).attr('font-size',9).attr('fill',city.color).attr('text-anchor','middle').attr('font-weight','700').text(city.data.personas+' emp.');
+    var r=5+(d.personas/maxP)*18;
+    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r*1.8).attr('fill',d.color).attr('opacity',.12);
+    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r).attr('fill',d.color).attr('opacity',.85);
+    svg.append('text').attr('x',pt[0]).attr('y',pt[1]-r-5).attr('font-size',9).attr('fill',d.color).attr('text-anchor','middle').attr('font-weight','700').text(d.personas+' emp.');
   });
-  container.style.position='relative'; container.innerHTML=''; container.appendChild(svgEl);
+  container.appendChild(svgEl);
 }
 
 
