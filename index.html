@@ -2257,6 +2257,9 @@ function calcProcessWorkbook(wb, fileName) {
       var s0=finRows[0];
       var kReg=calcFindKey(s0,['reg. pat','reg.pat']);
       if (kReg) { var rv=finRows.map(function(r){return String(r[kReg]||'').trim();}).filter(Boolean); fin.regPat=rv[0]||''; }
+      // Mapeo de registro patronal a nombre de ciudad legible
+      var REG_PAT_CIUDADES = {'SALINAS VI':'Monterrey','TIJUANA':'Tijuana','TLALNEPANTLA':'Cuautitlan Izcalli','GUADALAJARA':'Guadalajara'};
+      if (fin.regPat && REG_PAT_CIUDADES[fin.regPat.toUpperCase()]) { fin.regPat = REG_PAT_CIUDADES[fin.regPat.toUpperCase()]; }
       var kNum2=calcFindKey(s0,['numero','n']); var kNom2=calcFindKey(s0,['nombre']);
       var kPerc2=calcFindKey(s0,['tot.percep','percep']); var kISR2=calcFindKey(s0,['51.ispt','ispt','isr']);
       var kSub2=calcFindKey(s0,['53.subemp','subemp']); var kIMSS2=calcFindKey(s0,['52.imss','imss']);
