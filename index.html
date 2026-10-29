@@ -268,6 +268,28 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .c-costo-final .cf-lbl{font-size:13px;font-weight:700;color:#555}
 .c-costo-final .cf-val{font-size:20px;font-weight:900;color:#0d3d6b}
 @media(max-width:640px){.c-rsv-grid{grid-template-columns:1fr}.c-cmp-nums{gap:8px}.c-sec-nums{gap:10px}}
+
+/* ═══ CALC LANDING ═══ */
+#calc-landing{padding:40px 20px;max-width:920px;margin:0 auto}
+#calc-landing h2{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
+.clc-cards-row{display:flex;gap:20px;flex-wrap:wrap}
+.clc-card{background:#fff;border-radius:16px;padding:26px;flex:1;min-width:260px;max-width:440px;cursor:pointer;border:2px solid #e0e4ea;transition:.18s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.clc-card:hover{border-color:#0d3d6b;box-shadow:0 6px 20px rgba(13,61,107,.10);transform:translateY(-1px)}
+.clc-card.featured{border-color:#0d3d6b}
+.clc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0}
+.clc-icon.blue{background:#eff6ff}
+.clc-icon.green{background:#f0fdf4}
+.clc-card h3{font-size:18px;font-weight:800;color:#0d3d6b;margin-bottom:8px;line-height:1.2}
+.clc-card p{font-size:13px;color:#666;line-height:1.55;margin-bottom:18px}
+.clc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:36px}
+.clc-tag{border-radius:20px;padding:3px 11px;font-size:11px;font-weight:700}
+.clc-tag.blue{background:#eff6ff;color:#1d4ed8}
+.clc-tag.green{background:#f0fdf4;color:#15803d}
+.clc-cta{font-size:12px;font-weight:700;color:#aaa;position:absolute;bottom:20px;right:22px;transition:.15s}
+.clc-card:hover .clc-cta{color:#0d3d6b}
+/* Back button */
+#calc-back-btn{display:none;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:#0d3d6b;padding:0 0 16px;margin-left:20px;margin-top:16px}
+#calc-back-btn svg{flex-shrink:0}
 </style>
 </head><body>
 
@@ -313,7 +335,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
     </div>
   </div>
 
-  <div id="nom-emp-bar">
+  <div id="nom-emp-bar" style="display:none">
     <button class="nom-emp-chip active" onclick="nomSelEmpresa('Todas',this)">Todas</button>
     <button class="nom-emp-chip" onclick="nomSelEmpresa('Ariitranst',this)">Ariitranst</button>
     <button class="nom-emp-chip" onclick="nomSelEmpresa('Internacional',this)">Internacional</button>
@@ -323,18 +345,62 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   </div>
 
   <div id="nom-tab-nav">
-    <button id="nomTabPago" class="nom-tab-btn active" onclick="nomSwitchTab('pago')">Pago en Efectivo</button>
-    <button id="nomTabCalc" class="nom-tab-btn" onclick="nomSwitchTab('calc')">Calculo de Nomina</button>
+    <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pago en Efectivo</button>
+    <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Calculo de Nomina</button>
   </div>
 
   <div id="nom-main">
-    <div id="nom-content"><div class="nom-loading">Cargando...</div></div>
+    <div id="nom-content" style="display:none"><div class="nom-loading">Cargando...</div></div>
 
-  <div id="nom-calc-panel" style="display:none;padding:20px;max-width:1200px;margin:0 auto;width:100%">
-    <div class="calc-cards-row">
+  <div id="nom-calc-panel" style="display:block;padding:20px;max-width:1200px;margin:0 auto;width:100%">
+    <!-- LANDING: selector de herramienta -->
+    <div id="calc-landing">
+      <h2>Selecciona una herramienta</h2>
+      <div class="clc-cards-row">
+
+        <div class="clc-card featured" onclick="calcOpenTool('individual')">
+          <div class="clc-icon blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
+          <h3>Calculo por colaborador</h3>
+          <p>Ingresa los datos de un colaborador y obtén el desglose completo: neto, retenciones ISR e IMSS, y carga patronal con fundamento legal.</p>
+          <div class="clc-tags">
+            <span class="clc-tag blue">Un colaborador</span>
+            <span class="clc-tag blue">Calculo inmediato</span>
+            <span class="clc-tag blue">Fundamento legal</span>
+            <span class="clc-tag blue">Regular o Proyecto</span>
+          </div>
+          <div class="clc-cta">Abrir calculadora</div>
+        </div>
+
+        <div class="clc-card" onclick="calcOpenTool('completa')">
+          <div class="clc-icon green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/><path d="M15 17l2 2 3-3"/></svg>
+          </div>
+          <h3>Calculo de nomina completa</h3>
+          <p>Sube el archivo Excel semanal y obtén el consolidado total: neto bancario, vales, proyectos, finiquitos, reserva de impuestos y costo real empresa.</p>
+          <div class="clc-tags">
+            <span class="clc-tag green">Nomina semanal</span>
+            <span class="clc-tag green">Cuadre bancario</span>
+            <span class="clc-tag green">Reserva tesoreria</span>
+            <span class="clc-tag green">Carga patronal</span>
+          </div>
+          <div class="clc-cta">Subir archivo</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BACK BUTTON (visible al abrir una herramienta) -->
+    <button id="calc-back-btn" onclick="calcShowLanding()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+      Volver a herramientas
+    </button>
+
+    <div class="calc-cards-row" id="calc-tools-row" style="display:none">
 
       <!-- CARD 1: Calculo individual -->
-      <div class="calc-card">
+      <div class="calc-card" id="calc-card-individual">
         <div class="calc-card-title">Calculo por colaborador</div>
         <div class="calc-field">
           <label>Nombre del colaborador</label>
@@ -397,7 +463,7 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
       </div>
 
       <!-- CARD 2: Nomina completa desde Excel -->
-      <div class="calc-card">
+      <div class="calc-card" id="calc-card-completa">
         <div class="calc-card-title">Calculo de nomina completa</div>
         <div class="calc-field">
           <label>Cargar Excel de nomina</label>
@@ -413,9 +479,11 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
       </div>
 
     </div>
-  </div>
+  </div><!-- /#calc-tools-row -->
 
-  </div>
+  </div><!-- /#nom-calc-panel -->
+
+  </div><!-- /#nom-main -->
 </div>
 
 <!-- MODAL: Nueva / Editar Requisición -->
@@ -1498,7 +1566,7 @@ async function nomCerrarEntregaFinal(){
 // CALCULADORA DE NOMINA
 // ────────────────────────────────────────────
 
-var __calcTab = 'pago';
+var __calcTab = 'calc';
 
 window.nomSwitchTab = function nomSwitchTab(tab) {
   __calcTab = tab;
@@ -1512,6 +1580,32 @@ window.nomSwitchTab = function nomSwitchTab(tab) {
   if (bar) { bar.style.display  = tab === 'pago' ? '' : 'none'; }
   if (con) { con.style.display  = tab === 'pago' ? '' : 'none'; }
   if (pan) { pan.style.display  = tab === 'calc' ? 'block' : 'none'; }
+  if (tab === 'calc') { calcShowLanding(); }
+};
+
+window.calcShowLanding = function calcShowLanding() {
+  var landing  = document.getElementById('calc-landing');
+  var tools    = document.getElementById('calc-tools-row');
+  var backBtn  = document.getElementById('calc-back-btn');
+  if (landing) landing.style.display = 'block';
+  if (tools)   tools.style.display   = 'none';
+  if (backBtn) backBtn.style.display  = 'none';
+};
+
+window.calcOpenTool = function calcOpenTool(tool) {
+  var landing = document.getElementById('calc-landing');
+  var tools   = document.getElementById('calc-tools-row');
+  var backBtn = document.getElementById('calc-back-btn');
+  var cInd    = document.getElementById('calc-card-individual');
+  var cComp   = document.getElementById('calc-card-completa');
+  if (landing) landing.style.display = 'none';
+  if (tools)   tools.style.display   = 'flex';
+  if (backBtn) backBtn.style.display  = 'flex';
+  if (cInd)  cInd.style.display  = tool === 'individual' ? '' : 'none';
+  if (cComp) cComp.style.display = tool === 'completa'   ? '' : 'none';
+  if (tool === 'completa') {
+    setTimeout(function(){ var f=document.getElementById('calcFullFile'); if(f)f.click(); }, 200);
+  }
 };
 
 // Tabla ISR mensual 2026 — criterio Tress (Art. 96 LISR, Anexo 8 RMF 2026)
