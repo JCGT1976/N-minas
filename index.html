@@ -1040,87 +1040,166 @@ function nomRenderDashboard() {
 }
 
 
+function nomBuildStateData(R) {
+  if (!R) return {};
+  var F = nomFmt;
+  var T = R.totals;
+  var bcEmps = T.regEmps, bcMonto = T.regNeto;
+  var nlEmps = 0, nlMonto = 0, emEmps = 0, emMonto = 0;
+  R.flujoNeto.forEach(function(fn) {
+    if (fn.tipo === 'Hrs extras' || fn.tipo === 'Proyectos TJ') { bcEmps += fn.emps; bcMonto += fn.total; }
+    else if (fn.tipo === 'Proyectos MTY' || fn.tipo === 'Bonos MTY') { nlEmps += fn.emps; nlMonto += fn.total; }
+    else if (fn.tipo === 'Complemento') { emEmps += fn.emps; emMonto += fn.total; }
+  });
+  var fin = R.finiquitos;
+  var sd = {};
+  sd['MX.BC']  = {label:'Baja California',   personas:bcEmps,  monto:F(bcMonto),  color:'#1d4ed8', hover:'#2563eb'};
+  sd['MX.NL']  = {label:'Nuevo Le\u00f3n',   personas:nlEmps,  monto:F(nlMonto),  color:'#b91c1c', hover:'#dc2626'};
+  sd['MX.EM']  = {label:'Estado de M\u00e9xico', personas:emEmps, monto:F(emMonto), color:'#15803d', hover:'#16a34a'};
+  sd['MX.DF']  = sd['MX.EM'];
+  if (fin.emps > 0) {
+    sd['MX.JA'] = {label:'Jalisco', personas:fin.emps, monto:F(fin.neto), color:'#d97706', hover:'#e5920c'};
+  }
+  return sd;
+}
+
 function nomInitMap3D() {
   var container = document.getElementById('nom-map-3d-container');
   if (!container || container.dataset.init) return;
   container.dataset.init = '1';
   var R = window.__nomLastResult;
-  container.innerHTML = '<span style="color:#555;font-size:11px">Cargando mapa...</span>';
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
-    .then(function(r){ return r.json(); })
-    .then(function(world){ nomDrawMexicoMap(container, world, R); })
-    .catch(function(e){
-      console.warn('world-atlas fetch failed:', e);
-      nomDrawMexicoMapFallback(container, R);
-    });
-}
+  var sd = nomBuildStateData(R);
+  container.innerHTML = '<span style="color:#555;font-size:11px">Cargando mapa de estados...</span>';
 
-function nomDrawMexicoMap(container, world, R) {
-  var countries = topojson.feature(world, world.objects.countries);
-  var mexico = countries.features.find(function(f){ return +f.id === 484; });
-  if (!mexico) { nomDrawMexicoMapFallback(container, R); return; }
-  var W = container.offsetWidth || 340;
-  var H = Math.max(container.offsetHeight - 10, 260);
-  var proj = d3.geoMercator().center([-102, 23.5]).scale(W * 1.45).translate([W/2, H/2]);
-  var pathGen = d3.geoPath(proj);
-  var svgPath = pathGen(mexico);
-  nomRenderMapSVG(container, svgPath, W, H, R, proj);
-}
-
-function nomDrawMexicoMapFallback(container, R) {
-  // Ruta SVG simplificada pero reconocible de Mexico
-  var svgPath = 'M90,28 L108,22 L138,18 L175,15 L210,14 L240,18 L262,24 L278,30 L294,28 L300,35 L296,44 L288,53 L292,62 L288,71 L278,80 L267,90 L258,101 L247,114 L234,124 L220,130 L207,133 L196,142 L186,151 L175,159 L163,165 L150,168 L137,164 L124,155 L113,145 L102,133 L93,120 L85,107 L77,93 L70,79 L64,65 L58,52 L55,42 Z M160,158 L167,170 L173,182 L177,194 L172,202 L163,204 L154,200 L149,189 L151,177 L157,165 Z M110,22 L116,13 L126,9 L134,11 L136,18 L127,24 L116,26 Z';
-  nomRenderMapSVG(container, svgPath, 360, 260, R, null);
-}
-
-function nomRenderMapSVG(container, svgPath, W, H, R, proj) {
-  var tjEmps  = R ? R.totals.regEmps : 554;
-  var mtyEmps = 52, cdmxEmps = 14, gdlEmps = 4;
-  if (R) {
-    R.flujoNeto.forEach(function(fn){
-      if (fn.concepto.indexOf('Monterrey')>=0||fn.tipo==='Proyectos MTY'||fn.tipo==='Bonos MTY') mtyEmps+=fn.emps;
-      else if (fn.tipo==='Hrs extras') tjEmps+=fn.emps;
-      else if (fn.concepto.indexOf('Complemento')>=0) cdmxEmps+=fn.emps;
-    });
-    gdlEmps = R.finiquitos.emps;
+  // Crear tooltip global
+  var tipId = 'nom-map-tip';
+  if (!document.getElementById(tipId)) {
+    var tip = document.createElement('div');
+    tip.id = tipId;
+    tip.style.cssText = 'position:fixed;display:none;background:rgba(5,12,26,.95);border:1px solid rgba(42,120,214,.4);border-radius:8px;padding:10px 14px;color:#fff;font-size:12px;pointer-events:none;z-index:9999;backdrop-filter:blur(4px);min-width:160px;line-height:1.5';
+    document.body.appendChild(tip);
   }
-  var maxE = Math.max(tjEmps, mtyEmps, cdmxEmps, gdlEmps, 1);
-  var cities = [
-    {name:'Tijuana',   lat:32.52, lon:-117.04, emps:tjEmps,   color:'#60a5fa'},
-    {name:'Monterrey', lat:25.68, lon:-100.31,  emps:mtyEmps,  color:'#34d399'},
-    {name:'CDMX',      lat:19.43, lon:-99.13,   emps:cdmxEmps, color:'#fbbf24'},
-    {name:'GDL',       lat:20.67, lon:-103.35,  emps:gdlEmps,  color:'#fb923c'},
-  ];
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" style="overflow:visible">'
-    + '<defs><linearGradient id="mxg2" x1="0%" y1="0%" x2="100%" y2="100%">'
-    + '<stop offset="0%" stop-color="#1a5c9e"/><stop offset="100%" stop-color="#0d3d6b"/>'
-    + '</linearGradient>'
-    + '<filter id="glw"><feGaussianBlur stdDeviation="3" result="b"/>'
-    + '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'
-    + '<path d="' + svgPath + '" fill="rgba(0,0,0,0.4)" transform="translate(5,7)" style="filter:blur(5px)"/>'
-    + '<path d="' + svgPath + '" fill="url(#mxg2)" stroke="#2a78d6" stroke-width="1.2"/>'
-    + '<path d="' + svgPath + '" fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.4"/>';
-  cities.forEach(function(city){
-    var x, y;
-    if (proj) { var pt = proj([city.lon, city.lat]); if (!pt) return; x=pt[0]; y=pt[1]; }
-    else {
-      var latN=(city.lat-14.5)/18.2; var lonN=(city.lon+118.4)/31.7;
-      x = lonN * W; y = (1-latN) * H;
-    }
-    var r = 4 + (city.emps/maxE)*16;
-    svg += '<circle cx="'+x+'" cy="'+y+'" r="'+(r*2.2)+'" fill="'+city.color+'" opacity="0.1"/>';
-    svg += '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+city.color+'" opacity="0.85" style="filter:url(#glw)"/>';
-    var anch = x < W*0.35 ? 'start' : (x > W*0.65 ? 'end' : 'middle');
-    var dy   = y < H*0.3  ? r+13   : -(r+5);
-    svg += '<text x="'+x+'" y="'+(y+dy)+'" font-size="9.5" fill="'+city.color+'" text-anchor="'+anch+'" font-weight="700" font-family="system-ui">'+city.name+'</text>';
-    svg += '<text x="'+x+'" y="'+(y+dy+11)+'" font-size="8" fill="'+city.color+'" text-anchor="'+anch+'" opacity="0.65" font-family="system-ui">'+city.emps+' emp.</text>';
-  });
-  svg += '</svg>';
-  container.innerHTML = '<div style="perspective:480px;perspective-origin:50% 15%;width:100%;display:flex;align-items:center;justify-content:center">'
-    + '<div style="transform:rotateX(32deg) rotateZ(-2deg);display:inline-block;'
-    + 'filter:drop-shadow(0 14px 24px rgba(0,0,0,.6))">'
-    + svg + '</div></div>';
+
+  fetch('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/mex.topo.json')
+    .then(function(r){ return r.json(); })
+    .then(function(topo){ nomDrawStateChoropleth(container, topo, sd); })
+    .catch(function() {
+      fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+        .then(function(r){ return r.json(); })
+        .then(function(world){ nomDrawWorldWithStubs(container, world, sd); })
+        .catch(function(){ container.innerHTML = '<span style="color:#555;font-size:11px">Sin conexion al mapa</span>'; });
+    });
 }
+
+function nomDrawStateChoropleth(container, topo, sd) {
+  var W = container.offsetWidth  || 380;
+  var H = container.offsetHeight || 340;
+  var proj = d3.geoMercator().center([-102, 23.5]).scale(W * 1.42).translate([W/2, H/2]);
+  var pathGen = d3.geoPath(proj);
+  var geo = topojson.feature(topo, topo.objects.MEX_adm1);
+  var tip = document.getElementById('nom-map-tip');
+
+  var svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.setAttribute('width', W); svgEl.setAttribute('height', H);
+  svgEl.style.overflow = 'visible';
+
+  var svg = d3.select(svgEl);
+
+  svg.selectAll('path.state-fill')
+    .data(geo.features)
+    .join('path')
+    .attr('class','state-fill')
+    .attr('fill', function(d) {
+      var hasc = (d.properties.HASC_1 || '').trim();
+      return (sd[hasc] ? sd[hasc].color : '#454b52');
+    })
+    .attr('stroke','#5a6169').attr('stroke-width',0.5)
+    .attr('d', pathGen)
+    .style('cursor', function(d){
+      return sd[(d.properties.HASC_1||'').trim()] ? 'pointer' : 'default';
+    })
+    .style('transition','fill .18s')
+    .on('mouseover', function(event, d) {
+      var hasc = (d.properties.HASC_1 || '').trim();
+      var data = sd[hasc];
+      if (!data) return;
+      d3.select(this).attr('fill', data.hover);
+      if (tip) {
+        tip.style.display = 'block';
+        tip.innerHTML = '<strong style="font-size:13px">' + data.label + '</strong><br>'
+          + '<span style="color:#60a5fa">' + data.personas + ' personas</span>'
+          + '&nbsp;&nbsp;<span style="color:#34d399">' + data.monto + '</span>';
+      }
+    })
+    .on('mousemove', function(event) {
+      if (tip) { tip.style.left=(event.clientX+14)+'px'; tip.style.top=(event.clientY-10)+'px'; }
+    })
+    .on('mouseout', function(event, d) {
+      var hasc = (d.properties.HASC_1 || '').trim();
+      var data = sd[hasc];
+      if (data) d3.select(this).attr('fill', data.color);
+      if (tip) tip.style.display = 'none';
+    });
+
+  // State borders
+  try {
+    svg.append('path')
+      .datum(topojson.mesh(topo, topo.objects.MEX_adm1, function(a,b){ return a!==b; }))
+      .attr('fill','none').attr('stroke','#6b7280').attr('stroke-width',0.35).attr('d', pathGen);
+  } catch(e) {}
+
+  container.style.position = 'relative';
+  container.innerHTML = '';
+  container.appendChild(svgEl);
+
+  // Legend
+  var leg = document.createElement('div');
+  leg.style.cssText = 'position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:6px 10px;backdrop-filter:blur(4px)';
+  var lh = '';
+  var seen = {};
+  Object.keys(sd).forEach(function(key) {
+    var d = sd[key];
+    if (!d || seen[d.label]) return;
+    seen[d.label] = true;
+    if (d.personas <= 0) return;
+    lh += '<div style="display:flex;align-items:center;gap:6px;font-size:9.5px;color:#fff;margin-bottom:3px">'
+       + '<div style="width:9px;height:9px;border-radius:2px;background:' + d.color + ';flex-shrink:0"></div>'
+       + d.label + ' &mdash; ' + d.personas + ' personas</div>';
+  });
+  leg.innerHTML = lh;
+  container.appendChild(leg);
+}
+
+function nomDrawWorldWithStubs(container, world, sd) {
+  var W = container.offsetWidth || 380;
+  var H = container.offsetHeight || 340;
+  var proj = d3.geoMercator().center([-102,23.5]).scale(W*1.42).translate([W/2,H/2]);
+  var pathGen = d3.geoPath(proj);
+  var countries = topojson.feature(world, world.objects.countries);
+  var mexico = countries.features.find(function(f){ return +f.id===484; });
+  if (!mexico) { container.innerHTML='<span style="color:#555;font-size:11px">No se pudo cargar el mapa</span>'; return; }
+  var svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.setAttribute('width',W); svgEl.setAttribute('height',H);
+  var svg = d3.select(svgEl);
+  svg.append('path').datum(mexico).attr('fill','#454b52').attr('stroke','#5a6169').attr('stroke-width',0.7).attr('d',pathGen);
+  // City markers as fallback
+  var cities=[
+    {lon:-117.04,lat:32.52,label:'Tijuana (BC)',data:sd['MX.BC'],color:'#1d4ed8'},
+    {lon:-100.31,lat:25.68,label:'Monterrey (NL)',data:sd['MX.NL'],color:'#b91c1c'},
+    {lon:-99.13,lat:19.43,label:'CDMX/EdoMex',data:sd['MX.EM'],color:'#15803d'},
+    {lon:-103.35,lat:20.67,label:'Guadalajara (Jal)',data:sd['MX.JA'],color:'#d97706'},
+  ];
+  cities.forEach(function(city){
+    if (!city.data || city.data.personas<=0) return;
+    var pt=proj([city.lon,city.lat]); if(!pt) return;
+    var r=6+(city.data.personas/700)*20;
+    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r*1.5).attr('fill',city.color).attr('opacity',0.15);
+    svg.append('circle').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r).attr('fill',city.color).attr('opacity',0.85);
+    svg.append('text').attr('x',pt[0]).attr('y',pt[1]-r-4).attr('font-size',9).attr('fill',city.color).attr('text-anchor','middle').attr('font-weight','700').text(city.data.personas+' emp.');
+  });
+  container.style.position='relative'; container.innerHTML=''; container.appendChild(svgEl);
+}
+
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
   alert('Historico de Nominas — Etapa 4 en desarrollo.');
