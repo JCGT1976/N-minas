@@ -345,8 +345,8 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   </div>
 
   <div id="nom-tab-nav">
-    <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pago en Efectivo</button>
-    <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Calculo de Nomina</button>
+    <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pre-nomina</button>
+    <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Costo Laboral</button>
   </div>
 
   <div id="nom-main">
@@ -1030,7 +1030,7 @@ async function nomCargarLista() {
       + '<div class="nom-kpi"><div class="nom-kpi-label">Colaboradores procesados</div><div class="nom-kpi-val">'+totalEmp.toLocaleString('es-MX')+'</div></div>'
       + '</div>';
 
-    html += '<div class="nom-sec-hdr"><h2>Pago de Nómina en Efectivo</h2>';
+    html += '<div class="nom-sec-hdr"><h2>Pre-nomina</h2>';
     if (nomPuede(NOM_ROLES_CAPTURISTA)) {
       html += '<button class="nom-btn nom-btn-primary" onclick="nomAbrirNueva()">+ Nueva requisición</button>';
     }
