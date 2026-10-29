@@ -914,19 +914,17 @@ function nomOcultarAcciones() {
 function nomRenderDashboard() {
   var el = document.getElementById('nom-dashboard-panel');
   if (!el) return;
-  var R = window.__nomLastResult;
-  var F = nomFmt;
+  var R  = window.__nomLastResult;
+  var F  = nomFmt;
   if (!R) {
     el.innerHTML = '<div class="db-empty">'
       + '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.4" style="margin-bottom:12px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7h8M8 12h8M8 17h4"/></svg>'
       + '<div style="font-size:14px;font-weight:700;color:#555;margin-bottom:6px">Sin datos de nomina</div>'
-      + '<div style="font-size:13px;color:#888">Carga primero el Excel en <strong>Costo Laboral</strong> para ver el dashboard.</div>'
-      + '<button class="db-empty-btn" onclick="nomSwitchTab(\u0027calc\u0027)">Ir a Costo Laboral</button>'
-      + '</div>';
+      + '<div style="font-size:13px;color:#888">Carga primero el Excel en <strong>Costo Laboral</strong>.</div>'
+      + '<button class="db-empty-btn" onclick="nomSwitchTab(\u0027calc\u0027)">Ir a Costo Laboral</button></div>';
     return;
   }
   var T = R.totals;
-  // Clasifica flujo neto
   var proyFlujo = R.flujoNeto.filter(function(f){ return f.tipo.indexOf('Proy') >= 0; });
   var adicFlujo = R.flujoNeto.filter(function(f){ return f.tipo.indexOf('Proy') < 0 && f.tipo !== 'Vales'; });
   var valesFlujo = R.flujoNeto.filter(function(f){ return f.tipo === 'Vales'; });
@@ -935,215 +933,110 @@ function nomRenderDashboard() {
   var adicTotal = adicFlujo.reduce(function(s,x){ return s+x.total; }, 0);
   var adicEmps  = adicFlujo.reduce(function(s,x){ return s+x.emps; }, 0);
   var valesTotal= valesFlujo.reduce(function(s,x){ return s+x.total; }, 0);
-  var totalMax  = T.regNeto;
-  // Ciudad: estima TJ = regular + proyectos TJ, MTY = proyectos MTY + bonos
   var tjEmps = T.regEmps, mtyEmps = 0, cdmxEmps = 0, gdlEmps = 0;
-  proyFlujo.forEach(function(f){
-    if (f.concepto.indexOf('Tijuana') >= 0) tjEmps += f.emps;
-    else mtyEmps += f.emps;
+  R.flujoNeto.forEach(function(fn) {
+    if (fn.concepto.indexOf('Monterrey') >= 0 || fn.tipo === 'Proyectos MTY' || fn.tipo === 'Bonos MTY') mtyEmps += fn.emps;
+    else if (fn.tipo === 'Hrs extras') tjEmps += fn.emps;
+    else if (fn.concepto.indexOf('Complemento') >= 0) cdmxEmps += fn.emps;
   });
-  adicFlujo.forEach(function(f){
-    if (f.concepto.indexOf('Complemento') >= 0) cdmxEmps += f.emps;
-    else if (f.concepto.indexOf('Bono') >= 0) mtyEmps += f.emps;
-  });
-  var fin = R.finiquitos; gdlEmps = fin.emps > 0 ? fin.emps : gdlEmps;
+  gdlEmps = R.finiquitos.emps;
   var cityMax = Math.max(tjEmps, mtyEmps, cdmxEmps, gdlEmps, 1);
-  var pct = function(n){ return Math.round(n/cityMax*100)+'%'; };
-  var h = '';
-
-  // ── Sección 1: Regular vs Proyectos ─────────────────────────────────────
-  h += '<div class="db-section-lbl">Regular vs Proyectos — montos y colaboradores</div>'
-     + '<div class="db-split3">';
-  h += '<div class="db-bloc db-bloc-blue">'
-     + '<div class="db-type" style="color:#1d4ed8">Nomina regular</div>'
-     + '<div class="db-money" style="color:#1d4ed8">' + F(T.regNeto) + '</div>'
-     + '<div class="db-colabs" style="color:#2563eb">' + T.regEmps + ' colaboradores</div>'
-     + '<div class="db-sub">INT · COM · AUT · ARI · con retenciones ISR e IMSS</div>'
-     + '<div class="db-prog" style="background:#2563eb;width:100%"></div></div>';
-  var proPct = totalMax > 0 ? Math.round(proyTotal/T.regNeto*100) : 0;
-  h += '<div class="db-bloc db-bloc-green">'
-     + '<div class="db-type" style="color:#15803d">Proyectos</div>'
-     + '<div class="db-money" style="color:#15803d">' + F(proyTotal) + '</div>'
-     + '<div class="db-colabs" style="color:#16a34a">' + proyEmps + ' pagos</div>'
-     + '<div class="db-sub">Tijuana + Monterrey · flujo neto sin retenciones</div>'
-     + '<div class="db-prog" style="background:#16a34a;width:' + proPct + '%"></div></div>';
-  var addPct = totalMax > 0 ? Math.round((adicTotal+valesTotal)/T.regNeto*100) : 0;
-  h += '<div class="db-bloc db-bloc-amber">'
-     + '<div class="db-type" style="color:#b45309">Flujo adicional</div>'
-     + '<div class="db-money" style="color:#b45309">' + F(adicTotal + valesTotal) + '</div>'
-     + '<div class="db-colabs" style="color:#d97706">' + adicEmps + ' pagos</div>'
-     + '<div class="db-sub">Hrs extras · Vales · Bonos · Complementos</div>'
-     + '<div class="db-prog" style="background:#d97706;width:' + addPct + '%"></div></div>';
-  h += '</div>';
-
-  // ── Sección 2: Empleados por ciudad ──────────────────────────────────────
-  h += '<div class="db-section-lbl">Colaboradores por ciudad</div>'
-     + '<div class="db-split4">';
-  var cities = [
-    {key:'TJ',  name:'Tijuana, BC',           emps:tjEmps,   color:'#1d4ed8', bg:'#eff6ff', border:'#bfdbfe'},
-    {key:'MTY', name:'Monterrey, NL',          emps:mtyEmps,  color:'#15803d', bg:'#f0fdf4', border:'#bbf7d0'},
-    {key:'CDMX',name:'Ciudad de Mexico',       emps:cdmxEmps, color:'#b45309', bg:'#fffbeb', border:'#fde68a'},
-    {key:'GDL', name:'Guadalajara, Jal',       emps:gdlEmps,  color:'#c2410c', bg:'#fff7ed', border:'#fed7aa'},
-  ];
-  cities.forEach(function(city) {
-    h += '<div class="db-bloc" style="background:' + city.bg + ';border:.5px solid ' + city.border + ';display:flex;align-items:flex-start;gap:10px">'
-       + '<div class="db-city-icon" style="background:' + city.bg + ';border:1.5px solid ' + city.border + ';color:' + city.color + '">' + city.key + '</div>'
-       + '<div style="flex:1">'
-       + '<div class="db-city-name">' + city.name + '</div>'
-       + '<div class="db-city-count" style="color:' + city.color + '">' + city.emps + '</div>'
-       + '<div class="db-city-bar"><div style="height:100%;border-radius:2px;background:' + city.color + ';width:' + pct(city.emps) + '"></div></div>'
-       + '</div></div>';
-  });
-  h += '</div>';
-
-  // ── Sección 3: Qué incluye el flujo adicional ─────────────────────────────
-  h += '<div class="db-section-lbl">¿Que incluye el flujo adicional?</div>'
-     + '<div class="db-split4">';
+  var fin = R.finiquitos;
+  var compItems = adicFlujo.concat(valesFlujo);
   var compColors = ['#1d4ed8','#15803d','#b45309','#7c3aed'];
-  var compItems  = adicFlujo.concat(valesFlujo);
-  compItems.slice(0,4).forEach(function(fn, idx) {
-    h += '<div class="db-bloc db-bloc-gray">'
-       + '<div class="db-comp-lbl" style="color:' + compColors[idx % compColors.length] + '">' + fn.tipo + '</div>'
-       + '<div class="db-comp-val">' + F(fn.total) + '</div>'
-       + '<div class="db-comp-desc">' + fn.concepto + (fn.emps > 0 ? ' &middot; ' + fn.emps + ' pagos' : '') + '</div>'
-       + '</div>';
-  });
-  h += '</div>';
 
-  // ── Envolver secciones 1-3 en columna izquierda, mapa en derecha ──────────
-  h = '<div style="display:flex;gap:12px;align-items:flex-start"><div style="flex:0 0 58%;display:flex;flex-direction:column;gap:0">' + h;
+  // ── Columna izquierda ─────────────────────────────────────────────────────
+  var left = '<div style="display:flex;flex-direction:column;gap:12px">';
 
-  // Cerrar columna izquierda, abrir columna mapa
-  h += '</div><div style="flex:1;background:#050c1a;border-radius:12px;padding:14px;min-height:420px;display:flex;flex-direction:column">'
-     + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(160,196,255,.4);margin-bottom:10px">'
-     + 'Distribucion geografica &mdash; Mapa 3D Mexico</div>'
-     + '<div id="nom-map-3d-container" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:12px">'
-     + '<div class="loader-ring" style="width:28px;height:28px;border-width:2px"></div></div>'
-     + '</div></div>';
+  // Sección 1: Regular vs Proyectos
+  left += '<div>'
+       + '<div class="db-section-lbl">Regular vs Proyectos — montos y colaboradores</div>'
+       + '<div class="db-split3">'
+       + '<div class="db-bloc db-bloc-blue"><div class="db-type" style="color:#1d4ed8">Nomina regular</div>'
+       + '<div class="db-money" style="color:#1d4ed8">' + F(T.regNeto) + '</div>'
+       + '<div class="db-colabs" style="color:#2563eb">' + T.regEmps + ' colaboradores</div>'
+       + '<div class="db-sub">INT · COM · AUT · ARI</div>'
+       + '<div class="db-prog" style="background:#2563eb;width:100%"></div></div>'
+       + '<div class="db-bloc db-bloc-green"><div class="db-type" style="color:#15803d">Proyectos</div>'
+       + '<div class="db-money" style="color:#15803d">' + F(proyTotal) + '</div>'
+       + '<div class="db-colabs" style="color:#16a34a">' + proyEmps + ' pagos</div>'
+       + '<div class="db-sub">Tijuana + Monterrey · flujo neto</div>'
+       + '<div class="db-prog" style="background:#16a34a;width:' + Math.round(proyTotal/T.regNeto*100) + '%"></div></div>'
+       + '<div class="db-bloc db-bloc-amber"><div class="db-type" style="color:#b45309">Flujo adicional</div>'
+       + '<div class="db-money" style="color:#b45309">' + F(adicTotal + valesTotal) + '</div>'
+       + '<div class="db-colabs" style="color:#d97706">' + adicEmps + ' pagos</div>'
+       + '<div class="db-sub">Hrs extras · Vales · Bonos · Comp.</div>'
+       + '<div class="db-prog" style="background:#d97706;width:' + Math.round((adicTotal+valesTotal)/T.regNeto*100) + '%"></div></div>'
+       + '</div></div>';
 
-  // ── Sección 4: Finiquitos + Total ─────────────────────────────────────────
-  h += '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:12px">';
-  if (fin.emps > 0) {
-    h += '<div class="db-bloc db-bloc-red" style="min-width:200px">'
-       + '<div class="db-type" style="color:#b91c1c">Finiquitos esta semana</div>'
-       + '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">'
-       + '<span style="font-size:28px;font-weight:900;color:#ef4444">' + fin.emps + '</span>'
-       + '<span style="font-size:11px;color:#f87171">colaboradores</span></div>'
-       + '<div style="font-size:13px;font-weight:700;color:#ef4444">' + F(fin.neto) + ' neto pagado</div>'
-       + (fin.regPat ? '<div style="font-size:10px;color:#fca5a5;margin-top:2px">' + fin.regPat + '</div>' : '')
-       + '</div>';
-  }
-  h += '<div class="db-total-bloc">'
-     + '<div><div class="db-total-lbl">Efectivo total semana ' + R.semana + '</div>'
-     + '<div class="db-total-val">' + F(T.totalEfectivo) + '</div>'
-     + '<div class="db-total-sub">cuadre exacto con Nomina a Pagar</div></div>'
-     + '<div style="text-align:right"><div class="db-total-lbl">Costo real empresa</div>'
-     + '<div style="font-size:22px;font-weight:900;color:#f87171">' + F(T.costoReal) + '</div>'
-     + '<div class="db-total-sub">incl. IMSS patronal · ISN · INFONAVIT</div></div>'
-     + '</div>'
-     + '</div>';
-
-  el.innerHTML = h;
-  setTimeout(nomInitMap3D, 80);
-}
-
-function nomInitMap3D() {
-  var container = document.getElementById('nom-map-3d-container');
-  if (!container || container.dataset.init) return;
-  container.dataset.init = '1';
-  var R = window.__nomLastResult;
-
-  function loadScript(url, cb) {
-    if (window.__nomScriptLoaded && window.__nomScriptLoaded[url]) { cb(); return; }
-    var s = document.createElement('script');
-    s.src = url;
-    s.onload = function() {
-      if (!window.__nomScriptLoaded) window.__nomScriptLoaded = {};
-      window.__nomScriptLoaded[url] = true;
-      cb();
-    };
-    document.head.appendChild(s);
-  }
-
-  loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js', function() {
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js', function() {
-      fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
-        .then(function(r){ return r.json(); })
-        .then(function(world) { nomDrawMexicoMap(container, world, R); })
-        .catch(function() {
-          container.innerHTML = '<span style="color:#555;font-size:11px">Error al cargar el mapa</span>';
-        });
-    });
-  });
-}
-
-function nomDrawMexicoMap(container, world, R) {
-  var countries = topojson.feature(world, world.objects.countries);
-  var mexico    = countries.features.find(function(f){ return +f.id === 484; });
-  if (!mexico) { container.innerHTML = '<span style="color:#555">Mexico no encontrado</span>'; return; }
-
-  var W  = container.offsetWidth  || 360;
-  var H  = Math.max(container.offsetHeight || 300, 280);
-  var sc = W * 1.45;
-  var proj = d3.geoMercator().center([-102, 23.5]).scale(sc).translate([W/2, H/2]);
-  var pathGen = d3.geoPath(proj);
-  var svgPath = pathGen(mexico);
-
-  // Datos de ciudades desde el resultado
-  var tjEmps  = R ? R.totals.regEmps : 554;
-  var mtyEmps = 52, cdmxEmps = 14, gdlEmps = 4;
-  if (R) {
-    R.flujoNeto.forEach(function(fn) {
-      if (fn.concepto.indexOf('Monterrey') >= 0 || fn.tipo === 'Proyectos MTY' || fn.tipo === 'Bonos MTY') mtyEmps += fn.emps;
-      else if (fn.concepto.indexOf('Tijuana') >= 0 || fn.tipo === 'Hrs extras') tjEmps += fn.emps;
-    });
-  }
-  var maxE = Math.max(tjEmps, mtyEmps, cdmxEmps, gdlEmps, 1);
+  // Sección 2: Ciudades
   var cities = [
-    {name:'Tijuana',   lat:32.52,lon:-117.04,emps:tjEmps,  color:'#60a5fa'},
-    {name:'Monterrey', lat:25.68,lon:-100.31, emps:mtyEmps, color:'#34d399'},
-    {name:'CDMX',      lat:19.43,lon:-99.13,  emps:cdmxEmps,color:'#fbbf24'},
-    {name:'GDL',       lat:20.67,lon:-103.35, emps:gdlEmps, color:'#fb923c'},
+    {key:'TJ',  name:'Tijuana, BC',      emps:tjEmps,   color:'#1d4ed8',bg:'#eff6ff',border:'#bfdbfe'},
+    {key:'MTY', name:'Monterrey, NL',     emps:mtyEmps,  color:'#15803d',bg:'#f0fdf4',border:'#bbf7d0'},
+    {key:'CDMX',name:'Ciudad de Mexico',  emps:cdmxEmps, color:'#b45309',bg:'#fffbeb',border:'#fde68a'},
+    {key:'GDL', name:'Guadalajara, Jal',  emps:gdlEmps,  color:'#c2410c',bg:'#fff7ed',border:'#fed7aa'},
   ];
-
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" style="overflow:visible">'
-    + '<defs>'
-    + '<linearGradient id="mxfill" x1="0%" y1="0%" x2="100%" y2="100%">'
-    + '<stop offset="0%" stop-color="#1a5c9e"/><stop offset="100%" stop-color="#0d3d6b"/>'
-    + '</linearGradient>'
-    + '<filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/>'
-    + '<feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
-    + '</defs>'
-    // Shadow
-    + '<path d="' + svgPath + '" fill="rgba(0,0,0,0.35)" transform="translate(6,8)" style="filter:blur(5px)"/>'
-    // Fill
-    + '<path d="' + svgPath + '" fill="url(#mxfill)" stroke="#2a78d6" stroke-width="1.2"/>'
-    // Border glow
-    + '<path d="' + svgPath + '" fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.4"/>';
-
+  left += '<div><div class="db-section-lbl">Colaboradores por ciudad</div><div class="db-split4">';
   cities.forEach(function(city) {
-    var pt = proj([city.lon, city.lat]);
-    if (!pt) return;
-    var x = pt[0], y = pt[1];
-    var r = 4 + (city.emps / maxE) * 14;
-    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r*2.2) + '" fill="' + city.color + '" opacity="0.1"/>';
-    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r*1.3) + '" fill="' + city.color + '" opacity="0.2"/>';
-    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + city.color + '" opacity="0.85" style="filter:url(#glow)"/>';
-    var anch = x < W*0.35 ? 'start' : (x > W*0.65 ? 'end' : 'middle');
-    var dy   = y < H*0.35 ? r+12 : -(r+6);
-    svg += '<text x="' + x + '" y="' + (y+dy) + '" font-size="9.5" fill="' + city.color + '" text-anchor="' + anch + '" font-weight="700" font-family="system-ui">' + city.name + '</text>';
-    svg += '<text x="' + x + '" y="' + (y+dy+11) + '" font-size="8" fill="' + city.color + '" text-anchor="' + anch + '" opacity="0.65" font-family="system-ui">' + city.emps + ' emp.</text>';
+    var barW = Math.round(city.emps/cityMax*100);
+    left += '<div class="db-bloc" style="background:' + city.bg + ';border:.5px solid ' + city.border + ';display:flex;align-items:flex-start;gap:8px">'
+          + '<div class="db-city-icon" style="background:' + city.bg + ';border:1.5px solid ' + city.border + ';color:' + city.color + '">' + city.key + '</div>'
+          + '<div style="flex:1"><div class="db-city-name">' + city.name + '</div>'
+          + '<div class="db-city-count" style="color:' + city.color + '">' + city.emps + '</div>'
+          + '<div class="db-city-bar"><div style="height:100%;border-radius:2px;background:' + city.color + ';width:' + barW + '%"></div></div>'
+          + '</div></div>';
   });
+  left += '</div></div>';
 
-  svg += '</svg>';
+  // Sección 3: Flujo adicional
+  left += '<div><div class="db-section-lbl">¿Que incluye el flujo adicional?</div><div class="db-split4">';
+  compItems.slice(0,4).forEach(function(fn, i) {
+    left += '<div class="db-bloc db-bloc-gray">'
+          + '<div class="db-comp-lbl" style="color:' + compColors[i%compColors.length] + '">' + fn.tipo + '</div>'
+          + '<div class="db-comp-val">' + F(fn.total) + '</div>'
+          + '<div class="db-comp-desc">' + fn.concepto + (fn.emps > 0 ? ' &middot; ' + fn.emps + ' pagos' : '') + '</div></div>';
+  });
+  left += '</div></div>';
 
-  container.innerHTML = '<div style="perspective:480px;perspective-origin:50% 15%;width:100%">'
-    + '<div style="transform:rotateX(32deg) rotateZ(-2deg);transform-style:preserve-3d;'
-    + 'display:flex;align-items:center;justify-content:center;'
-    + 'filter:drop-shadow(0 14px 22px rgba(0,0,0,.55))">'
-    + svg
-    + '</div></div>';
+  // Sección 4: Finiquitos + Total
+  left += '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px">';
+  if (fin.emps > 0) {
+    left += '<div class="db-bloc db-bloc-red" style="min-width:180px">'
+          + '<div class="db-type" style="color:#b91c1c">Finiquitos</div>'
+          + '<div style="display:flex;align-items:baseline;gap:6px">'
+          + '<span style="font-size:28px;font-weight:900;color:#ef4444">' + fin.emps + '</span>'
+          + '<span style="font-size:11px;color:#f87171">colaboradores</span></div>'
+          + '<div style="font-size:12px;font-weight:700;color:#ef4444">' + F(fin.neto) + ' neto</div>'
+          + (fin.regPat ? '<div style="font-size:10px;color:#fca5a5;margin-top:2px">' + fin.regPat + '</div>' : '')
+          + '</div>';
+  }
+  left += '<div style="background:#0d3d6b;border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px">'
+        + '<div><div style="font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px">Efectivo total semana ' + R.semana + '</div>'
+        + '<div style="font-size:26px;font-weight:900;color:#fff">' + F(T.totalEfectivo) + '</div>'
+        + '<div style="font-size:9px;color:rgba(255,255,255,.35)">cuadre exacto con Nomina a Pagar</div></div>'
+        + '<div style="text-align:right"><div style="font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px">Costo real empresa</div>'
+        + '<div style="font-size:20px;font-weight:900;color:#f87171">' + F(T.costoReal) + '</div>'
+        + '<div style="font-size:9px;color:rgba(248,113,113,.4)">incl. IMSS patronal · ISN · INFONAVIT</div></div>'
+        + '</div></div>';
+  left += '</div>';
+
+  // ── Columna derecha: mapa ─────────────────────────────────────────────────
+  var right = '<div style="flex:0 0 40%;background:#050c1a;border-radius:12px;padding:14px;min-height:500px;display:flex;flex-direction:column">'
+            + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(160,196,255,.4);margin-bottom:10px">Distribucion geografica</div>'
+            + '<div id="nom-map-3d-container" style="flex:1;width:100%;display:flex;align-items:center;justify-content:center">'
+            + '<span style="color:#444;font-size:11px">Cargando mapa real de Mexico...</span>'
+            + '</div></div>';
+
+  // ── Layout split ──────────────────────────────────────────────────────────
+  el.innerHTML = '<div style="display:flex;flex-direction:row;gap:12px;align-items:flex-start;flex-wrap:nowrap">'
+               + '<div style="flex:1;min-width:0">' + left + '</div>'
+               + right
+               + '</div>';
+
+  // Inicializar mapa después de que el DOM esté listo
+  setTimeout(nomInitMap3D, 120);
 }
+
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
   alert('Historico de Nominas — Etapa 4 en desarrollo.');
