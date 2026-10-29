@@ -1010,8 +1010,19 @@ function nomRenderDashboard() {
   });
   h += '</div>';
 
+  // ── Envolver secciones 1-3 en columna izquierda, mapa en derecha ──────────
+  h = '<div style="display:flex;gap:12px;align-items:flex-start"><div style="flex:0 0 58%;display:flex;flex-direction:column;gap:0">' + h;
+
+  // Cerrar columna izquierda, abrir columna mapa
+  h += '</div><div style="flex:1;background:#050c1a;border-radius:12px;padding:14px;min-height:420px;display:flex;flex-direction:column">'
+     + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(160,196,255,.4);margin-bottom:10px">'
+     + 'Distribucion geografica &mdash; Mapa 3D Mexico</div>'
+     + '<div id="nom-map-3d-container" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:12px">'
+     + '<div class="loader-ring" style="width:28px;height:28px;border-width:2px"></div></div>'
+     + '</div></div>';
+
   // ── Sección 4: Finiquitos + Total ─────────────────────────────────────────
-  h += '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px">';
+  h += '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:12px">';
   if (fin.emps > 0) {
     h += '<div class="db-bloc db-bloc-red" style="min-width:200px">'
        + '<div class="db-type" style="color:#b91c1c">Finiquitos esta semana</div>'
@@ -1033,6 +1044,105 @@ function nomRenderDashboard() {
      + '</div>';
 
   el.innerHTML = h;
+  setTimeout(nomInitMap3D, 80);
+}
+
+function nomInitMap3D() {
+  var container = document.getElementById('nom-map-3d-container');
+  if (!container || container.dataset.init) return;
+  container.dataset.init = '1';
+  var R = window.__nomLastResult;
+
+  function loadScript(url, cb) {
+    if (window.__nomScriptLoaded && window.__nomScriptLoaded[url]) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = url;
+    s.onload = function() {
+      if (!window.__nomScriptLoaded) window.__nomScriptLoaded = {};
+      window.__nomScriptLoaded[url] = true;
+      cb();
+    };
+    document.head.appendChild(s);
+  }
+
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js', function() {
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js', function() {
+      fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+        .then(function(r){ return r.json(); })
+        .then(function(world) { nomDrawMexicoMap(container, world, R); })
+        .catch(function() {
+          container.innerHTML = '<span style="color:#555;font-size:11px">Error al cargar el mapa</span>';
+        });
+    });
+  });
+}
+
+function nomDrawMexicoMap(container, world, R) {
+  var countries = topojson.feature(world, world.objects.countries);
+  var mexico    = countries.features.find(function(f){ return +f.id === 484; });
+  if (!mexico) { container.innerHTML = '<span style="color:#555">Mexico no encontrado</span>'; return; }
+
+  var W  = container.offsetWidth  || 360;
+  var H  = Math.max(container.offsetHeight || 300, 280);
+  var sc = W * 1.45;
+  var proj = d3.geoMercator().center([-102, 23.5]).scale(sc).translate([W/2, H/2]);
+  var pathGen = d3.geoPath(proj);
+  var svgPath = pathGen(mexico);
+
+  // Datos de ciudades desde el resultado
+  var tjEmps  = R ? R.totals.regEmps : 554;
+  var mtyEmps = 52, cdmxEmps = 14, gdlEmps = 4;
+  if (R) {
+    R.flujoNeto.forEach(function(fn) {
+      if (fn.concepto.indexOf('Monterrey') >= 0 || fn.tipo === 'Proyectos MTY' || fn.tipo === 'Bonos MTY') mtyEmps += fn.emps;
+      else if (fn.concepto.indexOf('Tijuana') >= 0 || fn.tipo === 'Hrs extras') tjEmps += fn.emps;
+    });
+  }
+  var maxE = Math.max(tjEmps, mtyEmps, cdmxEmps, gdlEmps, 1);
+  var cities = [
+    {name:'Tijuana',   lat:32.52,lon:-117.04,emps:tjEmps,  color:'#60a5fa'},
+    {name:'Monterrey', lat:25.68,lon:-100.31, emps:mtyEmps, color:'#34d399'},
+    {name:'CDMX',      lat:19.43,lon:-99.13,  emps:cdmxEmps,color:'#fbbf24'},
+    {name:'GDL',       lat:20.67,lon:-103.35, emps:gdlEmps, color:'#fb923c'},
+  ];
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" style="overflow:visible">'
+    + '<defs>'
+    + '<linearGradient id="mxfill" x1="0%" y1="0%" x2="100%" y2="100%">'
+    + '<stop offset="0%" stop-color="#1a5c9e"/><stop offset="100%" stop-color="#0d3d6b"/>'
+    + '</linearGradient>'
+    + '<filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/>'
+    + '<feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    + '</defs>'
+    // Shadow
+    + '<path d="' + svgPath + '" fill="rgba(0,0,0,0.35)" transform="translate(6,8)" style="filter:blur(5px)"/>'
+    // Fill
+    + '<path d="' + svgPath + '" fill="url(#mxfill)" stroke="#2a78d6" stroke-width="1.2"/>'
+    // Border glow
+    + '<path d="' + svgPath + '" fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.4"/>';
+
+  cities.forEach(function(city) {
+    var pt = proj([city.lon, city.lat]);
+    if (!pt) return;
+    var x = pt[0], y = pt[1];
+    var r = 4 + (city.emps / maxE) * 14;
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r*2.2) + '" fill="' + city.color + '" opacity="0.1"/>';
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r*1.3) + '" fill="' + city.color + '" opacity="0.2"/>';
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + city.color + '" opacity="0.85" style="filter:url(#glow)"/>';
+    var anch = x < W*0.35 ? 'start' : (x > W*0.65 ? 'end' : 'middle');
+    var dy   = y < H*0.35 ? r+12 : -(r+6);
+    svg += '<text x="' + x + '" y="' + (y+dy) + '" font-size="9.5" fill="' + city.color + '" text-anchor="' + anch + '" font-weight="700" font-family="system-ui">' + city.name + '</text>';
+    svg += '<text x="' + x + '" y="' + (y+dy+11) + '" font-size="8" fill="' + city.color + '" text-anchor="' + anch + '" opacity="0.65" font-family="system-ui">' + city.emps + ' emp.</text>';
+  });
+
+  svg += '</svg>';
+
+  container.innerHTML = '<div style="perspective:480px;perspective-origin:50% 15%;width:100%">'
+    + '<div style="transform:rotateX(32deg) rotateZ(-2deg);transform-style:preserve-3d;'
+    + 'display:flex;align-items:center;justify-content:center;'
+    + 'filter:drop-shadow(0 14px 22px rgba(0,0,0,.55))">'
+    + svg
+    + '</div></div>';
 }
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
