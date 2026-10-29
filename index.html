@@ -269,6 +269,9 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .c-costo-final .cf-val{font-size:20px;font-weight:900;color:#0d3d6b}
 @media(max-width:640px){.c-rsv-grid{grid-template-columns:1fr}.c-cmp-nums{gap:8px}.c-sec-nums{gap:10px}}
 
+.nom-guardar-hist-btn{display:inline-flex;align-items:center;gap:6px;background:#0d3d6b;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;transition:.12s}
+.nom-guardar-hist-btn:hover{background:#0b3360}
+.nom-guardar-hist-btn svg{flex-shrink:0}
 /* ═══ CALC LANDING ═══ */
 #calc-landing{padding:40px 20px;max-width:920px;margin:0 auto}
 #calc-landing h2{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
@@ -290,6 +293,13 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 /* Back button */
 #calc-back-btn{display:none;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:#0d3d6b;padding:0 0 16px;margin-left:20px;margin-top:16px}
 #calc-back-btn svg{flex-shrink:0}
+
+/* ═══ ACCESOS + HISTORICO ═══ */
+#nom-tab-nav{justify-content:space-between;align-items:center}
+#nom-tab-left{display:flex;gap:2px}
+.nom-historico-btn{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border,#d0d8e4);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;color:#555;cursor:pointer;margin-right:8px;transition:.12s;white-space:nowrap}
+.nom-historico-btn:hover{border-color:#0d3d6b;color:#0d3d6b;background:#f0f5fb}
+.nom-view-badge{display:inline-flex;align-items:center;gap:4px;background:#fff8e1;border:1px solid #fbbf24;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:#92400e;margin-right:8px}
 </style>
 </head><body>
 
@@ -345,8 +355,20 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
   </div>
 
   <div id="nom-tab-nav">
-    <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pre-nomina</button>
-    <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Costo Laboral</button>
+    <div id="nom-tab-left">
+      <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pre-nomina</button>
+      <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Costo Laboral</button>
+    </div>
+    <div style="display:flex;align-items:center">
+      <span id="nom-view-badge" class="nom-view-badge" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Solo visualizacion
+      </span>
+      <button class="nom-historico-btn" onclick="nomAbrirHistorico()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.06-4.49"/></svg>
+        Historico de nominas
+      </button>
+    </div>
   </div>
 
   <div id="nom-main">
@@ -806,7 +828,82 @@ async function nomCargarUsuarioYArrancar(authUser){
   __nomUsername = username;
   mostrarApp();
   window.__initReport__(user.rol);
+  nomAplicarPermisos(username);
 }
+
+function nomAplicarPermisos(username) {
+  var PRENOMINA_USERS = ['jcgonzalez'];
+  var WRITE_USERS     = ['jcgonzalez', 'kcastaneda', 'eperez'];
+  var canPrenomina    = PRENOMINA_USERS.indexOf(username) >= 0;
+  var canWrite        = WRITE_USERS.indexOf(username) >= 0;
+
+  window.__nomCanWrite      = canWrite;
+  window.__nomCanPrenomina  = canPrenomina;
+
+  // Pre-nomina tab: solo JC
+  var tabPago = document.getElementById('nomTabPago');
+  if (tabPago) { tabPago.style.display = canPrenomina ? '' : 'none'; }
+
+  // Si no tiene pre-nomina asegurar que empieza en Costo Laboral
+  if (!canPrenomina) { nomSwitchTab('calc'); }
+
+  // Badge solo visualizacion (mabarca, yburgos)
+  var badge = document.getElementById('nom-view-badge');
+  if (badge) { badge.style.display = canWrite ? 'none' : 'inline-flex'; }
+
+  // View-only: ocultar botones de accion en Costo Laboral
+  if (!canWrite) {
+    nomOcultarAcciones();
+  }
+}
+
+function nomOcultarAcciones() {
+  // Botón Calcular en calculadora individual
+  var calcBtns = document.querySelectorAll('#nom-calc-panel .calc-btn');
+  calcBtns.forEach(function(b){ b.style.display='none'; });
+  // Area de subida de archivo
+  var dropArea = document.getElementById('calcFullDropArea');
+  if (dropArea) { dropArea.style.pointerEvents='none'; dropArea.style.opacity='.5'; }
+  var fileInput = document.getElementById('calcFullFile');
+  if (fileInput) { fileInput.disabled = true; }
+  // Status message
+  var status = document.getElementById('calcFullStatus');
+  if (status) { status.textContent = 'Solo visualizacion — resultados disponibles cuando el equipo los procese'; }
+  // Landing CTAs
+  var ctas = document.querySelectorAll('#calc-landing .clc-cta');
+  ctas.forEach(function(cta){ cta.textContent = 'Ver resultados'; });
+}
+
+window.nomAbrirHistorico = function nomAbrirHistorico() {
+  alert('Historico de Nominas — Etapa 4 en desarrollo.');
+};
+
+window.nomGuardarHistorico = function nomGuardarHistorico() {
+  if (!window.__nomCanWrite) { return; }
+  var btn = document.getElementById('nomGuardarBtn');
+  if (!btn) return;
+  var result = window.__nomLastResult;
+  if (!result) { alert('Primero carga un archivo de nomina.'); return; }
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+  var payload = {
+    semana: parseInt(result.semana, 10) || 0,
+    filename: result.fileName || '',
+    totals: result.totals || {},
+    created_by: window.__nomUsername || '',
+    created_at: new Date().toISOString()
+  };
+  sb.from('nom_historico').insert([payload]).then(function(r) {
+    if (r.error) {
+      console.error('nomGuardarHistorico', r.error);
+      btn.textContent = 'Error al guardar';
+      btn.disabled = false;
+    } else {
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Guardado';
+      setTimeout(function(){ btn.style.display = 'none'; }, 2000);
+    }
+  });
+};
 
 async function doLogin(){
   if (__nomCambioPendiente) { return nomCambiarPassword(); }
@@ -1603,9 +1700,10 @@ window.calcOpenTool = function calcOpenTool(tool) {
   if (backBtn) backBtn.style.display  = 'flex';
   if (cInd)  cInd.style.display  = tool === 'individual' ? '' : 'none';
   if (cComp) cComp.style.display = tool === 'completa'   ? '' : 'none';
-  if (tool === 'completa') {
+  if (tool === 'completa' && window.__nomCanWrite !== false) {
     setTimeout(function(){ var f=document.getElementById('calcFullFile'); if(f)f.click(); }, 200);
   }
+  if (!window.__nomCanWrite) { nomOcultarAcciones(); }
 };
 
 // Tabla ISR mensual 2026 — criterio Tress (Art. 96 LISR, Anexo 8 RMF 2026)
@@ -1850,6 +1948,7 @@ window.calcNominaCompleta = function calcNominaCompleta(ev) {
     try {
       var wb = XLSX.read(e.target.result, {type:'array', cellFormula:true, raw:false});
       var result = calcProcessWorkbook(wb, file.name);
+      window.__nomLastResult = result;
       document.getElementById('calcFullResult').innerHTML = calcHtmlCompleta(result);
       document.getElementById('calcFullResult').style.display = 'block';
       var totE = result.totals.regEmps + result.totals.flujoEmps + result.finiquitos.emps;
@@ -2362,6 +2461,17 @@ function calcHtmlCompleta(R) {
      + '<span class="cf-lbl">Costo real total empresa semana ' + R.semana + '</span>'
      + '<span class="cf-val">' + F(T.costoReal) + '</span>'
      + '</div>';
+
+  // Boton guardar: solo usuarios con permiso de escritura
+  if (window.__nomCanWrite) {
+    h += '<div style="text-align:right;margin-top:14px">'
+       + '<button class="nom-guardar-hist-btn" onclick="nomGuardarHistorico()" id="nomGuardarBtn">'
+       + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>'
+       + 'Guardar en historico'
+       + '</button>'
+       + '</div>';
+  }
+
   return h;
 }
 
