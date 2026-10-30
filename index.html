@@ -1126,36 +1126,49 @@ function nomFindState(sd, name) {
   return found;
 }
 
-function nomDrawStateChoropleth(container,topo,sd) {
+function nomDrawStateChoropleth(container,topo,sd,R) {
   container.innerHTML='';
   container.style.position='relative';
+  var F2=nomFmt; var T2=R&&R.totals?R.totals:null;
+
+  // ── KPI bar integrada en el mapa ──────────────────────────────────────────
+  var kpiBar=document.createElement('div');
+  kpiBar.style.cssText='position:absolute;top:0;left:0;right:0;height:44px;'
+    +'background:rgba(5,14,28,0.9);border-bottom:1px solid rgba(42,120,214,0.22);'
+    +'display:flex;align-items:center;padding:0 16px;gap:0;z-index:30';
+  if(T2&&R){
+    kpiBar.innerHTML='<span style="font-size:11px;font-weight:600;color:rgba(160,196,255,0.55);margin-right:auto">Semana '+(R.semana||'?')+'</span>'
+      +nomKpiItem('Colaboradores',String(R.uniqueEmps||T2.regEmps),'#60a5fa')
+      +nomKpiSep()
+      +nomKpiItem('Efectivo',F2(T2.totalEfectivo),'#34d399')
+      +nomKpiSep()
+      +nomKpiItem('Costo real',F2(T2.costoReal),'#f87171')
+      +nomKpiSep()
+      +nomKpiItem('Reserva',F2(T2.reservaTotal),'#fbbf24');
+  }
+  container.appendChild(kpiBar);
+
+  // ── SVG map ───────────────────────────────────────────────────────────────
+  var KPI_H=44;
   var W=container.offsetWidth||380;
-  var H=container.offsetHeight||340;
-  if(H<100) H=340;
+  var H=Math.max((container.offsetHeight||380)-KPI_H,220);
+  if(W<100) W=380;
 
   var proj=d3.geoMercator().center([-102,23.5]).scale(W*1.42).translate([W/2,H/2]);
   var pathGen=d3.geoPath(proj);
-
-  // Detectar la key correcta del objeto topoJSON
   var objKey=Object.keys(topo.objects)[0];
   var geo=topojson.feature(topo,topo.objects[objKey]);
 
-  // Crear SVG
   var svgEl=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svgEl.style.cssText='width:100%;height:100%;display:block;overflow:visible';
+  svgEl.style.cssText='position:absolute;top:'+KPI_H+'px;left:0;width:100%;height:calc(100% - '+KPI_H+'px);display:block;overflow:visible';
   svgEl.setAttribute('viewBox','0 0 '+W+' '+H);
-  svgEl.setAttribute('preserveAspectRatio','xMidYMid meet');
 
-  // Tooltip inline (dentro del contenedor para evitar problemas de z-index)
+  // Tooltip
   var tipDiv=document.createElement('div');
   tipDiv.style.cssText='position:absolute;display:none;background:rgba(5,12,26,.96);border:1.5px solid rgba(42,120,214,.5);'
-    +'border-radius:9px;padding:10px 14px;color:#fff;font-size:12px;pointer-events:none;z-index:9999;'
-    +'backdrop-filter:blur(6px);min-width:155px;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.5)';
-  container.appendChild(tipDiv);
-  container.appendChild(svgEl);
+    +'border-radius:9px;padding:10px 14px;color:#fff;font-size:12px;pointer-events:none;z-index:50;min-width:160px;line-height:1.6';
 
   var svg=d3.select(svgEl);
-
   svg.selectAll('path.mxs')
     .data(geo.features)
     .join('path')
@@ -1164,14 +1177,12 @@ function nomDrawStateChoropleth(container,topo,sd) {
     .attr('fill',function(d){
       var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
       var data=nomFindState(sd,name);
-      return(data&&data.color)?data.color:'#454b52';
+      return(data&&data.color)?data.color:'#1e2840';
     })
-    .attr('stroke','#5a6169')
-    .attr('stroke-width',0.5)
+    .attr('stroke','#334466').attr('stroke-width',0.5)
     .style('cursor',function(d){
       var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
-      var data=nomFindState(sd,name);
-      return(data&&data.color)?'pointer':'default';
+      return(nomFindState(sd,name)&&nomFindState(sd,name).color)?'pointer':'default';
     })
     .on('mouseover',function(event,d){
       var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
@@ -1179,17 +1190,20 @@ function nomDrawStateChoropleth(container,topo,sd) {
       if(!data||!data.color) return;
       d3.select(this).attr('fill',data.hover);
       var rect=container.getBoundingClientRect();
-      tipDiv.innerHTML='<strong style="font-size:13px">'+name+'</strong><br>'
-        +'<span style="color:#93c5fd">'+data.personas+' personas</span>'
-        +'&emsp;<span style="color:#6ee7b7">'+data.monto+'</span>';
+      var isnTxt=data.isnRate?' &nbsp;<span style="color:rgba(160,196,255,.45);font-size:10px">ISN '+data.isnRate+'</span>':'';
+      var rpTxt=data.regPatLabel?'<div style="font-size:10px;color:rgba(160,196,255,.4);margin-top:3px">Reg. Pat.: '+data.regPatLabel+'</div>':'';
+      tipDiv.innerHTML='<strong style="font-size:13px;color:#fff">'+name+'</strong>'
+        +'<div style="margin:5px 0 3px;font-size:11px">'
+        +'<span style="color:#93c5fd;font-weight:700">'+data.personas+' personas</span>'
+        +'&emsp;<span style="color:#6ee7b7;font-weight:700">'+data.monto+'</span>'+isnTxt+'</div>'+rpTxt;
       tipDiv.style.display='block';
-      tipDiv.style.left=(event.clientX-rect.left+10)+'px';
-      tipDiv.style.top=(event.clientY-rect.top-10)+'px';
+      tipDiv.style.left=(event.clientX-rect.left+12)+'px';
+      tipDiv.style.top=(event.clientY-rect.top-8)+'px';
     })
     .on('mousemove',function(event){
       var rect=container.getBoundingClientRect();
-      tipDiv.style.left=(event.clientX-rect.left+10)+'px';
-      tipDiv.style.top=(event.clientY-rect.top-10)+'px';
+      tipDiv.style.left=(event.clientX-rect.left+12)+'px';
+      tipDiv.style.top=(event.clientY-rect.top-8)+'px';
     })
     .on('mouseout',function(event,d){
       var name=d.properties.name_1||d.properties.NAME_1||d.properties.name||'';
@@ -1198,26 +1212,29 @@ function nomDrawStateChoropleth(container,topo,sd) {
       tipDiv.style.display='none';
     });
 
-  // Bordes entre estados
   try{
     svg.append('path')
       .datum(topojson.mesh(topo,topo.objects[objKey],function(a,b){return a!==b;}))
-      .attr('fill','none').attr('stroke','#5a6169').attr('stroke-width',0.35).attr('d',pathGen);
+      .attr('fill','none').attr('stroke','#334466').attr('stroke-width',0.35).attr('d',pathGen);
   }catch(e){}
+
+  container.appendChild(svgEl);
+  container.appendChild(tipDiv);
 
   // Leyenda
   var leg=document.createElement('div');
-  leg.style.cssText='position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);border-radius:7px;padding:7px 10px';
+  leg.style.cssText='position:absolute;bottom:8px;left:8px;background:rgba(5,14,28,.85);border:1px solid rgba(42,120,214,.2);border-radius:7px;padding:7px 11px;z-index:20';
   var lh=''; var seen={};
   Object.keys(sd).forEach(function(k){
-    var d=sd[k]; if(!d||seen[k]||d.personas<=0) return; seen[k]=true;
+    var d=sd[k]; if(!d||seen[d.color]||d.personas<=0) return; seen[d.color]=true;
     lh+='<div style="display:flex;align-items:center;gap:6px;font-size:9.5px;color:#fff;margin-bottom:3px">'
        +'<div style="width:9px;height:9px;border-radius:2px;background:'+d.color+'"></div>'
-       +k+' &mdash; '+d.personas+' personas</div>';
+       +Object.keys(sd).find(function(x){return sd[x]===d;})+' \u2014 '+d.personas+' personas</div>';
   });
   leg.innerHTML=lh;
   container.appendChild(leg);
 }
+
 
 function nomDrawWorldWithStubs(container,world,sd) {
   container.innerHTML=''; container.style.position='relative';
