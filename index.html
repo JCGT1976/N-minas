@@ -1338,7 +1338,7 @@ function nomHistRenderLista(body) {
   var tbody=document.createElement('tbody');
   rows.forEach(function(row){
     var T=row.totals||{};
-    var colabs=(T.regEmps||0)+(T.flujoEmps||0);
+    var colabs=(T.regEmps||0);
     var tr=document.createElement('tr');
     tr.style.cursor='pointer';
     tr.onclick=function(){ nomVerDetalleHist(row); };
@@ -1439,7 +1439,7 @@ function nomHistRenderComparativo(body) {
       var good=(invert?d<0:d<0);
       var col=good?'#1a7a4a':'#c0392b';
       var arr=d>0?'↑':'↓';
-      return '<span style="color:'+col+';font-size:11px;font-weight:700">'+arr+' $'+Math.abs(d).toLocaleString('es-MX',{maximumFractionDigits:0})+'</span>';
+      return '<span style="color:'+col+';font-size:11px;font-weight:700">'+arr+' $'+Math.round(Math.abs(d)).toLocaleString('es-MX',{maximumFractionDigits:0})+'</span>';
     };
     var dtN=function(a,b){
       if(a==null||b==null)return'';
@@ -1449,7 +1449,7 @@ function nomHistRenderComparativo(body) {
       return '<span style="color:'+col+';font-size:11px;font-weight:700">'+(d>0?'↑':'↓')+' '+Math.abs(d)+'</span>';
     };
     var concepts=[
-      {lbl:'Colaboradores',a:(TA.regEmps||0)+(TA.flujoEmps||0),b:(TB.regEmps||0)+(TB.flujoEmps||0),num:true,sep:true},
+      {lbl:'Empleados nomina regular',a:(TA.regEmps||0),b:(TB.regEmps||0),num:true,sep:true},
       {lbl:'Efectivo total',a:TA.totalEfectivo,b:TB.totalEfectivo,c:'#1a7a4a',invert:true},
       {lbl:'Percepciones nomina regular',a:TA.regPercep,b:TB.regPercep,c:'#0d3d6b'},
       {lbl:'ISR retenido',a:TA.regISR,b:TB.regISR,c:'#c0392b'},
@@ -1460,7 +1460,8 @@ function nomHistRenderComparativo(body) {
       {lbl:'IMSS patronal',a:TA.imssPatron,b:TB.imssPatron,c:'#b86b00',sep:true},
       {lbl:'ISN Tijuana 4.25%',a:TA.isn,b:TB.isn,c:'#b86b00'},
       {lbl:'INFONAVIT patronal',a:TA.infoPatron,b:TB.infoPatron,c:'#b86b00'},
-      {lbl:'Total cuotas patronales',a:TA.cuotas,b:TB.cuotas,c:'#b86b00',fw:'700'},
+      {lbl:'Subtotal IMSS patronal + ISN',a:TA.cuotas,b:TB.cuotas,c:'#b86b00',fw:'700'},
+      {lbl:'CARGA PATRONAL TOTAL (incl. INFONAVIT)',a:(TA.cuotas||0)+(TA.infoTotal||0),b:(TB.cuotas||0)+(TB.infoTotal||0),c:'#b86b00',fw:'800',sep:true},
       {lbl:'COSTO REAL SEMANA',a:TA.costoReal,b:TB.costoReal,c:'#0d3d6b',fw:'800',sep:true,big:true},
       {lbl:'Reserva para gobierno',a:TA.reservaTotal,b:TB.reservaTotal,c:'#7c3aed',sep:true},
       {lbl:'INFONAVIT bimestral acumulado',a:TA.infoTotal,b:TB.infoTotal,c:'#7c3aed'},
@@ -1535,7 +1536,7 @@ function nomHistRenderAcumulado(body) {
   var tbl=document.createElement('table'); tbl.className='nom-table';
   var thead=document.createElement('thead');
   var trh=document.createElement('tr');
-  ['Semana','Colab.','Efectivo','Retenciones','Carga Pat.','Costo Real','Reserva'].forEach(function(h,i){
+  ['Semana','Emps. reg.','Efectivo','Retenciones','Carga Pat.','Costo Real','Reserva'].forEach(function(h,i){
     var th=document.createElement('th'); th.style.textAlign=i<2?'center':'right'; th.textContent=h; trh.appendChild(th);
   });
   thead.appendChild(trh); tbl.appendChild(thead);
@@ -1544,7 +1545,7 @@ function nomHistRenderAcumulado(body) {
   sorted.forEach(function(row){
     var T=row.totals||{};
     var tr=document.createElement('tr');
-    [{v:row.semana||'-',c:'#0d3d6b',fw:'800',al:'center'},{v:(T.regEmps||0)+(T.flujoEmps||0),al:'center'},{v:nomFmtH(T.totalEfectivo),c:'#1a7a4a',fw:'700',al:'right'},{v:nomFmtH(T.retenciones),c:'#c0392b',al:'right'},{v:nomFmtH(T.cuotas),c:'#b86b00',al:'right'},{v:nomFmtH(T.costoReal),c:'#0d3d6b',fw:'700',al:'right'},{v:nomFmtH(T.reservaTotal),c:'#7c3aed',al:'right'}].forEach(function(d){
+    [{v:row.semana||'-',c:'#0d3d6b',fw:'800',al:'center'},{v:(T.regEmps||0),al:'center'},{v:nomFmtH(T.totalEfectivo),c:'#1a7a4a',fw:'700',al:'right'},{v:nomFmtH(T.retenciones),c:'#c0392b',al:'right'},{v:nomFmtH(T.cuotas),c:'#b86b00',al:'right'},{v:nomFmtH(T.costoReal),c:'#0d3d6b',fw:'700',al:'right'},{v:nomFmtH(T.reservaTotal),c:'#7c3aed',al:'right'}].forEach(function(d){
       var td=document.createElement('td'); td.style.textAlign=d.al||'left';
       if(d.c)td.style.color=d.c; if(d.fw)td.style.fontWeight=d.fw; td.textContent=d.v; tr.appendChild(td);
     });
