@@ -3411,7 +3411,7 @@ function calcHtmlCompleta(R) {
     var totFlujoExtra = R.cruce.reduce(function(s,e){ return s+e.flujos.reduce(function(ss,f){return ss+f.monto;},0); }, 0);
     h += '<div class="nom-table-wrap">';
     h += '<table class="nom-table"><thead><tr>';
-    ['# Empl.','Nombre','Empresa','Percep. regular','Neto regular','Flujo neto adicional','Total percibido semana'].forEach(function(col,i){
+    ['# Empl.','Nombre','Empresa','Percep. regular','Neto regular','Flujo neto adicional','Total recibido (neto+flujo)'].forEach(function(col,i){
       h += '<th style="text-align:'+(i>2?'right':'left')+'">'+col+'</th>';
     });
     h += '</tr></thead><tbody>';
@@ -3425,7 +3425,7 @@ function calcHtmlCompleta(R) {
       h += '<td style="text-align:right;color:#1a7a4a;font-weight:600">'+F(emp.percep)+'</td>';
       h += '<td style="text-align:right;color:#0d3d6b">'+F(emp.neto)+'</td>';
       h += '<td style="text-align:right"><b style="color:#b86b00">'+F(ft)+'</b><br><span style="font-size:10px;color:#999">'+detail+'</span></td>';
-      h += '<td style="text-align:right;font-weight:700">'+F(emp.percep+ft)+'</td>';
+      h += '<td style="text-align:right;font-weight:700">'+F(emp.neto+ft)+'</td>';
       h += '</tr>';
     });
     h += '</tbody><tfoot><tr>';
