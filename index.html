@@ -1453,7 +1453,7 @@ function nomHistRenderComparativo(body) {
       var c=document.createElement('div');
       c.style.cssText='background:#f8f9fb;border-radius:7px;padding:8px 10px;border:1px solid #e8ecf0';
       c.innerHTML='<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.3px">'+lbl+'</div>'+
-        '<div style="font-size:15px;font-weight:800;color:'+(color||'#0d3d6b')+';margin:3px 0 1px">'+valA+'</div>'+
+        '<div style="font-size:'+(String(valA).length>8?'13':'15')+'px;font-weight:800;color:'+(color||'#0d3d6b')+';margin:3px 0 1px">'+valA+'</div>'+
         '<div style="font-size:10px;color:#aaa">Sem. B: '+valB+'</div>'+
         '<div style="font-size:11px;margin-top:2px">'+diffHtml+'</div>';
       return c;
@@ -1487,17 +1487,17 @@ function nomHistRenderComparativo(body) {
     var s1=sec('gray','Colaboradores','Headcount');
     var kpiRow=document.createElement('div');
     kpiRow.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 14px';
-    var flujoUnA=fdA.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0)||TA.flujoEmps||0;
-    var flujoUnB=fdB.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0)||TB.flujoEmps||0;
-    var finEmpA=(fiA.emps||TA.finEmps||0), finEmpB=(fiB.emps||TB.finEmps||0);
-    var totA=(TA.regEmps||0)+flujoUnA+finEmpA, totB=(TB.regEmps||0)+flujoUnB+finEmpB;
+    var uniqA=rA.unique_emps||TA.regEmps||0, uniqB=rB.unique_emps||TB.regEmps||0;
+    var finEmpA=(fiA.emps||(TA.finNeto?TA.finEmps:0)||0), finEmpB=(fiB.emps||(TB.finNeto?TB.finEmps:0)||0);
+    var proyA=Math.max(0,uniqA-(TA.regEmps||0)-finEmpA), proyB=Math.max(0,uniqB-(TB.regEmps||0)-finEmpB);
     [
-      {lbl:'Nomina regular',a:TA.regEmps||0,b:TB.regEmps||0,c:'#0d3d6b'},
-      {lbl:'Flujo neto (personas)',a:flujoUnA,b:flujoUnB,c:'#0f6e56'},
+      {lbl:'Empleados nomina regular',a:TA.regEmps||0,b:TB.regEmps||0,c:'#0d3d6b'},
+      {lbl:'Proyectos / flujo',a:proyA,b:proyB,c:'#0f6e56'},
       {lbl:'Finiquitos',a:finEmpA,b:finEmpB,c:'#854f0b'},
-      {lbl:'Total',a:totA,b:totB,c:'#333'}
+      {lbl:'Total colaboradores',a:uniqA,b:uniqB,c:'#333'},
+      {lbl:'Costo real semana',a:TA.costoReal,b:TB.costoReal,c:'#0d3d6b',money:true}
     ].forEach(function(k){
-      kpiRow.appendChild(kpiCard(k.lbl,k.a,k.b,dNum(k.a,k.b),k.c));
+      var va=k.money?F(k.a):k.a, vb=k.money?F(k.b):k.b, df=k.money?dMon(k.a,k.b):dNum(k.a,k.b); kpiRow.appendChild(kpiCard(k.lbl,va,vb,df,k.c));
     });
     s1.appendChild(kpiRow); compArea.appendChild(s1);
 
@@ -1729,6 +1729,7 @@ window.nomGuardarHistorico = function nomGuardarHistorico() {
     semana: parseInt(result.semana, 10) || 0,
     filename: result.fileName || '',
     totals: result.totals || {},
+    unique_emps: result.uniqueEmps||0,
     flujo_detalle: (result.flujoNeto||[]).map(function(f){
       return {tipo:f.tipo,concepto:f.concepto,emps:f.emps,empsUnicos:f.empsUnicos||f.emps||0,total:f.total||0};
     }),
