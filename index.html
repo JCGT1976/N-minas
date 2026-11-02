@@ -1218,8 +1218,133 @@ function nomDrawWorldWithStubs(container,world,sd) {
 
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
-  alert('Historico de Nominas — Etapa 4 en desarrollo.');
+  var existing = document.getElementById('nomHistModal');
+  if (existing) { existing.remove(); return; }
+  var modal = document.createElement('div');
+  modal.id = 'nomHistModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f172a;z-index:9999;display:flex;flex-direction:column;overflow:hidden';
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#1e293b;border-bottom:1px solid #334155;flex-shrink:0';
+  var title = document.createElement('span');
+  title.style.cssText = 'font-size:15px;font-weight:700;color:#60a5fa';
+  title.textContent = 'Historico de Nominas';
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Cerrar';
+  closeBtn.style.cssText = 'background:#475569;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px';
+  closeBtn.onclick = function() { document.getElementById('nomHistModal').remove(); };
+  hdr.appendChild(title); hdr.appendChild(closeBtn);
+  var body = document.createElement('div');
+  body.id = 'nomHistBody';
+  body.style.cssText = 'flex:1;overflow:auto;padding:16px';
+  var loadMsg = document.createElement('div');
+  loadMsg.id = 'nomHistMsg';
+  loadMsg.style.cssText = 'color:#94a3b8;font-size:13px';
+  loadMsg.textContent = 'Cargando...';
+  body.appendChild(loadMsg);
+  modal.appendChild(hdr); modal.appendChild(body);
+  document.body.appendChild(modal);
+  nomCargarHistorico();
 };
+
+async function nomCargarHistorico() {
+  var msg = document.getElementById('nomHistMsg');
+  if (!msg) return;
+  try {
+    var r = await sb.from('nom_historico').select('*').order('created_at', {ascending:false}).limit(52);
+    if (r.error) throw r.error;
+    var rows = r.data || [];
+    if (!rows.length) { msg.textContent = 'Sin registros guardados.'; return; }
+    var F = function(n) { return n != null ? '$' + Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-'; };
+    var table = document.createElement('table');
+    table.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px';
+    var hcols = ['Sem.','Archivo','Colab.','Efectivo','Retenciones','Carga Pat.','Costo Real','Reserva','Guardado'];
+    var align = ['center','left','center','right','right','right','right','right','left'];
+    var thead = document.createElement('thead');
+    var tr = document.createElement('tr');
+    tr.style.background = '#1e3a5f';
+    hcols.forEach(function(h, i) {
+      var th = document.createElement('th');
+      th.style.cssText = 'padding:8px 10px;font-size:11px;text-align:' + align[i];
+      th.textContent = h; tr.appendChild(th);
+    });
+    thead.appendChild(tr); table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    rows.forEach(function(row, i) {
+      var T = row.totals || {};
+      var tr2 = document.createElement('tr');
+      tr2.style.background = i%2===0 ? '#0f172a' : '#1a2639';
+      tr2.style.cursor = 'pointer';
+      tr2.onclick = (function(ro) { return function() { nomVerDetalleHist(ro); }; })(row);
+      var colabs = (T.regEmps||0) + (T.flujoEmps||0);
+      var fecha = row.created_at ? row.created_at.substring(0,10) : '';
+      var cells = [
+        {v: row.semana||'-', c:'#60a5fa', fw:'700', al:'center'},
+        {v: row.filename||'-', c:'#94a3b8', al:'left', mw:'160px'},
+        {v: colabs, al:'center'},
+        {v: F(T.totalEfectivo), c:'#22c55e', fw:'600', al:'right'},
+        {v: F(T.retenciones), c:'#f87171', al:'right'},
+        {v: F(T.cuotas), c:'#fb923c', al:'right'},
+        {v: F(T.costoReal), fw:'600', al:'right'},
+        {v: F(T.reservaTotal), c:'#a78bfa', al:'right'},
+        {v: (row.created_by||'') + ' ' + fecha, c:'#64748b', al:'left'}
+      ];
+      cells.forEach(function(cell) {
+        var td = document.createElement('td');
+        td.style.padding = '7px 10px';
+        if (cell.al) td.style.textAlign = cell.al;
+        if (cell.c) td.style.color = cell.c;
+        if (cell.fw) td.style.fontWeight = cell.fw;
+        if (cell.mw) { td.style.maxWidth = cell.mw; td.style.overflow = 'hidden'; td.style.textOverflow = 'ellipsis'; td.style.whiteSpace = 'nowrap'; }
+        td.textContent = cell.v;
+        tr2.appendChild(td);
+      });
+      tbody.appendChild(tr2);
+    });
+    table.appendChild(tbody);
+    msg.parentNode.replaceChild(table, msg);
+  } catch(e) {
+    if (msg) { msg.style.color = '#ef4444'; msg.textContent = 'Error: ' + e.message; }
+  }
+}
+
+window.nomVerDetalleHist = function nomVerDetalleHist(row) {
+  var T = row.totals || {};
+  var F = function(n) { return n != null ? '$' + Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-'; };
+  var existing = document.getElementById('nomHistDetModal');
+  if (existing) existing.remove();
+  var labels = {totalEfectivo:'Efectivo total',retenciones:'Retenciones ISR+IMSS',cuotas:'Cuotas patronales',costoReal:'Costo real semana',reservaTotal:'Total a reservar',regPercep:'Percepciones reg.',regISR:'ISR reg.',regIMSS:'IMSS obrero reg.',regNeto:'Neto reg.',regEmps:'Empleados reg.',flujoTotal:'Total flujo neto',flujoEmps:'Pagos flujo neto',imssPatron:'IMSS patronal',isn:'ISN',infoPatron:'INFONAVIT patronal',infoTotal:'INFONAVIT bimestral'};
+  var det = document.createElement('div');
+  det.id = 'nomHistDetModal';
+  det.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;border:1px solid #334155;border-radius:10px;padding:20px;z-index:10000;min-width:360px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)';
+  var dhdr = document.createElement('div');
+  dhdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px';
+  var dtitle = document.createElement('b');
+  dtitle.style.color = '#60a5fa';
+  dtitle.textContent = 'Semana ' + (row.semana||'-');
+  var dclose = document.createElement('button');
+  dclose.textContent = 'X';
+  dclose.style.cssText = 'background:#475569;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer';
+  dclose.onclick = function() { document.getElementById('nomHistDetModal').remove(); };
+  dhdr.appendChild(dtitle); dhdr.appendChild(dclose);
+  var dsub = document.createElement('div');
+  dsub.style.cssText = 'font-size:11px;color:#64748b;margin-bottom:10px';
+  dsub.textContent = (row.filename||'') + ' | ' + (row.created_by||'') + ' | ' + (row.created_at||'').substring(0,16);
+  var dtable = document.createElement('table');
+  dtable.style.cssText = 'width:100%;border-collapse:collapse';
+  Object.keys(labels).forEach(function(k) {
+    var dr = document.createElement('tr');
+    var dl = document.createElement('td');
+    dl.style.cssText = 'padding:5px 10px;color:#94a3b8;font-size:12px';
+    dl.textContent = labels[k];
+    var dv = document.createElement('td');
+    dv.style.cssText = 'padding:5px 10px;text-align:right;font-size:12px;font-weight:600';
+    dv.textContent = F(T[k]);
+    dr.appendChild(dl); dr.appendChild(dv); dtable.appendChild(dr);
+  });
+  det.appendChild(dhdr); det.appendChild(dsub); det.appendChild(dtable);
+  document.body.appendChild(det);
+};
+window.nomCargarHistorico = nomCargarHistorico;
 
 window.nomGuardarHistorico = function nomGuardarHistorico() {
   if (!window.__nomCanWrite) { return; }
