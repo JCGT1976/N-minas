@@ -2898,11 +2898,20 @@ function calcParseSimpSheet(rows, idSet) {
   var kCompSuel  = calcFindKey(s, ['complemento sueldo']);
   var kHrsDob    = calcFindKey(s, ['horas extras dobles valor','hrs dobles valor']);
   if (kHrsEsp || kCompSuel) {
+    out.netoHrs=0; out.empsHrs=0; out.netoComp=0; out.empsComp=0;
     rows.forEach(function(r) {
       var nom = String(r[calcFindKey(r, ['nombre'])] || '').trim();
       if (!nom) return;
-      var v = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kCompSuel]) + nomParseMoney(r[kHrsDob]);
-      if (v > 0 && v <= 200000) { out.neto += v; out.emps++; var id2 = String(r[calcFindKey(r,['# empleado','#empleado','numero','number'])]||'').trim(); if (idSet && id2) idSet[id2]=true; }
+      var vHrs  = nomParseMoney(r[kHrsEsp]) + nomParseMoney(r[kHrsDob]);
+      var vComp = nomParseMoney(r[kCompSuel]);
+      var v = vHrs + vComp;
+      if (v > 0 && v <= 200000) {
+        out.neto += v; out.emps++;
+        var id2 = String(r[calcFindKey(r,['# empleado','#empleado','numero','number'])]||'').trim();
+        if (idSet && id2) idSet[id2]=true;
+        if (vHrs  > 0) { out.netoHrs  += vHrs;  out.empsHrs++; }
+        if (vComp > 0) { out.netoComp += vComp; out.empsComp++; }
+      }
     });
     return out;
   }
@@ -3069,7 +3078,7 @@ function calcCruceEmpleados(wb) {
   });
 
   var flujoSheets = [
-    {pat:'HORAS EXTRAS',    label:'Hrs extras TJ',  numPat:['empleado'],           amtPat:['extra2']},
+    {pat:'HORAS EXTRAS',    label:'Hrs extras TJ',  numPat:['empleado'],           amtPat:['total de hrs esp','total hrs esp','extra2']},
     {pat:'PROY. MTY',       label:'Proyectos MTY',   numPat:['empleado','n'],       amtPat:['cantridad','cantidad tot']},
     {pat:'BONO ASISTENCIA', label:'Bono MTY',         numPat:['n'],                 amtPat:['cantidad']},
     {pat:'COMP. SUELDOS',   label:'Compl. sueldos',  numPat:['empleado','n'],       amtPat:['complemento']}
@@ -3162,7 +3171,7 @@ function calcProcessWorkbook(wb, fileName) {
     }
     var total = (def.refKey && ref && ref[def.refKey]) ? ref[def.refKey] : p.neto;
     if (total <= 0 && p.emps <= 0) return;
-    var empsUnicos=(function(){var kId=calcFindKey(rows[0],['empleado','numero','n']);if(!kId)return p.emps;var seen={},c=0;rows.forEach(function(r){var id=String(r[kId]||'').trim();if(!id)return;var num=parseInt(id);var key=isNaN(num)?id:num;if(key&&!seen[key]){seen[key]=true;c++;}});return c;})();flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, empsUnicos:empsUnicos, total:total});
+    var empsUnicos=(function(){var kId=calcFindKey(rows[0],['empleado','numero','n']);if(!kId)return p.emps;var seen={},c=0;rows.forEach(function(r){var id=String(r[kId]||'').trim();if(!id)return;var num=parseInt(id);var key=isNaN(num)?id:num;if(key&&!seen[key]){seen[key]=true;c++;}});return c;})();if (p.netoHrs != null) {  if (p.netoHrs > 0) flujoNeto.push({tipo:'Hrs extras', concepto:'Horas extras TJ', emps:p.empsHrs, empsUnicos:p.empsHrs, total:p.netoHrs});  if (p.netoComp > 0) flujoNeto.push({tipo:'Complemento', concepto:'Complemento de sueldo', emps:p.empsComp, empsUnicos:p.empsComp, total:p.netoComp});} else {  flujoNeto.push({tipo:def.tipo, concepto:def.concepto, emps:p.emps, empsUnicos:empsUnicos, total:total});}
   });
   var totVales = (ref && ref.valesTotal > 0) ? ref.valesTotal : regular.reduce(function(s,co){return s+co.vales;},0);
   if (totVales > 0) {
