@@ -2918,26 +2918,30 @@ function calcCruceEmpleados(wb) {
     if (!found) return;
     var rows = calcSmartSheetRows(found.sh);
     if (!rows.length) return;
-    var kNum = calcFindKey(rows[0], ['numero','num']);
-    var kNom = calcFindKey(rows[0], ['nombre']);
-    var kPer = calcFindKey(rows[0], ['tot.percep','totpercep','percep']);
-    var kNet = calcFindKey(rows[0], ['total neto','totalneto']);
+    var kNum  = calcFindKey(rows[0], ['numero','number','n']);
+    var kNom  = calcFindKey(rows[0], ['nombre']);
+    var kPer  = calcFindKey(rows[0], ['tot.percep','tot. percep','total percep']);
+    var kNet  = calcFindKey(rows[0], ['total neto','neto total','neto transferir']);
     if (!kNum || !kNom) return;
     rows.forEach(function(row) {
-      var num = parseInt(String(row[kNum]||'').trim());
-      if (!num || !row[kNom]) return;
+      var raw = String(row[kNum]||'').trim();
+      var num = parseInt(raw);
+      if (!num || isNaN(num)) return;
+      var nombre = String(row[kNom]||'').trim();
+      if (!nombre) return;
       var percep = parseFloat(String(row[kPer]||'0').replace(/[^0-9.-]/g,''))||0;
       var neto   = parseFloat(String(row[kNet]||'0').replace(/[^0-9.-]/g,''))||0;
-      if (!regEmpMap[num]) regEmpMap[num] = {num:num, nombre:String(row[kNom]).trim(), emp:def.emp, percep:0, neto:0};
+      if (!regEmpMap[num]) regEmpMap[num] = {num:num, nombre:nombre, emp:def.emp, percep:0, neto:0};
       regEmpMap[num].percep += percep;
       regEmpMap[num].neto   += neto;
     });
   });
+
   var flujoSheets = [
-    {pat:'HORAS EXTRAS',    label:'Hrs extras TJ', numPat:['empleado','num'], amtPat:['extra2','bono.*2']},
-    {pat:'PROY. MTY',       label:'Proyectos MTY', numPat:['empleado','numero'], amtPat:['cantridad','cantidad tot']},
-    {pat:'BONO ASISTENCIA', label:'Bono MTY',       numPat:['numero','num'],     amtPat:['cantidad']},
-    {pat:'COMP. SUELDOS',   label:'Compl. sueldos', numPat:['empleado','num'],   amtPat:['complemento']}
+    {pat:'HORAS EXTRAS',    label:'Hrs extras TJ',  numPat:['empleado'],           amtPat:['extra2']},
+    {pat:'PROY. MTY',       label:'Proyectos MTY',   numPat:['empleado','n'],       amtPat:['cantridad','cantidad tot']},
+    {pat:'BONO ASISTENCIA', label:'Bono MTY',         numPat:['n'],                 amtPat:['cantidad']},
+    {pat:'COMP. SUELDOS',   label:'Compl. sueldos',  numPat:['empleado','n'],       amtPat:['complemento']}
   ];
   var cruceMap = {};
   flujoSheets.forEach(function(def) {
@@ -2950,9 +2954,9 @@ function calcCruceEmpleados(wb) {
     if (!kNum || !kAmt) return;
     rows.forEach(function(row) {
       var num = parseInt(String(row[kNum]||'').trim());
-      if (!num || !regEmpMap[num]) return;
+      if (!num || isNaN(num) || !regEmpMap[num]) return;
       var monto = parseFloat(String(row[kAmt]||'0').replace(/[^0-9.-]/g,''))||0;
-      if (!monto) return;
+      if (monto <= 0) return;
       if (!cruceMap[num]) {
         var re = regEmpMap[num];
         cruceMap[num] = {num:num, nombre:re.nombre, emp:re.emp, percep:re.percep, neto:re.neto, flujos:[]};
@@ -2960,10 +2964,13 @@ function calcCruceEmpleados(wb) {
       cruceMap[num].flujos.push({label:def.label, monto:monto});
     });
   });
-  return Object.values(cruceMap).sort(function(a,b) {
+  var result = Object.values(cruceMap).sort(function(a,b) {
     return b.flujos.reduce(function(s,f){return s+f.monto;},0) - a.flujos.reduce(function(s,f){return s+f.monto;},0);
   });
+  return result;
 }
+
+
 
 function calcProcessWorkbook(wb, fileName) {
   var semana = calcDetectSemana(wb);
