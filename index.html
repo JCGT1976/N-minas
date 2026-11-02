@@ -1220,7 +1220,7 @@ function nomDrawWorldWithStubs(container,world,sd) {
 window.nomAbrirHistorico = function nomAbrirHistorico() {
   var existing = document.getElementById('nomHistOverlay');
   if (existing) { existing.remove(); return; }
-  var isAdmin = (window.__nomUserRol === 'admin_master');
+  var isAdmin = (__nomRole === 'admin_master');
   window.__nomHistIsAdmin = isAdmin;
   window.__nomHistData = null;
   window.__nomHistActiveTab = 'Lista';
