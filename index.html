@@ -1503,7 +1503,8 @@ function nomHistRenderComparativo(body) {
 
     // ── SEC 2: NOMINA REGULAR ────────────────────────────────────────────
     var s2=sec('blue','Nomina regular con obligaciones','Gravable — ISR/IMSS aplica');
-    var t2=makeTbl(['Concepto','Sem. A','Sem. B','Diferencia'],['left','right','right','right']);
+    var semLblA='Sem. '+(rA.semana||'A'), semLblB='Sem. '+(rB.semana||'B');
+    var t2=makeTbl(['Concepto',semLblA,semLblB,'Diferencia'],['left','right','right','right']);
     var concepts2=[
       {lbl:'Percepciones',a:TA.regPercep,b:TB.regPercep},
       {lbl:'ISR retenido',a:TA.regISR,b:TB.regISR,inv:true},
@@ -1542,7 +1543,8 @@ function nomHistRenderComparativo(body) {
     var s3=sec('teal','Proyectos y flujo neto','Sin obligaciones fiscales');
     var hasDet=(fdA.length>0&&fdB.length>0);
     if(hasDet){
-      var t3=makeTbl(['Concepto','Pers. A','Monto A','Pers. B','Monto B','Dif. pers.','Dif. monto'],['left','center','right','center','right','center','right']);
+      var semLblA='Sem. '+(rA.semana||'A'), semLblB='Sem. '+(rB.semana||'B');
+      var t3=makeTbl(['Concepto','Pers. '+semLblA,'Monto '+semLblA,'Pers. '+semLblB,'Monto '+semLblB,'Dif. pers.','Dif. monto'],['left','center','right','center','right','center','right']);
       var tiposA={}, tiposB={};
       fdA.forEach(function(f){ tiposA[f.tipo]={emps:f.empsUnicos||f.emps||0,total:f.total||0,concepto:f.concepto}; });
       fdB.forEach(function(f){ tiposB[f.tipo]={emps:f.empsUnicos||f.emps||0,total:f.total||0}; });
@@ -1567,7 +1569,7 @@ function nomHistRenderComparativo(body) {
       var totUnA=fdA.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0);
       var totUnB=fdB.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0);
       var tft=document.createElement('tfoot'); var tftr=document.createElement('tr');
-      [['Total flujo neto',true],totUnA,F(totFlujoA),totUnB,F(totFlujoB),dNum(totUnA,totUnB),dMon(totFlujoA,totFlujoB,true)].forEach(function(c,i){
+      [['Total flujo neto',true],'—',F(totFlujoA),'—',F(totFlujoB),'—',dMon(totFlujoA,totFlujoB,true)].forEach(function(c,i){
         var td=document.createElement('td');
         td.style.cssText='padding:8px 12px;background:#f0f4f9;font-weight:700;border-top:2px solid #d0d8e4;text-align:'+(i===0?'left':i===1||i===3||i===5?'center':'right');
         if(i===2) td.style.color='#0f6e56';
@@ -1597,7 +1599,7 @@ function nomHistRenderComparativo(body) {
     // ── SEC 4: FINIQUITOS ────────────────────────────────────────────────
     var s4=sec('amber','Finiquitos','Retenciones pre-calculadas');
     var hasFin=(fiA.emps!=null||fiB.emps!=null);
-    var t4=makeTbl(['Concepto','Sem. A','Sem. B','Diferencia'],['left','right','right','right']);
+    var t4=makeTbl(['Concepto',semLblA,semLblB,'Diferencia'],['left','right','right','right']);
     var fConcepts=[
       {lbl:'Colaboradores finiquitados',a:fiA.emps||TA.finEmps||0,b:fiB.emps||TB.finEmps||0,num:true},
       {lbl:'Percepciones',a:fiA.percep,b:fiB.percep},
