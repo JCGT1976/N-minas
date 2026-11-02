@@ -1218,80 +1218,79 @@ function nomDrawWorldWithStubs(container,world,sd) {
 
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
-  var existing = document.getElementById('nomHistModal');
+  var existing = document.getElementById('nomHistOverlay');
   if (existing) { existing.remove(); return; }
-
   var isAdmin = (window.__nomUserRol === 'admin_master');
+  window.__nomHistIsAdmin = isAdmin;
+  window.__nomHistData = null;
+  window.__nomHistActiveTab = 'Lista';
+
+  var overlay = document.createElement('div');
+  overlay.id = 'nomHistOverlay';
+  overlay.className = 'nom-modal-overlay open';
+  overlay.style.cssText = 'padding:0;align-items:stretch;background:rgba(0,0,0,.45)';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
 
   var modal = document.createElement('div');
-  modal.id = 'nomHistModal';
-  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f172a;z-index:9999;display:flex;flex-direction:column;overflow:hidden';
+  modal.className = 'nom-modal';
+  modal.style.cssText = 'max-width:960px;width:100%;border-radius:16px;display:flex;flex-direction:column;max-height:90vh;margin:auto;overflow:hidden';
 
   var hdr = document.createElement('div');
-  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0d3d6b;flex-shrink:0';
-
-  var htitle = document.createElement('span');
+  hdr.className = 'nom-modal-hdr';
+  hdr.style.cssText = 'background:#0d3d6b;padding:14px 20px;border-radius:16px 16px 0 0;flex-shrink:0';
+  var htitle = document.createElement('h3');
+  htitle.style.cssText = 'color:#fff;font-size:15px;font-weight:700;flex:1;margin:0';
   htitle.textContent = 'Historico de Nominas';
-  htitle.style.cssText = 'color:#fff;font-size:14px;font-weight:600;letter-spacing:.3px';
+  var hclose = document.createElement('button');
+  hclose.className = 'nom-modal-close';
+  hclose.style.cssText = 'color:rgba(255,255,255,.8);font-size:20px;background:none;border:none;cursor:pointer;line-height:1;padding:4px';
+  hclose.textContent = 'x';
+  hclose.onclick = function(){ overlay.remove(); };
+  hdr.appendChild(htitle); hdr.appendChild(hclose);
 
-  var tabBar = document.createElement('div');
-  tabBar.style.cssText = 'display:flex;gap:2px;background:#0a2a4a;border-radius:6px;padding:3px';
-
-  var tabs = ['Lista','Comparativo','Acumulado'];
+  var tabNav = document.createElement('div');
+  tabNav.style.cssText = 'background:#fff;border-bottom:2px solid #e0e4ea;padding:0 16px;display:flex;gap:0;flex-shrink:0';
   var tabBtns = {};
-  tabs.forEach(function(t) {
+  ['Lista','Comparativo','Acumulado'].forEach(function(t){
     var btn = document.createElement('button');
+    btn.className = 'nom-tab-btn' + (t==='Lista'?' active':'');
     btn.textContent = t;
-    btn.style.cssText = 'padding:5px 14px;border-radius:4px;font-size:11px;border:none;cursor:pointer;background:transparent;color:#94a3b8;font-family:inherit';
-    btn.onclick = function() { nomHistSwitchTab(t); };
-    tabBtns[t] = btn;
-    tabBar.appendChild(btn);
+    btn.onclick = function(){ nomHistSwitchTab(t); };
+    tabBtns[t] = btn; tabNav.appendChild(btn);
   });
-
-  var closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Cerrar';
-  closeBtn.style.cssText = 'background:#475569;color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit';
-  closeBtn.onclick = function() { document.getElementById('nomHistModal').remove(); };
-
-  hdr.appendChild(htitle); hdr.appendChild(tabBar); hdr.appendChild(closeBtn);
+  window.__nomHistTabBtns = tabBtns;
 
   var body = document.createElement('div');
   body.id = 'nomHistBody';
-  body.style.cssText = 'flex:1;overflow:auto;padding:0';
+  body.style.cssText = 'flex:1;overflow:auto;background:#f0f2f5;padding:16px';
+  var loading = document.createElement('div');
+  loading.className = 'nom-loading'; loading.textContent = 'Cargando...';
+  body.appendChild(loading);
 
-  modal.appendChild(hdr); modal.appendChild(body);
-  document.body.appendChild(modal);
-
-  window.__nomHistTabBtns = tabBtns;
-  window.__nomHistIsAdmin = isAdmin;
-  window.__nomHistData = null;
-
-  nomHistSwitchTab('Lista');
+  modal.appendChild(hdr); modal.appendChild(tabNav); modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
   nomCargarHistorico();
 };
 
 function nomHistSwitchTab(tab) {
   window.__nomHistActiveTab = tab;
-  var btns = window.__nomHistTabBtns || {};
-  Object.keys(btns).forEach(function(t) {
-    btns[t].style.background = t === tab ? '#185fa5' : 'transparent';
-    btns[t].style.color = t === tab ? '#fff' : '#94a3b8';
-    btns[t].style.fontWeight = t === tab ? '500' : '400';
+  var btns = window.__nomHistTabBtns||{};
+  Object.keys(btns).forEach(function(t){
+    btns[t].className = 'nom-tab-btn'+(t===tab?' active':'');
   });
-  if (window.__nomHistData) { nomHistRenderTab(tab); }
+  if (window.__nomHistData) nomHistRenderTab(tab);
 }
 
 async function nomCargarHistorico() {
-  var body = document.getElementById('nomHistBody');
-  if (!body) return;
-  body.innerHTML = '<div style="padding:24px;color:#94a3b8;font-size:13px">Cargando...</div>';
   try {
-    var r = await sb.from('nom_historico').select('*').order('semana', {ascending:false}).limit(52);
+    var r = await sb.from('nom_historico').select('*').order('semana',{ascending:false}).limit(52);
     if (r.error) throw r.error;
-    window.__nomHistData = r.data || [];
-    nomHistRenderTab(window.__nomHistActiveTab || 'Lista');
+    window.__nomHistData = r.data||[];
+    nomHistRenderTab(window.__nomHistActiveTab||'Lista');
   } catch(e) {
-    if (body) body.innerHTML = '<div style="padding:24px;color:#ef4444;font-size:12px">Error: ' + e.message + '</div>';
+    var b = document.getElementById('nomHistBody');
+    if (b) { b.innerHTML=''; var d=document.createElement('div'); d.className='nom-alert danger'; d.textContent='Error: '+e.message; b.appendChild(d); }
   }
 }
 
@@ -1299,418 +1298,300 @@ function nomHistRenderTab(tab) {
   var body = document.getElementById('nomHistBody');
   if (!body) return;
   body.innerHTML = '';
-  if (tab === 'Lista') { nomHistRenderLista(body); }
-  else if (tab === 'Comparativo') { nomHistRenderComparativo(body); }
-  else if (tab === 'Acumulado') { nomHistRenderAcumulado(body); }
+  if (tab==='Lista') nomHistRenderLista(body);
+  else if (tab==='Comparativo') nomHistRenderComparativo(body);
+  else if (tab==='Acumulado') nomHistRenderAcumulado(body);
 }
 
-function nomFmtH(n) {
-  if (n == null || isNaN(Number(n))) return '-';
-  return '$' + Number(n).toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
-}
+function nomFmtH(n,dec){ if(n==null||isNaN(Number(n)))return'-'; return '$'+Number(n).toLocaleString('es-MX',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0}); }
 
 function nomHistRenderLista(body) {
-  var rows = window.__nomHistData || [];
+  var rows = window.__nomHistData||[];
   var isAdmin = window.__nomHistIsAdmin;
-
   var wrap = document.createElement('div');
-  wrap.style.cssText = 'overflow:auto';
+  wrap.className = 'nom-table-wrap';
 
-  var info = document.createElement('div');
-  info.style.cssText = 'padding:8px 16px;font-size:10px;color:#334155;text-align:right;background:#0a1929;border-bottom:1px solid #1e3a5f';
-  info.textContent = isAdmin ? 'Admin: puedes eliminar registros' : 'Solo admin_master puede eliminar';
-  wrap.appendChild(info);
+  if (!rows.length) {
+    var emp = document.createElement('div');
+    emp.className='nom-empty';
+    emp.innerHTML='<div class="icon">&#128196;</div><p>Sin registros guardados aun.</p>';
+    wrap.appendChild(emp); body.appendChild(wrap); return;
+  }
 
   var table = document.createElement('table');
-  table.style.cssText = 'width:100%;border-collapse:collapse;font-size:11px;min-width:700px';
+  table.className='nom-table';
+  table.style.minWidth='700px';
 
-  var cols = ['Sem.','Archivo','Colab.','Efectivo','Retenciones','Carga Pat.','Costo Real','Reserva','Guardado'];
-  if (isAdmin) cols.push('');
-  var aligns = ['center','left','center','right','right','right','right','right','left','center'];
+  var cols=['Sem.','Archivo','Colab.','Efectivo total','Retenciones','Carga patronal','Costo real','Reserva','Guardado'];
+  if(isAdmin) cols.push('');
+  var aligns=['center','left','center','right','right','right','right','right','left','center'];
 
-  var thead = document.createElement('thead');
-  var trh = document.createElement('tr');
-  trh.style.background = '#1e3a5f';
-  cols.forEach(function(c, i) {
-    var th = document.createElement('th');
-    th.style.cssText = 'padding:8px 10px;color:#94a3b8;font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;text-align:' + (aligns[i]||'left');
-    th.textContent = c; trh.appendChild(th);
+  var thead=document.createElement('thead');
+  var trh=document.createElement('tr');
+  cols.forEach(function(c,i){
+    var th=document.createElement('th');
+    th.style.textAlign=aligns[i]||'left';
+    th.textContent=c; trh.appendChild(th);
   });
   thead.appendChild(trh); table.appendChild(thead);
 
-  var tbody = document.createElement('tbody');
-  if (!rows.length) {
-    var tr0 = document.createElement('tr');
-    var td0 = document.createElement('td');
-    td0.colSpan = cols.length;
-    td0.style.cssText = 'padding:24px;text-align:center;color:#64748b;font-size:12px';
-    td0.textContent = 'Sin registros guardados.';
-    tr0.appendChild(td0); tbody.appendChild(tr0);
-  }
-  rows.forEach(function(row, i) {
-    var T = row.totals || {};
-    var colabs = (T.regEmps||0) + (T.flujoEmps||0);
-    var fecha = (row.created_at||'').substring(0,10);
-    var tr = document.createElement('tr');
-    tr.style.background = i%2===0 ? '#0f172a' : '#1a2639';
-    tr.style.cursor = 'pointer';
-    tr.onclick = function() { nomVerDetalleHist(row); };
+  var tbody=document.createElement('tbody');
+  rows.forEach(function(row){
+    var T=row.totals||{};
+    var colabs=(T.regEmps||0)+(T.flujoEmps||0);
+    var tr=document.createElement('tr');
+    tr.style.cursor='pointer';
+    tr.onclick=function(){ nomVerDetalleHist(row); };
 
-    var cells = [
-      {v:row.semana||'-', c:'#60a5fa', fw:'700', al:'center'},
-      {v:(row.filename||'-'), c:'#64748b', al:'left', mw:'150px'},
-      {v:colabs, al:'center', c:'#e2e8f0'},
-      {v:nomFmtH(T.totalEfectivo), c:'#22c55e', fw:'600', al:'right'},
-      {v:nomFmtH(T.retenciones), c:'#f87171', al:'right'},
-      {v:nomFmtH(T.cuotas), c:'#fb923c', al:'right'},
-      {v:nomFmtH(T.costoReal), c:'#e2e8f0', fw:'600', al:'right'},
-      {v:nomFmtH(T.reservaTotal), c:'#a78bfa', al:'right'},
-      {v:(row.created_by||'') + ' ' + fecha, c:'#64748b', al:'left'}
+    var datas=[
+      {v:row.semana||'-', c:'#0d3d6b', fw:'800', al:'center'},
+      {v:(row.filename||'-').substring(0,28), c:'#888', al:'left'},
+      {v:colabs, al:'center', c:'#444'},
+      {v:nomFmtH(T.totalEfectivo), c:'#1a7a4a', fw:'700', al:'right'},
+      {v:nomFmtH(T.retenciones), c:'#c0392b', al:'right'},
+      {v:nomFmtH(T.cuotas), c:'#b86b00', al:'right'},
+      {v:nomFmtH(T.costoReal), c:'#0d3d6b', fw:'700', al:'right'},
+      {v:nomFmtH(T.reservaTotal), c:'#7c3aed', al:'right'},
+      {v:(row.created_by||'')+' '+((row.created_at||'').substring(0,10)), c:'#888', al:'left'}
     ];
-    cells.forEach(function(cell) {
-      var td = document.createElement('td');
-      td.style.padding = '8px 10px';
-      td.style.textAlign = cell.al||'left';
-      if (cell.c) td.style.color = cell.c;
-      if (cell.fw) td.style.fontWeight = cell.fw;
-      if (cell.mw) { td.style.maxWidth = cell.mw; td.style.overflow='hidden'; td.style.textOverflow='ellipsis'; td.style.whiteSpace='nowrap'; }
-      td.textContent = cell.v;
+    datas.forEach(function(d){
+      var td=document.createElement('td');
+      td.style.textAlign=d.al||'left';
+      if(d.c) td.style.color=d.c;
+      if(d.fw) td.style.fontWeight=d.fw;
+      td.textContent=d.v;
       tr.appendChild(td);
     });
-
-    if (isAdmin) {
-      var tdDel = document.createElement('td');
-      tdDel.style.cssText = 'padding:6px 10px;text-align:center';
-      var delBtn = document.createElement('button');
-      delBtn.textContent = 'Eliminar';
-      delBtn.style.cssText = 'background:none;border:1px solid #dc2626;color:#dc2626;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:inherit';
-      delBtn.onclick = (function(r) {
-        return function(e) {
-          e.stopPropagation();
-          nomHistEliminar(r.id, r.semana);
-        };
-      })(row);
-      tdDel.appendChild(delBtn);
-      tr.appendChild(tdDel);
+    if(isAdmin){
+      var tdD=document.createElement('td');
+      tdD.style.textAlign='center';
+      var db=document.createElement('button');
+      db.className='nom-btn nom-btn-danger nom-btn-sm';
+      db.textContent='Eliminar';
+      db.onclick=(function(ro){return function(e){e.stopPropagation();nomHistEliminar(ro.id,ro.semana);};})(row);
+      tdD.appendChild(db); tr.appendChild(tdD);
     }
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
   wrap.appendChild(table);
   body.appendChild(wrap);
+  if(isAdmin){
+    var note=document.createElement('div');
+    note.style.cssText='font-size:11px;color:#aaa;margin-top:8px;text-align:right';
+    note.textContent='Solo admin_master puede eliminar registros';
+    body.appendChild(note);
+  }
 }
 
-async function nomHistEliminar(id, semana) {
-  if (!confirm('Eliminar el registro de la semana ' + semana + '? Esta accion no se puede deshacer.')) return;
-  try {
-    var r = await sb.from('nom_historico').delete().eq('id', id);
-    if (r.error) throw r.error;
-    window.__nomHistData = (window.__nomHistData||[]).filter(function(x){ return x.id !== id; });
+async function nomHistEliminar(id,semana){
+  if(!confirm('Eliminar el registro de la semana '+semana+'? Esta accion no se puede deshacer.')) return;
+  try{
+    var r=await sb.from('nom_historico').delete().eq('id',id);
+    if(r.error) throw r.error;
+    window.__nomHistData=(window.__nomHistData||[]).filter(function(x){return x.id!==id;});
     nomHistRenderTab('Lista');
-  } catch(e) {
-    alert('Error al eliminar: ' + e.message);
-  }
+  }catch(e){ alert('Error al eliminar: '+e.message); }
 }
 
 function nomHistRenderComparativo(body) {
-  var rows = window.__nomHistData || [];
-
-  var wrap = document.createElement('div');
-  wrap.style.cssText = 'padding:14px 16px';
-
-  if (rows.length < 2) {
-    var msg = document.createElement('div');
-    msg.style.cssText = 'color:#94a3b8;font-size:13px;padding:16px 0';
-    msg.textContent = 'Se necesitan al menos 2 semanas guardadas para comparar.';
-    wrap.appendChild(msg); body.appendChild(wrap); return;
+  var rows=window.__nomHistData||[];
+  if(rows.length<2){
+    var al=document.createElement('div');
+    al.className='nom-alert info';
+    al.textContent='Se necesitan al menos 2 semanas guardadas para comparar.';
+    body.appendChild(al); return;
   }
 
-  var selRow = document.createElement('div');
-  selRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px';
+  var selWrap=document.createElement('div');
+  selWrap.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px';
 
-  function makeSelect(label, defaultIdx) {
-    var col = document.createElement('div');
-    var lbl = document.createElement('div');
-    lbl.style.cssText = 'color:#94a3b8;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px';
-    lbl.textContent = label;
-    var sel = document.createElement('select');
-    sel.style.cssText = 'width:100%;background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:5px;padding:5px 8px;font-size:11px;font-family:inherit';
-    rows.forEach(function(r, i) {
-      var opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = 'Sem. ' + (r.semana||'-') + ' — ' + (r.filename||'').substring(0,30);
-      sel.appendChild(opt);
+  function makeField(lbl,defIdx){
+    var f=document.createElement('div'); f.className='nom-field';
+    var lb=document.createElement('label'); lb.textContent=lbl; f.appendChild(lb);
+    var sel=document.createElement('select');
+    rows.forEach(function(r,i){
+      var o=document.createElement('option'); o.value=i;
+      o.textContent='Sem. '+(r.semana||'-')+' — '+(r.filename||'').substring(0,28);
+      sel.appendChild(o);
     });
-    sel.selectedIndex = defaultIdx;
-    sel.onchange = function() { nomHistRenderComp(rows[parseInt(selA.value)], rows[parseInt(selB.value)], compBody); };
-    col.appendChild(lbl); col.appendChild(sel);
-    return { col:col, sel:sel };
+    sel.selectedIndex=defIdx; f.appendChild(sel); return{f:f,sel:sel};
   }
+  var fA=makeField('Semana A',0);
+  var fB=makeField('Semana B (base de comparacion)',Math.min(1,rows.length-1));
+  var selA=fA.sel, selB=fB.sel;
+  selWrap.appendChild(fA.f); selWrap.appendChild(fB.f);
+  body.appendChild(selWrap);
 
-  var sA = makeSelect('Semana A (nueva)', 0);
-  var sB = makeSelect('Semana B (comparar contra)', Math.min(1, rows.length-1));
-  var selA = sA.sel, selB = sB.sel;
-  sA.sel.onchange = function() { nomHistRenderComp(rows[parseInt(selA.value)], rows[parseInt(selB.value)], compBody); };
-  sB.sel.onchange = function() { nomHistRenderComp(rows[parseInt(selA.value)], rows[parseInt(selB.value)], compBody); };
-  selRow.appendChild(sA.col); selRow.appendChild(sB.col);
-  wrap.appendChild(selRow);
+  var compArea=document.createElement('div');
+  body.appendChild(compArea);
 
-  var compBody = document.createElement('div');
-  wrap.appendChild(compBody);
-  body.appendChild(wrap);
-  nomHistRenderComp(rows[parseInt(selA.value)], rows[parseInt(selB.value)], compBody);
-}
+  function render(){
+    var rA=rows[parseInt(selA.value)];
+    var rB=rows[parseInt(selB.value)];
+    compArea.innerHTML='';
+    var TA=rA.totals||{}, TB=rB.totals||{};
+    var F=nomFmtH;
+    var dt=function(a,b,invert){
+      if(a==null||b==null)return'';
+      var d=Number(a)-Number(b);
+      if(d===0)return'<span style="color:#888">—</span>';
+      var good=(invert?d<0:d<0);
+      var col=good?'#1a7a4a':'#c0392b';
+      var arr=d>0?'↑':'↓';
+      return '<span style="color:'+col+';font-size:11px;font-weight:700">'+arr+' $'+Math.abs(d).toLocaleString('es-MX',{maximumFractionDigits:0})+'</span>';
+    };
+    var dtN=function(a,b){
+      if(a==null||b==null)return'';
+      var d=Number(a)-Number(b);
+      if(d===0)return'<span style="color:#888">—</span>';
+      var col=d>0?'#1a7a4a':'#c0392b';
+      return '<span style="color:'+col+';font-size:11px;font-weight:700">'+(d>0?'↑':'↓')+' '+Math.abs(d)+'</span>';
+    };
+    var concepts=[
+      {lbl:'Colaboradores',a:(TA.regEmps||0)+(TA.flujoEmps||0),b:(TB.regEmps||0)+(TB.flujoEmps||0),num:true,sep:true},
+      {lbl:'Efectivo total',a:TA.totalEfectivo,b:TB.totalEfectivo,c:'#1a7a4a',invert:true},
+      {lbl:'Percepciones nomina regular',a:TA.regPercep,b:TB.regPercep,c:'#0d3d6b'},
+      {lbl:'ISR retenido',a:TA.regISR,b:TB.regISR,c:'#c0392b'},
+      {lbl:'IMSS obrero',a:TA.regIMSS,b:TB.regIMSS,c:'#c0392b'},
+      {lbl:'Subsidio empleo',a:TA.regSub,b:TB.regSub,c:'#1a7a4a'},
+      {lbl:'Neto nomina regular',a:TA.regNeto,b:TB.regNeto,c:'#0d3d6b',fw:'700',sep:true},
+      {lbl:'Retenciones totales (ISR+IMSS)',a:TA.retenciones,b:TB.retenciones,c:'#c0392b',fw:'700'},
+      {lbl:'IMSS patronal',a:TA.imssPatron,b:TB.imssPatron,c:'#b86b00',sep:true},
+      {lbl:'ISN Tijuana 4.25%',a:TA.isn,b:TB.isn,c:'#b86b00'},
+      {lbl:'INFONAVIT patronal',a:TA.infoPatron,b:TB.infoPatron,c:'#b86b00'},
+      {lbl:'Total cuotas patronales',a:TA.cuotas,b:TB.cuotas,c:'#b86b00',fw:'700'},
+      {lbl:'COSTO REAL SEMANA',a:TA.costoReal,b:TB.costoReal,c:'#0d3d6b',fw:'800',sep:true,big:true},
+      {lbl:'Reserva para gobierno',a:TA.reservaTotal,b:TB.reservaTotal,c:'#7c3aed',sep:true},
+      {lbl:'INFONAVIT bimestral acumulado',a:TA.infoTotal,b:TB.infoTotal,c:'#7c3aed'},
+      {lbl:'Total pagos flujo neto',a:TA.flujoTotal,b:TB.flujoTotal,c:'#555'}
+    ];
 
-function nomHistRenderComp(rA, rB, container) {
-  container.innerHTML = '';
-  var TA = rA.totals || {};
-  var TB = rB.totals || {};
+    var tw=document.createElement('div'); tw.className='nom-table-wrap';
+    var tbl=document.createElement('table'); tbl.className='nom-table';
+    var th=document.createElement('thead');
+    var thr=document.createElement('tr');
+    ['Concepto','Sem. '+(rA.semana||'-'),'Sem. '+(rB.semana||'-'),'Diferencia'].forEach(function(h,i){
+      var el=document.createElement('th');
+      el.style.textAlign=i===0?'left':'right';
+      el.textContent=h; thr.appendChild(el);
+    });
+    th.appendChild(thr); tbl.appendChild(th);
 
-  var fmt = function(n) { return n != null ? '$' + Number(n).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}) : '-'; };
-  var delta = function(a, b) {
-    if (a == null || b == null) return '';
-    var d = Number(a) - Number(b);
-    var sign = d >= 0 ? '+' : '';
-    var col = d > 0 ? '#f87171' : '#22c55e';
-    var arr = d > 0 ? '↑' : '↓';
-    return '<span style="color:' + col + ';font-size:11px">' + arr + ' ' + sign + '$' + Math.abs(d).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}) + '</span>';
-  };
-  var deltaNum = function(a, b) {
-    if (a == null || b == null) return '';
-    var d = Number(a) - Number(b);
-    var sign = d >= 0 ? '+' : '';
-    var col = d > 0 ? '#22c55e' : '#f87171';
-    var arr = d > 0 ? '↑' : '↓';
-    return '<span style="color:' + col + ';font-size:11px">' + arr + ' ' + sign + d.toLocaleString('es-MX') + '</span>';
-  };
-
-  var concepts = [
-    {lbl:'Colaboradores', a:(TA.regEmps||0)+(TA.flujoEmps||0), b:(TB.regEmps||0)+(TB.flujoEmps||0), fmtFn:'num', sep:true},
-    {lbl:'Efectivo total', a:TA.totalEfectivo, b:TB.totalEfectivo, c:'#22c55e'},
-    {lbl:'Percepciones nomina reg.', a:TA.regPercep, b:TB.regPercep, c:'#60a5fa'},
-    {lbl:'ISR retenido', a:TA.regISR, b:TB.regISR, c:'#f87171'},
-    {lbl:'IMSS obrero', a:TA.regIMSS, b:TB.regIMSS, c:'#f87171'},
-    {lbl:'Neto nomina reg.', a:TA.regNeto, b:TB.regNeto, c:'#e2e8f0'},
-    {lbl:'Retenciones ISR+IMSS', a:TA.retenciones, b:TB.retenciones, c:'#f87171', sep:true},
-    {lbl:'IMSS patronal', a:TA.imssPatron, b:TB.imssPatron, c:'#fb923c'},
-    {lbl:'ISN Tijuana 4.25%', a:TA.isn, b:TB.isn, c:'#fb923c'},
-    {lbl:'INFONAVIT patronal', a:TA.infoPatron, b:TB.infoPatron, c:'#fb923c'},
-    {lbl:'Cuotas patronales', a:TA.cuotas, b:TB.cuotas, c:'#fb923c', sep:true},
-    {lbl:'COSTO REAL TOTAL', a:TA.costoReal, b:TB.costoReal, c:'#fff', fw:'600', big:true},
-    {lbl:'Reserva para gobierno', a:TA.reservaTotal, b:TB.reservaTotal, c:'#a78bfa', sep:true},
-    {lbl:'INFONAVIT bimestral acum.', a:TA.infoTotal, b:TB.infoTotal, c:'#a78bfa'},
-    {lbl:'Total flujo neto', a:TA.flujoTotal, b:TB.flujoTotal, c:'#94a3b8'}
-  ];
-
-  var table = document.createElement('table');
-  table.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px';
-
-  var thead = document.createElement('thead');
-  var trh = document.createElement('tr');
-  trh.style.background = '#1e3a5f';
-  ['Concepto','Sem. '+rA.semana,'Sem. '+rB.semana,'Diferencia'].forEach(function(h, i) {
-    var th = document.createElement('th');
-    th.style.cssText = 'padding:8px 12px;color:#94a3b8;font-weight:500;font-size:10px;text-align:' + (i===0?'left':'right');
-    th.textContent = h; trh.appendChild(th);
-  });
-  thead.appendChild(trh); table.appendChild(thead);
-
-  var tbody = document.createElement('tbody');
-  concepts.forEach(function(row, idx) {
-    if (row.sep && idx > 0) {
-      var sep = document.createElement('tr');
-      var std = document.createElement('td');
-      std.colSpan = 4;
-      std.style.cssText = 'padding:2px;background:#1e3a5f';
-      sep.appendChild(std); tbody.appendChild(sep);
-    }
-    var tr = document.createElement('tr');
-    tr.style.background = row.big ? '#1a2639' : (idx%2===0 ? '#0f172a' : '#131f2e');
-
-    var tdL = document.createElement('td');
-    tdL.style.cssText = 'padding:7px 12px;color:' + (row.c||'#94a3b8') + ';' + (row.fw?'font-weight:'+row.fw+';':'');
-    tdL.textContent = row.lbl;
-
-    var tdA = document.createElement('td');
-    tdA.style.cssText = 'padding:7px 12px;text-align:right;color:' + (row.c||'#e2e8f0') + ';' + (row.fw?'font-weight:'+row.fw+';':'');
-    tdA.textContent = row.fmtFn === 'num' ? (row.a||0) : fmt(row.a);
-
-    var tdB = document.createElement('td');
-    tdB.style.cssText = 'padding:7px 12px;text-align:right;color:#64748b;' + (row.fw?'font-weight:'+row.fw+';':'');
-    tdB.textContent = row.fmtFn === 'num' ? (row.b||0) : fmt(row.b);
-
-    var tdD = document.createElement('td');
-    tdD.style.cssText = 'padding:7px 12px;text-align:right';
-    tdD.innerHTML = row.fmtFn === 'num' ? deltaNum(row.a, row.b) : delta(row.a, row.b);
-
-    tr.appendChild(tdL); tr.appendChild(tdA); tr.appendChild(tdB); tr.appendChild(tdD);
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  container.appendChild(table);
+    var tb=document.createElement('tbody');
+    concepts.forEach(function(row,idx){
+      if(row.sep&&idx>0){
+        var sep=document.createElement('tr');
+        var sd=document.createElement('td'); sd.colSpan=4;
+        sd.style.cssText='padding:2px;background:#e0e4ea;'; sep.appendChild(sd); tb.appendChild(sep);
+      }
+      var tr=document.createElement('tr');
+      if(row.big) tr.style.background='#f0f4f9';
+      ['lbl','a','b','delta'].forEach(function(col2){
+        var td=document.createElement('td');
+        td.style.textAlign=col2==='lbl'?'left':'right';
+        if(row.c&&col2!=='b'&&col2!=='lbl') td.style.color=row.c;
+        if(col2==='b') td.style.color='#888';
+        if(row.fw) td.style.fontWeight=row.fw;
+        if(col2==='lbl') td.textContent=row.lbl;
+        else if(col2==='a') td.textContent=row.num?(row.a||0):F(row.a);
+        else if(col2==='b') td.textContent=row.num?(row.b||0):F(row.b);
+        else td.innerHTML=row.num?dtN(row.a,row.b):dt(row.a,row.b,row.invert);
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); tw.appendChild(tbl); compArea.appendChild(tw);
+  }
+  selA.onchange=render; selB.onchange=render;
+  render();
 }
 
 function nomHistRenderAcumulado(body) {
-  var rows = window.__nomHistData || [];
-  var wrap = document.createElement('div');
-  wrap.style.cssText = 'padding:14px 16px';
-
-  if (!rows.length) {
-    var msg = document.createElement('div');
-    msg.style.cssText = 'color:#94a3b8;font-size:13px';
-    msg.textContent = 'Sin datos acumulados.';
-    wrap.appendChild(msg); body.appendChild(wrap); return;
+  var rows=window.__nomHistData||[];
+  if(!rows.length){
+    var al=document.createElement('div'); al.className='nom-alert info';
+    al.textContent='Sin datos acumulados.'; body.appendChild(al); return;
   }
+  var sum=function(k){return rows.reduce(function(s,r){return s+Number((r.totals||{})[k]||0);},0);};
 
-  var sum = function(key) { return rows.reduce(function(s,r){ return s + Number((r.totals||{})[key]||0); }, 0); };
-
-  var kpis = [
-    {lbl:'Efectivo total acumulado', val:sum('totalEfectivo'), c:'#22c55e'},
-    {lbl:'Retenciones acumuladas', val:sum('retenciones'), c:'#f87171', sub:'ISR + IMSS obrero'},
-    {lbl:'Carga patronal acumulada', val:sum('cuotas'), c:'#fb923c', sub:'IMSS + ISN + INFO'},
-    {lbl:'Costo real acumulado', val:sum('costoReal'), c:'#e2e8f0', sub:'Total empresa'},
-    {lbl:'Reserva gobierno acumulada', val:sum('reservaTotal'), c:'#a78bfa', sub:'Estimado dias 17'},
-    {lbl:'Semanas registradas', val:rows.length, c:'#60a5fa', isNum:true}
-  ];
-
-  var kpiGrid = document.createElement('div');
-  kpiGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px';
-  kpis.forEach(function(k) {
-    var card = document.createElement('div');
-    card.style.cssText = 'background:#1e293b;border-radius:8px;padding:10px 12px;border:1px solid #334155';
-    var lbl = document.createElement('div');
-    lbl.style.cssText = 'color:#64748b;font-size:10px;margin-bottom:4px';
-    lbl.textContent = k.lbl;
-    var val = document.createElement('div');
-    val.style.cssText = 'font-size:15px;font-weight:500;color:' + k.c;
-    val.textContent = k.isNum ? k.val : nomFmtH(k.val);
-    card.appendChild(lbl); card.appendChild(val);
-    if (k.sub) {
-      var sub = document.createElement('div');
-      sub.style.cssText = 'font-size:10px;color:#475569;margin-top:2px';
-      sub.textContent = k.sub;
-      card.appendChild(sub);
-    }
-    kpiGrid.appendChild(card);
+  var kpiRow=document.createElement('div');
+  kpiRow.className='nom-kpi-row';
+  [{lbl:'Efectivo acumulado',val:sum('totalEfectivo'),cls:'green'},{lbl:'Retenciones acumuladas',val:sum('retenciones'),cls:'amber'},{lbl:'Carga patronal acumulada',val:sum('cuotas'),cls:'amber'},{lbl:'Costo real acumulado',val:sum('costoReal'),cls:''},{lbl:'Reserva gobierno acumulada',val:sum('reservaTotal'),cls:''},{lbl:'Semanas registradas',val:rows.length,cls:'',raw:true}].forEach(function(k){
+    var card=document.createElement('div'); card.className='nom-kpi';
+    var lb=document.createElement('div'); lb.className='nom-kpi-label'; lb.textContent=k.lbl;
+    var vl=document.createElement('div'); vl.className='nom-kpi-val'+(k.cls?' '+k.cls:'');
+    vl.style.fontSize='18px';
+    vl.textContent=k.raw?k.val:nomFmtH(k.val);
+    card.appendChild(lb); card.appendChild(vl); kpiRow.appendChild(card);
   });
-  wrap.appendChild(kpiGrid);
+  body.appendChild(kpiRow);
 
-  var chartTitle = document.createElement('div');
-  chartTitle.style.cssText = 'color:#94a3b8;font-size:11px;margin-bottom:8px;font-weight:500';
-  chartTitle.textContent = 'Costo real vs efectivo — por semana guardada';
-  wrap.appendChild(chartTitle);
-
-  var chartBox = document.createElement('div');
-  chartBox.style.cssText = 'background:#1e293b;border-radius:8px;padding:14px;border:1px solid #334155';
-
-  var sortedRows = rows.slice().sort(function(a,b){ return (a.semana||0)-(b.semana||0); });
-  var maxCosto = Math.max.apply(null, sortedRows.map(function(r){ return Number((r.totals||{}).costoReal||0); }));
-  var H = 100;
-
-  var svgNS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(svgNS, 'svg');
-  var barW = Math.min(40, Math.floor(500 / sortedRows.length) - 8);
-  var gap = barW + 12;
-  var totalW = sortedRows.length * gap + 20;
-  svg.setAttribute('viewBox', '0 0 ' + totalW + ' ' + (H+30));
-  svg.setAttribute('width', '100%');
-  svg.setAttribute('height', H+30);
-  svg.style.display = 'block';
-
-  sortedRows.forEach(function(row, i) {
-    var T = row.totals || {};
-    var costo = Number(T.costoReal||0);
-    var efect = Number(T.totalEfectivo||0);
-    var hCosto = maxCosto > 0 ? Math.round((costo/maxCosto)*H) : 0;
-    var hEfect = maxCosto > 0 ? Math.round((efect/maxCosto)*H) : 0;
-    var x = 10 + i * gap;
-
-    var rC = document.createElementNS(svgNS, 'rect');
-    rC.setAttribute('x', x); rC.setAttribute('y', H-hCosto);
-    rC.setAttribute('width', barW); rC.setAttribute('height', hCosto);
-    rC.setAttribute('fill', '#185fa5'); rC.setAttribute('rx', '2');
-    svg.appendChild(rC);
-
-    var rE = document.createElementNS(svgNS, 'rect');
-    rE.setAttribute('x', x + barW*0.3); rE.setAttribute('y', H-hEfect);
-    rE.setAttribute('width', barW*0.4); rE.setAttribute('height', hEfect);
-    rE.setAttribute('fill', '#22c55e'); rE.setAttribute('rx', '2');
-    svg.appendChild(rE);
-
-    var lbl = document.createElementNS(svgNS, 'text');
-    lbl.setAttribute('x', x + barW/2); lbl.setAttribute('y', H+14);
-    lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '9');
-    lbl.setAttribute('fill', '#64748b'); lbl.textContent = 'S'+row.semana;
-    svg.appendChild(lbl);
+  var tw=document.createElement('div'); tw.className='nom-table-wrap'; tw.style.marginTop='14px';
+  var hd=document.createElement('div');
+  hd.style.cssText='padding:12px 16px;font-size:13px;font-weight:700;color:#0d3d6b;border-bottom:1px solid #e8ecf0;background:#f5f7fa';
+  hd.textContent='Detalle por semana';
+  tw.appendChild(hd);
+  var tbl=document.createElement('table'); tbl.className='nom-table';
+  var thead=document.createElement('thead');
+  var trh=document.createElement('tr');
+  ['Semana','Colab.','Efectivo','Retenciones','Carga Pat.','Costo Real','Reserva'].forEach(function(h,i){
+    var th=document.createElement('th'); th.style.textAlign=i<2?'center':'right'; th.textContent=h; trh.appendChild(th);
   });
-
-  chartBox.appendChild(svg);
-
-  var legend = document.createElement('div');
-  legend.style.cssText = 'display:flex;gap:16px;margin-top:8px';
-  [{c:'#185fa5',l:'Costo real'},{c:'#22c55e',l:'Efectivo neto'}].forEach(function(leg) {
-    var d = document.createElement('div');
-    d.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8';
-    var dot = document.createElement('div');
-    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:'+leg.c;
-    d.appendChild(dot); d.appendChild(document.createTextNode(leg.l));
-    legend.appendChild(d);
+  thead.appendChild(trh); tbl.appendChild(thead);
+  var tbody=document.createElement('tbody');
+  var sorted=rows.slice().sort(function(a,b){return(a.semana||0)-(b.semana||0);});
+  sorted.forEach(function(row){
+    var T=row.totals||{};
+    var tr=document.createElement('tr');
+    [{v:row.semana||'-',c:'#0d3d6b',fw:'800',al:'center'},{v:(T.regEmps||0)+(T.flujoEmps||0),al:'center'},{v:nomFmtH(T.totalEfectivo),c:'#1a7a4a',fw:'700',al:'right'},{v:nomFmtH(T.retenciones),c:'#c0392b',al:'right'},{v:nomFmtH(T.cuotas),c:'#b86b00',al:'right'},{v:nomFmtH(T.costoReal),c:'#0d3d6b',fw:'700',al:'right'},{v:nomFmtH(T.reservaTotal),c:'#7c3aed',al:'right'}].forEach(function(d){
+      var td=document.createElement('td'); td.style.textAlign=d.al||'left';
+      if(d.c)td.style.color=d.c; if(d.fw)td.style.fontWeight=d.fw; td.textContent=d.v; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
   });
-  chartBox.appendChild(legend);
-  wrap.appendChild(chartBox);
-  body.appendChild(wrap);
+  var tfoot=document.createElement('tfoot');
+  var tfr=document.createElement('tr');
+  [{v:'TOTAL',c:'#0d3d6b',fw:'800',al:'center'},{v:'',al:'center'},{v:nomFmtH(sum('totalEfectivo')),c:'#1a7a4a',fw:'800',al:'right'},{v:nomFmtH(sum('retenciones')),c:'#c0392b',fw:'800',al:'right'},{v:nomFmtH(sum('cuotas')),c:'#b86b00',fw:'800',al:'right'},{v:nomFmtH(sum('costoReal')),c:'#0d3d6b',fw:'800',al:'right'},{v:nomFmtH(sum('reservaTotal')),c:'#7c3aed',fw:'800',al:'right'}].forEach(function(d){
+    var td=document.createElement('td'); td.style.cssText='padding:10px 12px;font-size:12px;background:#f0f4f9;border-top:2px solid #0d3d6b;text-align:'+d.al;
+    if(d.c)td.style.color=d.c; if(d.fw)td.style.fontWeight=d.fw; td.textContent=d.v; tfr.appendChild(td);
+  });
+  tfoot.appendChild(tfr);
+  tbl.appendChild(tbody); tbl.appendChild(tfoot); tw.appendChild(tbl); body.appendChild(tw);
 }
 
 window.nomVerDetalleHist = function nomVerDetalleHist(row) {
-  var T = row.totals || {};
-  var existing = document.getElementById('nomHistDetModal');
-  if (existing) existing.remove();
-
-  var labels = {
-    totalEfectivo:'Efectivo total',regPercep:'Percepciones reg.',regISR:'ISR retenido',
-    regIMSS:'IMSS obrero',regNeto:'Neto nomina reg.',retenciones:'Retenciones ISR+IMSS',
-    imssPatron:'IMSS patronal',isn:'ISN',infoPatron:'INFONAVIT patronal',cuotas:'Cuotas patronales',
-    costoReal:'Costo real semana',reservaTotal:'Total a reservar',
-    flujoTotal:'Total flujo neto',infoTotal:'INFONAVIT bimestral'
-  };
-
-  var det = document.createElement('div');
-  det.id = 'nomHistDetModal';
-  det.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;border:1px solid #334155;border-radius:10px;padding:20px;z-index:10000;min-width:340px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)';
-
-  var dhdr = document.createElement('div');
-  dhdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px';
-  var dtitle = document.createElement('b');
-  dtitle.style.color = '#60a5fa';
-  dtitle.textContent = 'Semana ' + (row.semana||'-');
-  var dclose = document.createElement('button');
-  dclose.textContent = 'X';
-  dclose.style.cssText = 'background:#475569;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit';
-  dclose.onclick = function() { document.getElementById('nomHistDetModal').remove(); };
-  dhdr.appendChild(dtitle); dhdr.appendChild(dclose);
-
-  var dsub = document.createElement('div');
-  dsub.style.cssText = 'font-size:10px;color:#64748b;margin-bottom:10px';
-  dsub.textContent = (row.filename||'') + ' | ' + (row.created_by||'') + ' | ' + (row.created_at||'').substring(0,16);
-
-  var dtable = document.createElement('table');
-  dtable.style.cssText = 'width:100%;border-collapse:collapse';
-  Object.keys(labels).forEach(function(k) {
-    var dr = document.createElement('tr');
-    var dl = document.createElement('td');
-    dl.style.cssText = 'padding:5px 8px;color:#94a3b8;font-size:12px;border-bottom:1px solid #1e3a5f';
-    dl.textContent = labels[k];
-    var dv = document.createElement('td');
-    dv.style.cssText = 'padding:5px 8px;text-align:right;font-size:12px;font-weight:500;color:#e2e8f0;border-bottom:1px solid #1e3a5f';
-    var num = T[k];
-    dv.textContent = num != null ? '$' + Number(num).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}) : '-';
-    dr.appendChild(dl); dr.appendChild(dv); dtable.appendChild(dr);
+  var T=row.totals||{};
+  var ex=document.getElementById('nomHistDetModal'); if(ex)ex.remove();
+  var labels={totalEfectivo:'Efectivo total',regPercep:'Percepciones reg.',regISR:'ISR retenido',regIMSS:'IMSS obrero',regNeto:'Neto nomina reg.',retenciones:'Retenciones totales',imssPatron:'IMSS patronal',isn:'ISN',infoPatron:'INFONAVIT patronal',cuotas:'Cuotas patronales',costoReal:'COSTO REAL',reservaTotal:'Reserva gobierno',flujoTotal:'Flujo neto',infoTotal:'INFONAVIT bimestral'};
+  var det=document.createElement('div'); det.id='nomHistDetModal';
+  det.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:14px;padding:0;z-index:10001;min-width:340px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)';
+  var dh=document.createElement('div');
+  dh.style.cssText='padding:14px 18px;background:#0d3d6b;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between';
+  var dt=document.createElement('b'); dt.style.cssText='color:#fff;font-size:14px'; dt.textContent='Semana '+(row.semana||'-');
+  var dc=document.createElement('button');
+  dc.style.cssText='background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px;line-height:1';
+  dc.textContent='x'; dc.onclick=function(){document.getElementById('nomHistDetModal').remove();};
+  dh.appendChild(dt); dh.appendChild(dc);
+  var ds=document.createElement('div');
+  ds.style.cssText='font-size:11px;color:#888;padding:8px 18px;border-bottom:1px solid #f0f2f5;background:#f8f9fb';
+  ds.textContent=(row.filename||'')+' | '+(row.created_by||'')+' | '+(row.created_at||'').substring(0,16);
+  var dtbl=document.createElement('table'); dtbl.style.cssText='width:100%;border-collapse:collapse';
+  Object.keys(labels).forEach(function(k,i){
+    var dr=document.createElement('tr');
+    if(i%2===0) dr.style.background='#f8f9fb';
+    var dl=document.createElement('td'); dl.style.cssText='padding:7px 18px;color:#666;font-size:12px';  dl.textContent=labels[k];
+    var dv=document.createElement('td'); dv.style.cssText='padding:7px 18px;text-align:right;font-size:13px;font-weight:700;color:#0d3d6b';
+    var n=T[k]; dv.textContent=n!=null?'$'+Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}):'-';
+    dr.appendChild(dl); dr.appendChild(dv); dtbl.appendChild(dr);
   });
-
-  det.appendChild(dhdr); det.appendChild(dsub); det.appendChild(dtable);
+  det.appendChild(dh); det.appendChild(ds); det.appendChild(dtbl);
   document.body.appendChild(det);
 };
 window.nomCargarHistorico = nomCargarHistorico;
+window.nomHistEliminar = nomHistEliminar;
+window.nomHistSwitchTab = nomHistSwitchTab;
+
 window.nomHistEliminar = nomHistEliminar;
 window.nomHistSwitchTab = nomHistSwitchTab;
 
