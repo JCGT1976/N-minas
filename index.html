@@ -2903,6 +2903,68 @@ function calcDetectForma(r, sample) {
   return '';
 }
 
+
+function calcCruceEmpleados(wb) {
+  var regEmpMap = {};
+  var regSheets = [
+    {pat:'INT. TRANSFERENCIA', emp:'Internacional (Transf.)'},
+    {pat:'INT. EFECTIVO',      emp:'Internacional (Efect.)'},
+    {pat:'NOM. COMERCIAL',     emp:'Comercial'},
+    {pat:'NOM. AUTOBOT',       emp:'Autobot'},
+    {pat:'NOM. ARIITRANST',    emp:'Ariitranst'}
+  ];
+  regSheets.forEach(function(def) {
+    var found = calcFindSheet(wb, def.pat);
+    if (!found) return;
+    var rows = calcSmartSheetRows(found.sh);
+    if (!rows.length) return;
+    var kNum = calcFindKey(rows[0], ['numero','num']);
+    var kNom = calcFindKey(rows[0], ['nombre']);
+    var kPer = calcFindKey(rows[0], ['tot.percep','totpercep','percep']);
+    var kNet = calcFindKey(rows[0], ['total neto','totalneto']);
+    if (!kNum || !kNom) return;
+    rows.forEach(function(row) {
+      var num = parseInt(String(row[kNum]||'').trim());
+      if (!num || !row[kNom]) return;
+      var percep = parseFloat(String(row[kPer]||'0').replace(/[^0-9.-]/g,''))||0;
+      var neto   = parseFloat(String(row[kNet]||'0').replace(/[^0-9.-]/g,''))||0;
+      if (!regEmpMap[num]) regEmpMap[num] = {num:num, nombre:String(row[kNom]).trim(), emp:def.emp, percep:0, neto:0};
+      regEmpMap[num].percep += percep;
+      regEmpMap[num].neto   += neto;
+    });
+  });
+  var flujoSheets = [
+    {pat:'HORAS EXTRAS',    label:'Hrs extras TJ', numPat:['empleado','num'], amtPat:['extra2','bono.*2']},
+    {pat:'PROY. MTY',       label:'Proyectos MTY', numPat:['empleado','numero'], amtPat:['cantridad','cantidad tot']},
+    {pat:'BONO ASISTENCIA', label:'Bono MTY',       numPat:['numero','num'],     amtPat:['cantidad']},
+    {pat:'COMP. SUELDOS',   label:'Compl. sueldos', numPat:['empleado','num'],   amtPat:['complemento']}
+  ];
+  var cruceMap = {};
+  flujoSheets.forEach(function(def) {
+    var found = calcFindSheet(wb, def.pat);
+    if (!found) return;
+    var rows = calcSmartSheetRows(found.sh);
+    if (!rows.length) return;
+    var kNum = calcFindKey(rows[0], def.numPat);
+    var kAmt = calcFindKey(rows[0], def.amtPat);
+    if (!kNum || !kAmt) return;
+    rows.forEach(function(row) {
+      var num = parseInt(String(row[kNum]||'').trim());
+      if (!num || !regEmpMap[num]) return;
+      var monto = parseFloat(String(row[kAmt]||'0').replace(/[^0-9.-]/g,''))||0;
+      if (!monto) return;
+      if (!cruceMap[num]) {
+        var re = regEmpMap[num];
+        cruceMap[num] = {num:num, nombre:re.nombre, emp:re.emp, percep:re.percep, neto:re.neto, flujos:[]};
+      }
+      cruceMap[num].flujos.push({label:def.label, monto:monto});
+    });
+  });
+  return Object.values(cruceMap).sort(function(a,b) {
+    return b.flujos.reduce(function(s,f){return s+f.monto;},0) - a.flujos.reduce(function(s,f){return s+f.monto;},0);
+  });
+}
+
 function calcProcessWorkbook(wb, fileName) {
   var semana = calcDetectSemana(wb);
   var ref = calcReadNominaAPagar(wb);
@@ -3015,10 +3077,11 @@ function calcProcessWorkbook(wb, fileName) {
   var infoTotal=infoPatron+fin.info;
   var reservaTotal=retenciones+cuotas+infoTotal;
   var costoReal=totalEfectivo+retenciones+cuotas+infoTotal;
+  var cruce = calcCruceEmpleados(wb);
   return {
     semana:semana, fileName:fileName||'',
     regular:regular, flujoNeto:flujoNeto, finiquitos:fin, duplicates:duplicates,
-    uniqueEmps:uniqueEmps,
+    uniqueEmps:uniqueEmps, cruce:cruce,
     totals:{
       regEmps:totReg.emps, regPercep:totReg.percep, regISR:totReg.isr, regIMSS:totReg.imss, regNeto:totReg.neto,
       flujoTotal:flujoTotal, flujoEmps:flujoEmps,
@@ -3199,6 +3262,40 @@ function calcHtmlCompleta(R) {
        + '</div>';
   }
 
+
+  if (R.cruce && R.cruce.length) {
+    h += '<div style="margin-top:16px">';
+    h += '<div style="background:#fff8e1;border-left:4px solid #f59f00;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px">';
+    h += '<span style="font-size:18px">&#9888;</span>';
+    h += '<div><b style="color:#7d5a00;font-size:13px">' + R.cruce.length + ' colaboradores con ingresos en nomina regular y flujo neto</b>';
+    h += '<div style="font-size:11px;color:#9a7400">Flujo neto no es base gravable — no se retiene ISR/IMSS adicional por esos montos</div></div>';
+    h += '</div>';
+    var totFlujoExtra = R.cruce.reduce(function(s,e){ return s+e.flujos.reduce(function(ss,f){return ss+f.monto;},0); }, 0);
+    h += '<div class="nom-table-wrap">';
+    h += '<table class="nom-table"><thead><tr>';
+    ['# Empl.','Nombre','Empresa','Percep. regular','Neto regular','Flujo neto adicional','Total percibido semana'].forEach(function(col,i){
+      h += '<th style="text-align:'+(i>2?'right':'left')+'">'+col+'</th>';
+    });
+    h += '</tr></thead><tbody>';
+    R.cruce.forEach(function(emp) {
+      var ft = emp.flujos.reduce(function(s,f){return s+f.monto;},0);
+      var detail = emp.flujos.map(function(f){return f.label+': '+F(f.monto);}).join(' · ');
+      h += '<tr>';
+      h += '<td style="color:#0d3d6b;font-weight:800">'+emp.num+'</td>';
+      h += '<td>'+emp.nombre+'</td>';
+      h += '<td style="color:#666;font-size:11px">'+emp.emp+'</td>';
+      h += '<td style="text-align:right;color:#1a7a4a;font-weight:600">'+F(emp.percep)+'</td>';
+      h += '<td style="text-align:right;color:#0d3d6b">'+F(emp.neto)+'</td>';
+      h += '<td style="text-align:right"><b style="color:#b86b00">'+F(ft)+'</b><br><span style="font-size:10px;color:#999">'+detail+'</span></td>';
+      h += '<td style="text-align:right;font-weight:700">'+F(emp.percep+ft)+'</td>';
+      h += '</tr>';
+    });
+    h += '</tbody><tfoot><tr>';
+    h += '<td colspan="5" style="padding:8px 12px;background:#f5f7fa;font-size:11px;color:#666">Total flujo adicional no gravable</td>';
+    h += '<td style="padding:8px 12px;text-align:right;background:#f5f7fa;font-weight:800;color:#b86b00">'+F(totFlujoExtra)+'</td>';
+    h += '<td style="background:#f5f7fa"></td>';
+    h += '</tr></tfoot></table></div></div>';
+  }
   return h;
 }
 
