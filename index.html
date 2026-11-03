@@ -1219,6 +1219,219 @@ function nomDrawWorldWithStubs(container,world,sd) {
 }
 
 
+var __dbCharts = {};
+var __dbData = [];
+var __dbSemActual = null;
+
+async function nomRenderDashboard() {
+  var panel = document.getElementById('nom-dashboard-panel');
+  if (!panel) return;
+  if (panel.innerHTML.trim()) { nomDbRenderSem(__dbSemActual); return; }
+  panel.innerHTML = '<div class="nom-loading">Cargando dashboard...</div>';
+  try {
+    var r = await sb.from('nom_historico').select('*').order('semana',{ascending:true}).limit(52);
+    if (r.error) throw r.error;
+    __dbData = r.data || [];
+    if (!__dbData.length) { panel.innerHTML='<div class="nom-empty"><div class="icon">&#128202;</div><p>Guarda al menos una semana en el historico para ver el dashboard.</p></div>'; return; }
+    __dbSemActual = __dbData[__dbData.length-1].semana;
+    nomDbBuildLayout(panel);
+    await nomDbLoadChartJs();
+    nomDbRenderSem(__dbSemActual);
+  } catch(e) {
+    panel.innerHTML='<div class="nom-alert danger">Error al cargar dashboard: '+e.message+'</div>';
+  }
+}
+
+function nomDbBuildLayout(panel) {
+  panel.innerHTML = [
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">',
+    '<div><div style="font-size:16px;font-weight:700;color:#0d3d6b">Dashboard ejecutivo — Nominas</div>',
+    '<div style="font-size:11px;color:#888;margin-top:2px">Datos del historico guardado</div></div>',
+    '<div id="db-sem-btns" style="display:flex;gap:4px;flex-wrap:wrap"></div>',
+    '</div>',
+    '<div class="db-split4" id="db-kpis"></div>',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">',
+    '<div style="grid-column:1/-1"><div class="nom-table-wrap" style="padding:14px">',
+    '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Tendencia semanal</div>',
+    '<div id="db-trend-leg" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-trend" role="img" aria-label="Tendencia semanal costo real y efectivo"></canvas></div></div></div>',
+    '<div class="nom-table-wrap" style="padding:14px">',
+    '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Composicion del costo</div>',
+    '<div id="db-dona-leg" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-dona" role="img" aria-label="Composicion porcentual del costo"></canvas></div></div>',
+    '<div class="nom-table-wrap" style="padding:14px">',
+    '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Flujo neto por concepto</div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-flujo" role="img" aria-label="Flujo neto desglosado por concepto"></canvas></div></div>',
+    '</div>',
+    '<div class="nom-table-wrap" style="padding:14px;margin-bottom:14px">',
+    '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:10px">Distribucion por ubicacion — flujo neto</div>',
+    '<div id="db-loc" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>',
+    '</div>'
+  ].join('');
+  var btnsEl = document.getElementById('db-sem-btns');
+  __dbData.forEach(function(row) {
+    var btn = document.createElement('button');
+    btn.className = 'nom-btn nom-btn-ghost nom-btn-sm';
+    btn.id = 'db-btn-'+row.semana;
+    btn.textContent = 'Sem. '+row.semana;
+    btn.onclick = function(){ nomDbRenderSem(row.semana); };
+    btnsEl.appendChild(btn);
+  });
+}
+
+function nomDbLoadChartJs() {
+  return new Promise(function(resolve) {
+    if (window.Chart) { resolve(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+}
+
+function nomDbFmt(n) { return n!=null?'$'+Math.round(Number(n)).toLocaleString('es-MX'):'-'; }
+function nomDbFmtM(n) { n=Number(n)||0; return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K'; }
+
+function nomDbRenderSem(semana) {
+  __dbSemActual = semana;
+  document.querySelectorAll('[id^="db-btn-"]').forEach(function(b) {
+    b.className = 'nom-btn nom-btn-sm' + (parseInt(b.id.replace('db-btn-',''))===semana ? ' nom-btn-primary' : ' nom-btn-ghost');
+  });
+  var row = __dbData.find(function(r){ return r.semana===semana; });
+  if (!row) return;
+  var T = row.totals || {};
+  var fd = row.flujo_detalle || [];
+  var fi = row.finiquito_detalle || {};
+  var prev = null;
+  for (var i=0;i<__dbData.length;i++) { if(__dbData[i].semana===semana && i>0) { prev=__dbData[i-1].totals||{}; break; } }
+
+  nomDbRenderKpis(T, fi, row.unique_emps, prev, semana);
+  nomDbRenderTrend();
+  nomDbRenderDona(T, fi, fd);
+  nomDbRenderFlujo(fd, T);
+  nomDbRenderLoc(fd);
+}
+
+function nomDbRenderKpis(T, fi, uniqueEmps, prev, sem) {
+  var el = document.getElementById('db-kpis');
+  if (!el) return;
+  var finEmps = fi.emps || 0;
+  var totalEmps = uniqueEmps || (T.regEmps||0);
+  var proyEmps = Math.max(0, totalEmps-(T.regEmps||0)-finEmps);
+  function delta(a,b,inv) {
+    if (!prev||b==null) return '';
+    var d=Math.round((Number(a)||0)-(Number(b)||0)); if(!d) return '';
+    var good=inv?d>0:d<0;
+    return '<span style="font-size:10px;font-weight:700;color:'+(good?'#1a7a4a':'#c0392b')+'">'+(d>0?'↑':'↓')+' '+(Math.abs(d)>=1000?nomDbFmtM(Math.abs(d)):Math.abs(d))+'</span>';
+  }
+  var kpis=[
+    {l:'Colaboradores',v:totalEmps,c:'#0d3d6b',sub:'Reg. '+(T.regEmps||0)+' · Proy. '+proyEmps+' · Fin. '+finEmps,d:delta(totalEmps,prev&&(prev.regEmps||0))},
+    {l:'Efectivo total',v:nomDbFmtM(T.totalEfectivo),c:'#1a7a4a',sub:'Neto a pagar semana',d:delta(T.totalEfectivo,prev&&prev.totalEfectivo,false)},
+    {l:'Retenciones ISR+IMSS',v:nomDbFmtM(T.retenciones),c:'#c0392b',sub:'A enterar dia 17',d:delta(T.retenciones,prev&&prev.retenciones,false)},
+    {l:'Costo real semana',v:nomDbFmtM(T.costoReal),c:'#0d3d6b',sub:'Empresa + carga patronal',d:delta(T.costoReal,prev&&prev.costoReal,false)}
+  ];
+  el.innerHTML=kpis.map(function(k){
+    return '<div class="nom-kpi"><div class="nom-kpi-label">'+k.l+'</div><div class="nom-kpi-val" style="color:'+k.c+';font-size:20px">'+k.v+'</div><div style="font-size:10px;color:#aaa;margin-top:2px">'+k.sub+'</div>'+k.d+'</div>';
+  }).join('');
+}
+
+function nomDbRenderTrend() {
+  if (!window.Chart) return;
+  if (__dbCharts.trend) { __dbCharts.trend.destroy(); }
+  var labels=[], costo=[], efect=[], reten=[];
+  __dbData.forEach(function(r){
+    var T=r.totals||{};
+    labels.push('S'+r.semana);
+    costo.push(Math.round((T.costoReal||0)/1000)/1000);
+    efect.push(Math.round((T.totalEfectivo||0)/1000)/1000);
+    reten.push(Math.round(((T.retenciones||0)+(T.cuotas||0)+(T.infoTotal||0))/1000)/1000);
+  });
+  var actIdx = __dbData.findIndex(function(r){return r.semana===__dbSemActual;});
+  var pts = labels.map(function(_,i){return i===actIdx?6:3;});
+  var legEl=document.getElementById('db-trend-leg');
+  if(legEl) legEl.innerHTML=[
+    {c:'#0d3d6b',l:'Costo real'},{c:'#1a7a4a',l:'Efectivo total'},{c:'#c0392b',l:'Retenciones+Carga'}
+  ].map(function(x){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+x.c+'"></span>'+x.l+'</span>';}).join('');
+  var cv=document.getElementById('db-chart-trend');
+  if(!cv)return;
+  __dbCharts.trend=new Chart(cv,{type:'line',data:{labels:labels,datasets:[
+    {label:'Costo real',data:costo,borderColor:'#0d3d6b',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#0d3d6b',tension:.35,fill:false},
+    {label:'Efectivo',data:efect,borderColor:'#1a7a4a',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#1a7a4a',tension:.35,fill:false},
+    {label:'Ret.+Carga',data:reten,borderColor:'#c0392b',borderWidth:1.5,pointRadius:pts,pointBackgroundColor:'#c0392b',tension:.35,borderDash:[4,3],fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.raw+'M';}}}},
+    scales:{x:{ticks:{font:{size:9},color:'#888'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'M'}},grid:{color:'#f0f0ed'}}}}});
+}
+
+function nomDbRenderDona(T, fi, fd) {
+  if (!window.Chart) return;
+  if (__dbCharts.dona) __dbCharts.dona.destroy();
+  var nomReg=Math.round(T.regNeto||0), flujoV=Math.round(T.flujoTotal||0);
+  var cargaV=Math.round((T.cuotas||0)+(T.infoTotal||0)), finV=Math.round(fi.neto||T.finNeto||0);
+  var tot=nomReg+flujoV+cargaV+finV||1;
+  var pcts=[nomReg,flujoV,cargaV,finV].map(function(v){return Math.round(v/tot*100);});
+  var lbls=['Nomina regular','Flujo neto','Carga patronal','Finiquitos'];
+  var cols=['#0d3d6b','#1a7a4a','#b86b00','#7c3aed'];
+  var legEl=document.getElementById('db-dona-leg');
+  if(legEl) legEl.innerHTML=lbls.map(function(l,i){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+cols[i]+'"></span>'+l+' '+pcts[i]+'%</span>';}).join('');
+  var cv=document.getElementById('db-chart-dona');
+  if(!cv)return;
+  __dbCharts.dona=new Chart(cv,{type:'doughnut',data:{labels:lbls,datasets:[{data:pcts,backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'%';}}}}}});
+}
+
+function nomDbRenderFlujo(fd, T) {
+  if (!window.Chart) return;
+  if (__dbCharts.flujo) __dbCharts.flujo.destroy();
+  var items=[];
+  if(fd.length) {
+    fd.forEach(function(f){ if(f.total>0) items.push({l:f.concepto.replace('Horas extras ','Hrs ext. ').replace('Complemento de sueldo','Compl. sueldos').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').substring(0,18),v:Math.round(f.total/1000)}); });
+    items.sort(function(a,b){return b.v-a.v;});
+  } else if(T.flujoTotal) {
+    items=[{l:'Flujo neto total',v:Math.round(T.flujoTotal/1000)}];
+  }
+  var cv=document.getElementById('db-chart-flujo');
+  if(!cv||!items.length)return;
+  __dbCharts.flujo=new Chart(cv,{type:'bar',data:{labels:items.map(function(x){return x.l;}),datasets:[{data:items.map(function(x){return x.v;}),backgroundColor:'#185fa5',borderRadius:3,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '$'+c.raw+'K';}}}},
+      scales:{x:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'K'}},grid:{color:'#f0f0ed'}},y:{ticks:{font:{size:9},color:'#555'},grid:{display:false}}}}});
+}
+
+function nomDbRenderLoc(fd) {
+  var el=document.getElementById('db-loc');
+  if(!el)return;
+  var tjTot=0,mtyTot=0,tjPers=0,mtyPers=0;
+  fd.forEach(function(f){
+    var c=(f.concepto||'').toUpperCase();
+    var isMty=c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0;
+    var isTj=c.indexOf('TJ')>=0||c.indexOf('TIJUANA')>=0||c.indexOf('SUELDOS')>=0||c.indexOf('EXTRAS')>=0||c.indexOf('COMPL')>=0;
+    if(isMty){mtyTot+=f.total||0;mtyPers+=f.empsUnicos||f.emps||0;}
+    else if(isTj){tjTot+=f.total||0;tjPers+=f.empsUnicos||f.emps||0;}
+  });
+  var maxT=Math.max(tjTot,mtyTot,1);
+  var maxP=Math.max(tjPers,mtyPers,1);
+  function locBar(n,val,max,col,suf){
+    var pct=Math.round(val/max*100);
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px">'+
+      '<div style="min-width:62px;color:#555">'+n+'</div>'+
+      '<div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden">'+
+      '<div style="width:'+pct+'%;height:8px;border-radius:3px;background:'+col+';transition:width .4s"></div></div>'+
+      '<div style="min-width:60px;text-align:right;font-weight:700;color:#0d3d6b">'+suf+'</div></div>';
+  }
+  el.innerHTML=[
+    '<div><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Personas (flujo neto)</div>'+
+    locBar('Tijuana',tjPers,maxP,'#0d3d6b',tjPers+' pers.')+
+    locBar('Monterrey',mtyPers,maxP,'#185fa5',mtyPers+' pers.')+
+    '<div style="font-size:10px;color:#aaa;margin-top:4px">*Nomina regular no desglosada por ciudad</div></div>',
+    '<div><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Flujo neto por ciudad</div>'+
+    locBar('Tijuana',tjTot,maxT,'#0d3d6b',nomDbFmt(tjTot))+
+    locBar('Monterrey',mtyTot,maxT,'#185fa5',nomDbFmt(mtyTot))+
+    '<div style="font-size:10px;color:#aaa;margin-top:4px">Monterrey incluye registro SALINAS VI</div></div>'
+  ].join('');
+}
+
+window.nomRenderDashboard = nomRenderDashboard;
+
+
 window.nomAbrirHistorico = function nomAbrirHistorico() {
   var existing = document.getElementById('nomHistOverlay');
   if (existing) { existing.remove(); return; }
