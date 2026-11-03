@@ -1246,12 +1246,78 @@ async function nomRenderDashboard() {
   }
 }
 
+
+var __dbHelpOpen = false;
+window.nomDbToggleHelp = function nomDbToggleHelp(section) {
+  var panel  = document.getElementById('db-help-panel');
+  var overlay= document.getElementById('db-help-overlay');
+  if (!panel) return;
+  __dbHelpOpen = !__dbHelpOpen;
+  panel.style.display   = __dbHelpOpen ? 'flex' : 'none';
+  if(overlay) overlay.style.display = __dbHelpOpen ? 'block' : 'none';
+  if (__dbHelpOpen) {
+    var body = document.getElementById('db-help-body');
+    if (body && !body.innerHTML) { body.innerHTML = nomDbHelpContent(); }
+    if (section) {
+      setTimeout(function(){
+        var el = document.getElementById('help-sec-'+section);
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 80);
+    }
+  }
+};
+
+function nomDbHelpContent() {
+  var sections = [
+    {id:'colabs',   icon:'&#128101;', title:'Colaboradores',              sub:'Cuantas personas recibieron pago esta semana',
+     body:'Es el total de personas que recibieron algun tipo de pago. Se divide en 3 grupos: <b>Nomina regular</b> (empleados formales con ISR y IMSS descontado), <b>Proyectos / flujo</b> (personas que reciben efectivo por proyectos o bonos, sin impuestos) y <b>Finiquitos</b> (empleados que terminaron su relacion laboral esta semana).',
+     tip:'Haz click en el numero para ver cuantos son de cada empresa y de cada ciudad.'},
+    {id:'efectivo', icon:'&#128181;', title:'Efectivo total',              sub:'Cuanto dinero salio del banco',
+     body:'Es el total de pesos que se retiraron de tesoreria para pagar a todos. Incluye lo que reciben los empleados de nomina formal, los pagos de proyectos, bonos, complementos y finiquitos. <b>Este es el cheque que se va al banco.</b> No incluye impuestos que paga la empresa aparte.',
+     tip:'Haz click para ver como se divide entre Tijuana, Monterrey y por tipo de pago.'},
+    {id:'reserva',  icon:'&#127963;&#65039;', title:'A reservar para gobierno', sub:'Cuanto hay que apartar para impuestos',
+     body:'Es el dinero que la empresa <b>debe separar hoy mismo</b> para pagar despues al SAT (ISR), al IMSS y al INFONAVIT. No se paga hoy, pero si hay que tenerlo reservado. Si no se aparta, puede faltar cuando llegue la fecha limite.',
+     tip:'Haz click para ver exactamente cuanto es de cada impuesto y cuando vence.'},
+    {id:'costo',    icon:'&#128202;', title:'Costo real de la semana',     sub:'Lo que realmente le cuesta a la empresa tener empleados',
+     body:'Es el gasto total real: lo que cobran los empleados MAS lo que la empresa paga por ley al gobierno (IMSS patronal, INFONAVIT 5%, ISN). <b>Siempre es mayor que el efectivo total</b> porque incluye estos impuestos que paga la empresa, no el empleado.',
+     tip:'Si el costo real sube mucho sin que suban los colaboradores, revisa la carga patronal.'},
+    {id:'tendencia',icon:'&#128200;', title:'Tendencia semanal',           sub:'Estamos gastando mas o menos que antes',
+     body:'Muestra la evolucion semana a semana. La <b>linea azul</b> es el costo real total, la <b>linea verde</b> es el efectivo que salio. Si la linea azul sube de forma continua hay que revisar por que. Una semana muy diferente a las demas merece atencion.',
+     tip:''},
+    {id:'dona',     icon:'&#127849;', title:'Composicion del costo',       sub:'De cada peso gastado, en que se fue',
+     body:'La grafica de dona muestra el porcentaje de cada componente. <b>Azul marino</b> = nomina formal, <b>Verde</b> = proyectos y flujo neto, <b>Naranja</b> = carga patronal (IMSS+ISN+INFONAVIT), <b>Morado</b> = finiquitos. Si el naranja crece mucho puede indicar aumento de base salarial.',
+     tip:''},
+    {id:'flujo',    icon:'&#128179;', title:'Flujo neto por concepto',     sub:'Que pagamos en efectivo fuera de nomina formal',
+     body:'Son los pagos en efectivo que <b>no son nomina formal</b>: proyectos en Tijuana y Monterrey, horas extras, bonos de asistencia, complementos de sueldo y vales de despensa. Estos pagos <b>no llevan ISR ni IMSS</b> porque son conceptos distintos a la relacion laboral formal.',
+     tip:'La barra mas larga es donde mas se gasto. Mas pagos no siempre es mas personas — un empleado puede tener varios pagos en la semana.'},
+    {id:'ubicacion',icon:'&#127968;', title:'Distribucion por ubicacion',  sub:'Cuanto corresponde a Tijuana y cuanto a Monterrey',
+     body:'Muestra como se reparte el flujo neto entre las dos ciudades principales. Tijuana incluye proyectos TJ, horas extras y complementos. Monterrey incluye proyectos MTY y bonos de asistencia (el registro IMSS de Monterrey se llama SALINAS VI, es lo mismo).',
+     tip:'La nomina regular de Internacional no esta desglosada por ciudad aqui — aparece el flujo solamente.'}
+  ];
+  return sections.map(function(s){
+    return '<div id="help-sec-'+s.id+'" style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f0f2f5">'+
+      '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px">'+
+      '<div style="font-size:22px;line-height:1;flex-shrink:0">'+s.icon+'</div>'+
+      '<div><div style="font-size:12px;font-weight:700;color:#0d3d6b">'+s.title+'</div>'+
+      '<div style="font-size:10px;color:#888">'+s.sub+'</div></div></div>'+
+      '<div style="font-size:11px;color:#444;line-height:1.6;margin-left:32px">'+s.body+'</div>'+
+      (s.tip?'<div style="background:#e8f0f9;border-radius:6px;padding:5px 8px;margin:6px 0 0 32px;font-size:10px;color:#0d3d6b;display:flex;align-items:flex-start;gap:4px"><span>&#128161;</span><span>'+s.tip+'</span></div>':'')+
+    '</div>';
+  }).join('');
+}
+window.nomDbHelpContent = nomDbHelpContent;
+
 function nomDbBuildLayout(panel) {
   panel.innerHTML = [
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">',
     '<div><div style="font-size:16px;font-weight:700;color:#0d3d6b">Dashboard ejecutivo — Nominas</div>',
     '<div style="font-size:11px;color:#888;margin-top:2px">Haz click en un KPI para ver el detalle</div></div>',
+    '<div style="display:flex;align-items:center;gap:8px">',
     '<div id="db-sem-btns" style="display:flex;gap:4px;flex-wrap:wrap"></div>',
+    '<button onclick="nomDbToggleHelp()" style="display:flex;align-items:center;gap:5px;background:#0d3d6b;border:none;color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'
+    +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".8" fill="currentColor"/></svg>'
+    +' Como leer esto</button>',
+    '</div>',
     '</div>',
     '<div id="db-kpis" class="db-split4" style="margin-bottom:8px"></div>',
     '<div id="db-detail" style="display:none;margin-bottom:12px"></div>',
@@ -1271,6 +1337,14 @@ function nomDbBuildLayout(panel) {
     '<div class="nom-table-wrap" style="padding:14px;margin-bottom:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:10px">Distribucion por ubicacion — flujo neto</div>',
     '<div id="db-loc" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>',
+    '</div>',
+    '<div id="db-help-overlay" onclick="if(event.target===this)nomDbToggleHelp()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9998"></div>',
+    '<div id="db-help-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:380px;background:#fff;z-index:9999;box-shadow:-4px 0 20px rgba(0,0,0,.15);display:none;flex-direction:column;overflow:hidden">',
+    '<div style="background:#0d3d6b;padding:14px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0">',
+    '<span style="color:#fff;font-size:13px;font-weight:700;flex:1">&#128218; Guia rapida del dashboard</span>',
+    '<button onclick="nomDbToggleHelp()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;line-height:1;padding:0 4px">&#x2715;</button>',
+    '</div>',
+    '<div id="db-help-body" style="flex:1;overflow-y:auto;padding:14px"></div>',
     '</div>'
   ].join('');
   var btnsEl = document.getElementById('db-sem-btns');
