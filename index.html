@@ -395,16 +395,18 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
       <button id="nomTabPago" class="nom-tab-btn" onclick="nomSwitchTab('pago')">Pre-nomina</button>
       <button id="nomTabCalc" class="nom-tab-btn active" onclick="nomSwitchTab('calc')">Costo Laboral</button>
       <button id="nomTabDash" class="nom-tab-btn" onclick="nomSwitchTab('dashboard')">Dashboard</button>
+      <div style="width:1px;background:#e0e4ea;margin:8px 4px"></div>
+      <button class="nom-historico-btn" onclick="nomAbrirHistorico()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Historico
+      </button>
     </div>
     <div style="display:flex;align-items:center">
       <span id="nom-view-badge" class="nom-view-badge" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         Solo visualizacion
       </span>
-      <button class="nom-historico-btn" onclick="nomAbrirHistorico()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Historico
-      </button>
+
     </div>
   </div>
 
@@ -1435,7 +1437,7 @@ function nomHistRenderComparativo(body) {
     }
     function dMon(a,b,inv){
       var d=Math.round((a||0)-(b||0)); if(!d)return '<span style="color:#aaa">—</span>';
-      var good=inv?d<0:d<0;
+      var good=inv?d>0:d<0;
       return '<span style="color:'+(good?'#1a7a4a':'#c0392b')+';font-weight:700">'+(d>0?'↑':'↓')+' $'+Math.abs(d).toLocaleString('es-MX')+'</span>';
     }
     function sec(color,title,badge){
@@ -1552,7 +1554,7 @@ function nomHistRenderComparativo(body) {
       allTipos.forEach(function(tipo){
         var a=tiposA[tipo]||{emps:0,total:0}; var b=tiposB[tipo]||{emps:0,total:0};
         var tr=document.createElement('tr');
-        var cells=[a.concepto||tipo,a.emps||'—',F(a.total),b.emps||'—',F(b.total),dNum(a.emps,b.emps),dMon(a.total,b.total,true)];
+        var cells=[a.concepto||tipo,a.emps||'—',F(a.total),b.emps||'—',F(b.total),dNum(a.emps,b.emps),dMon(a.total,b.total)];
         cells.forEach(function(c,i){
           var td=document.createElement('td');
           td.style.cssText='padding:7px 12px;text-align:'+(i===0?'left':i===1||i===3||i===5?'center':'right');
@@ -1568,7 +1570,7 @@ function nomHistRenderComparativo(body) {
       var totUnA=fdA.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0);
       var totUnB=fdB.reduce(function(s,f){return s+(f.empsUnicos||f.emps||0);},0);
       var tft=document.createElement('tfoot'); var tftr=document.createElement('tr');
-      [['Total flujo neto',true],'—',F(totFlujoA),'—',F(totFlujoB),'—',dMon(totFlujoA,totFlujoB,true)].forEach(function(c,i){
+      [['Total flujo neto',true],'—',F(totFlujoA),'—',F(totFlujoB),'—',dMon(totFlujoA,totFlujoB)].forEach(function(c,i){
         var td=document.createElement('td');
         td.style.cssText='padding:8px 12px;background:#f0f4f9;font-weight:700;border-top:2px solid #d0d8e4;text-align:'+(i===0?'left':i===1||i===3||i===5?'center':'right');
         if(i===2) td.style.color='#0f6e56';
@@ -1582,7 +1584,7 @@ function nomHistRenderComparativo(body) {
     } else {
       var fallback=document.createElement('div');
       fallback.style.cssText='padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px';
-      [{lbl:'Total flujo neto A',v:F(TA.flujoTotal),c:'#0f6e56'},{lbl:'Total flujo neto B',v:F(TB.flujoTotal),c:'#aaa'},{lbl:'Diferencia',v:dMon(TA.flujoTotal,TB.flujoTotal,true),html:true}].forEach(function(k){
+      [{lbl:'Total flujo neto A',v:F(TA.flujoTotal),c:'#0f6e56'},{lbl:'Total flujo neto B',v:F(TB.flujoTotal),c:'#aaa'},{lbl:'Diferencia',v:dMon(TA.flujoTotal,TB.flujoTotal),html:true}].forEach(function(k){
         var card=document.createElement('div'); card.style.cssText='background:#f8f9fb;border-radius:7px;padding:8px 10px;border:1px solid #e8ecf0;text-align:center';
         var lbl=document.createElement('div'); lbl.style.cssText='font-size:10px;color:#888;margin-bottom:4px'; lbl.textContent=k.lbl;
         var val=document.createElement('div'); val.style.cssText='font-size:14px;font-weight:700;color:'+(k.c||'#333');
