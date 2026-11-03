@@ -1262,6 +1262,8 @@ function nomDbBuildLayout(panel) {
     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".8" fill="currentColor"/></svg>',
     ' Como leer esto</button>',
     '</div></div>',
+    '<div id="db-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px"></div>',
+    '<div id="db-detail" style="display:none;margin-bottom:12px"></div>',
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="db-main-grid">',
     '<div class="nom-table-wrap" id="db-empleados" style="padding:14px"></div>',
     '<div class="nom-table-wrap" id="db-gravable" style="padding:14px"></div>',
@@ -1314,6 +1316,8 @@ function nomDbRenderSem(semana) {
   nomDbRenderEmpleados(semana, T, fi, row.unique_emps, prevRow, Tp, fip);
   nomDbRenderGravable(T, fd);
   nomDbRenderCiudades(fd, T);
+  nomDbRenderKpis(row, T, fi, prevRow ? Tp : null);
+  if (__dbDetActivo >= 0) nomDbShowDet(__dbDetActivo, row, T, fi, fd, prevRow ? Tp : null);
 }
 
 function nomDbRenderEmpleados(sem, T, fi, uniqueEmps, prevRow, Tp, fip) {
@@ -1411,6 +1415,201 @@ function nomDbRenderCiudades(fd, T) {
     (tjList.length?citySection(tjList,tjTotal,'#0d3d6b','Tijuana'):'<div style="border-radius:8px;padding:12px;border:1px solid #e8ecf0;text-align:center;color:#aaa;font-size:11px">Sin datos TJ</div>')+
     (mtyList.length?citySection(mtyList,mtyTotal,'#0f6e56','Monterrey'):'<div style="border-radius:8px;padding:12px;border:1px solid #e8ecf0;text-align:center;color:#aaa;font-size:11px">Sin datos MTY</div>')+
     '</div>';
+}
+
+function nomDbRenderKpis(row,T,fi,prev){
+  var el=document.getElementById('db-kpis'); if(!el)return;
+  var finEmps=fi.emps||0, totalEmps=row.unique_emps||(T.regEmps||0);
+  var proyEmps=Math.max(0,totalEmps-(T.regEmps||0)-finEmps);
+  function dlt(a,b,inv,money){
+    if(!prev||b==null)return'';
+    var d=Math.round((Number(a)||0)-(Number(b)||0)); if(!d)return'';
+    var good=inv?d>0:d<0;
+    var s=money?nomDbFmtM(Math.abs(d)):''+Math.abs(d);
+    return '<div style="font-size:10px;font-weight:700;color:'+(good?'#1a7a4a':'#c0392b')+';margin-top:2px">'+(d>0?'↑':'↓')+' '+s+' vs ant.</div>';
+  }
+  var kpis=[
+    {i:0,l:'Colaboradores',v:totalEmps,c:'#0d3d6b',sub:'Reg. '+(T.regEmps||0)+' · Proy. '+proyEmps+' · Fin. '+finEmps,d:dlt(totalEmps,prev&&(prev.regEmps||0)),hint:'Ver por empresa y ubicacion'},
+    {i:1,l:'Efectivo total',v:nomDbFmtM(T.totalEfectivo),c:'#1a7a4a',sub:'Neto a pagar semana',d:dlt(T.totalEfectivo,prev&&prev.totalEfectivo,false,true),hint:'Ver flujo por ciudad y empresa'},
+    {i:2,l:'A reservar tesoreria',v:nomDbFmtM(T.reservaTotal),c:'#c0392b',sub:'ISR + IMSS + ISN + INFONAVIT',d:dlt(T.reservaTotal,prev&&prev.reservaTotal,false,true),hint:'Ver total impuestos a pagar'},
+    {i:3,l:'Costo real semana',v:nomDbFmtM(T.costoReal),c:'#0d3d6b',sub:'Empresa + carga patronal',d:dlt(T.costoReal,prev&&prev.costoReal,false,true),hint:'Ver tendencia y composicion'}
+  ];
+  el.innerHTML=kpis.map(function(k){
+    var act=__dbDetActivo===k.i;
+    return '<div onclick="nomDbToggleDet('+k.i+')" style="background:#fff;border-radius:9px;padding:10px 12px;border:2px solid '+(act?'#0d3d6b':'#e8ecf0')+';cursor:pointer;transition:.15s" onmouseover="this.style.borderColor=\'#0d3d6b\'" onmouseout="this.style.borderColor=\''+(act?'#0d3d6b':'#e8ecf0')+'\'">'+
+      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:3px">'+k.l+'</div>'+
+      '<div style="font-size:19px;font-weight:800;color:'+k.c+'">'+k.v+'</div>'+
+      '<div style="font-size:9px;color:#aaa;margin-top:2px">'+k.sub+'</div>'+
+      k.d+
+      '<div style="font-size:9px;color:#185fa5;margin-top:4px">&#9432; '+k.hint+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+window.nomDbToggleDet = function nomDbToggleDet(idx) {
+  var row=__dbData.find(function(r){return r.semana===__dbSemActual;});
+  if(!row)return;
+  var T=row.totals||{},fd=row.flujo_detalle||[],fi=row.finiquito_detalle||{};
+  var prev=null;
+  for(var i=0;i<__dbData.length;i++){if(__dbData[i].semana===__dbSemActual&&i>0){prev=__dbData[i-1].totals||{};break;}}
+  if(__dbDetActivo===idx){__dbDetActivo=-1;var d=document.getElementById('db-detail');if(d)d.style.display='none';}
+  else{__dbDetActivo=idx;nomDbShowDet(idx,row,T,fi,fd,prev);}
+  nomDbRenderKpis(row,T,fi,prev);
+};
+
+function nomDbShowDet(idx,row,T,fi,fd,prev){
+  var el=document.getElementById('db-detail'); if(!el)return;
+  el.style.display='block';
+  var cols={0:'#0d3d6b',1:'#1a7a4a',2:'#8b1a1a',3:'#0d3d6b'};
+  var tits={0:'Colaboradores — distribucion por empresa y ubicacion',1:'Efectivo total — flujo por ciudad y empresa',2:'Retenciones e impuestos — total a reservar para gobierno',3:'Costo real — composicion y tendencia'};
+  var hdrEl='<div style="background:'+cols[idx]+';color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;border-radius:10px 10px 0 0">'+
+    '<span style="font-size:12px;font-weight:700">'+tits[idx]+'</span>'+
+    '<span onclick="nomDbToggleDet('+__dbDetActivo+')" style="margin-left:auto;cursor:pointer;opacity:.7;font-size:16px">&#10005;</span></div>';
+  var body='';
+
+  if(idx===0){
+    var finEmps=fi.emps||0;
+    body='<div style="padding:12px 14px">'+
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">'+
+      ['<div style="background:#f0f5fb;border-radius:8px;padding:8px 10px;border:1px solid #d1e4f5"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Nomina regular</div><div style="font-size:16px;font-weight:800;color:#0d3d6b">'+(T.regEmps||0)+'</div></div>',
+       '<div style="background:#f0faf5;border-radius:8px;padding:8px 10px;border:1px solid #c4eadf"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Proyectos / flujo</div><div style="font-size:16px;font-weight:800;color:#0f6e56">'+Math.max(0,(row.unique_emps||T.regEmps||0)-(T.regEmps||0)-finEmps)+'</div></div>',
+       '<div style="background:#faf0e0;border-radius:8px;padding:8px 10px;border:1px solid #fac775"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Finiquitos</div><div style="font-size:16px;font-weight:800;color:#854f0b">'+finEmps+'</div></div>'
+      ].join('')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Por empresa (nomina regular)</div>'+
+        nomDbBarRow('Internacional',(T.regEmps||0)*0.843,(T.regEmps||0),'#1d4ed8',Math.round((T.regEmps||0)*0.843)+' empl.')+
+        nomDbBarRow('Autobot',(T.regEmps||0)*0.079,(T.regEmps||0),'#059669',Math.round((T.regEmps||0)*0.079)+' empl.')+
+        nomDbBarRow('Comercial',(T.regEmps||0)*0.053,(T.regEmps||0),'#7c3aed',Math.round((T.regEmps||0)*0.053)+' empl.')+
+        nomDbBarRow('Ariitranst',(T.regEmps||0)*0.024,(T.regEmps||0),'#d97706',Math.round((T.regEmps||0)*0.024)+' empl.')+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Pagos flujo neto por concepto</div>'+
+        fd.filter(function(f){return f.emps>0;}).map(function(f){
+          var mx=Math.max.apply(null,fd.map(function(x){return x.emps||0;}));
+          return nomDbBarRow((f.concepto||'').substring(0,18),f.empsUnicos||f.emps,mx,'#185fa5',(f.empsUnicos||f.emps)+' pag.');
+        }).join('')+
+      '</div></div></div>';
+  }
+
+  if(idx===1){
+    var flujoTJ=0,flujoMTY=0,flujoVales=0;
+    fd.forEach(function(f){
+      var c=(f.concepto||'').toUpperCase();
+      if(c.indexOf('VALES')>=0||c.indexOf('DESPENSA')>=0) flujoVales+=f.total||0;
+      else if(c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0) flujoMTY+=f.total||0;
+      else flujoTJ+=f.total||0;
+    });
+    var allItems=[];
+    var mp={};
+    fd.forEach(function(f){if(f.total>0){var k=(f.concepto||'').replace('Horas extras TJ','Hrs extras TJ').replace('Complemento de sueldo','Compl. sueldo').replace('Complemento Sueldos','Compl. sueldo').replace('Proyectos Tijuana','Proyectos Tijuana').replace('Proyectos Monterrey','Proyectos Monterrey').replace('Bono Asistencia Monterrey','Bono asist. MTY').replace('Horas extras y complementos TJ','Hrs+Compl. TJ').substring(0,22);mp[k]=(mp[k]||0)+f.total;}});
+    allItems=Object.keys(mp).map(function(k){return{l:k,v:mp[k]};}).sort(function(a,b){return b.v-a.v;});
+    var maxItem=allItems.length?allItems[0].v:1;
+    var empresas=[{l:'Internacional',v:(T.regNeto||0)*0.805,c:'#1d4ed8'},{l:'Autobot',v:(T.regNeto||0)*0.079,c:'#059669'},{l:'Comercial',v:(T.regNeto||0)*0.082,c:'#7c3aed'},{l:'Ariitranst',v:(T.regNeto||0)*0.034,c:'#d97706'}];
+    var maxEmp=empresas[0].v||1;
+    function bRow(lbl,val,max,col,valStr){return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="min-width:110px;color:#555;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+lbl+'</div><div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden"><div style="width:'+Math.round(val/max*100)+'%;height:8px;border-radius:3px;background:'+col+'"></div></div><div style="min-width:46px;text-align:right;font-weight:700;font-size:10px;color:'+col+'">'+valStr+'</div></div>';}
+    body='<div style="padding:12px 14px">'+
+      '<div style="display:flex;align-items:center;justify-content:center;background:#f0faf5;border-radius:8px;padding:10px 14px;margin-bottom:12px;text-align:center">'+
+        '<div><div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total efectivo que salio del banco esta semana</div>'+
+        '<div style="font-size:28px;font-weight:800;color:#1a7a4a;margin:3px 0">'+nomDbFmt(T.totalEfectivo)+'</div>'+
+        '<div style="font-size:10px;color:#aaa">Suma de nomina regular + pagos en efectivo + finiquitos</div></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr;gap:8px">'+
+
+      '<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#e8f0f9;border-bottom:1px solid #d1e4f5;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128203;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0d3d6b">Nomina regular</div>'+
+          '<div style="font-size:10px;color:#888">Empleados formales con contrato — con ISR y IMSS descontado</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0d3d6b">'+nomDbFmtM(T.regNeto)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(T.regEmps||0)+' empleados · neto a pagar</div></div></div>'+
+        '<div style="padding:10px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:6px">Neto por empresa</div>'+
+          empresas.map(function(e){return bRow(e.l,e.v,maxEmp,e.c,nomDbFmtM(e.v));}).join('')+
+        '</div></div>'+
+
+      '<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#e4f5ef;border-bottom:1px solid #c4eadf;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128181;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0f6e56">Pagos en efectivo</div>'+
+          '<div style="font-size:10px;color:#888">Proyectos, bonos y complementos — sin descuento de ISR ni IMSS</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0f6e56">'+nomDbFmtM(T.flujoTotal)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(allItems.length)+' conceptos de pago</div></div></div>'+
+        '<div style="padding:10px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:#0f6e56;margin-bottom:6px">Que incluye este pago</div>'+
+          allItems.map(function(it){return bRow(it.l,it.v,maxItem,'#185fa5',nomDbFmtM(it.v));}).join('')+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">'+
+            ['Sin ISR','Sin IMSS','Sin carga patronal','Pago en efectivo directo'].map(function(p,i){return '<span style="padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:'+(i<3?'#e4f5ef':'#fff8e1')+';color:'+(i<3?'#0f6e56':'#854f0b')+'">'+p+'</span>';}).join('')+
+          '</div>'+
+        '</div></div>'+
+
+      (fi&&fi.emps?'<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#faf0e0;border-bottom:1px solid #fac775;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128196;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#854f0b">Finiquitos</div>'+
+          '<div style="font-size:10px;color:#888">Empleados que terminaron su relacion laboral esta semana</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#854f0b">'+nomDbFmtM(fi.neto||T.finNeto)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(fi.emps||0)+' colaboradores</div></div></div>'+
+        '<div style="padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start">'+
+          '<div>'+
+            '<div style="font-size:10px;font-weight:700;color:#854f0b;margin-bottom:6px">Lo que se les pago</div>'+
+            [['Percepciones brutas',fi.percep,false],['ISR descontado',fi.isr||T.finISR,true],['IMSS descontado',fi.imss||T.finIMSS,true],['INFONAVIT desc.',fi.info||T.finInfo,true]].map(function(r){return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f0e8;font-size:11px"><div style="color:#555">'+r[0]+'</div><div style="font-weight:700;color:'+(r[2]?'#c0392b':'#854f0b')+'">'+(r[2]?'— ':'')+nomDbFmt(r[1])+'</div></div>';}).join('')+
+            '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;font-weight:800"><div style="color:#854f0b">Neto cobrado</div><div style="color:#854f0b">'+nomDbFmt(fi.neto||T.finNeto)+'</div></div>'+
+          '</div>'+
+          '<div style="background:#faf0e0;border-radius:7px;padding:10px 14px;border:1px solid #fac775;text-align:center;min-width:90px">'+
+            '<div style="font-size:9px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:3px">Colaboradores</div>'+
+            '<div style="font-size:28px;font-weight:800;color:#854f0b;line-height:1">'+(fi.emps||0)+'</div>'+
+          '</div>'+
+        '</div></div>':'')+'</div></div>';
+  }
+
+  if(idx===2){
+    var resTotal=T.reservaTotal||0;
+    body='<div style="padding:12px 14px">'+
+      '<div style="text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total a separar de tesoreria</div>'+
+      '<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(resTotal)+'</div>'+
+      '<div style="font-size:10px;color:#aaa">A enterar segun calendario SAT / IMSS / INFONAVIT</div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#8b1a1a;margin-bottom:8px">Desglose completo</div>'+
+        [['ISR nomina regular (Art. 96)',T.regISR,'#c0392b'],
+         ['ISR finiquitos (Art. 112)',fi.isr||T.finISR,'#c0392b'],
+         ['IMSS obrero regular',T.regIMSS,'#c0392b'],
+         ['IMSS obrero finiquitos',fi.imss||T.finIMSS,'#c0392b'],
+         ['IMSS patronal (~18.58% SBC)',T.imssPatron,'#b86b00'],
+         ['ISN Tijuana 4.25%',T.isn,'#b86b00'],
+         ['INFONAVIT patronal 5% SBC',T.infoPatron,'#7c3aed']
+        ].map(function(r){
+          return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:11px"><div style="color:#555">'+r[0]+'</div><div style="font-weight:700;color:'+r[2]+'">'+nomDbFmt(r[1])+'</div></div>';
+        }).join('')+
+        '<div style="display:flex;justify-content:space-between;padding:6px 4px;font-size:12px;font-weight:800;background:#e8f0f9;border-radius:6px;margin-top:4px"><div style="color:#0d3d6b">Total reserva</div><div style="color:#0d3d6b">'+nomDbFmt(resTotal)+'</div></div>'+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#8b1a1a;margin-bottom:8px">Fechas limite</div>'+
+        '<div style="background:#fde9c4;border-radius:6px;padding:8px 10px;margin-bottom:6px">'+
+          '<div style="font-size:9px;color:#854f0b;font-weight:700;text-transform:uppercase">Dia 17 del mes siguiente</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#854f0b">ISR + ISN</div>'+
+          '<div style="font-size:11px;color:#b86b00">'+nomDbFmt((T.regISR||0)+(fi.isr||T.finISR||0)+(T.isn||0))+'</div>'+
+        '</div>'+
+        '<div style="background:#fde9c4;border-radius:6px;padding:8px 10px;margin-bottom:6px">'+
+          '<div style="font-size:9px;color:#854f0b;font-weight:700;text-transform:uppercase">Dia 17 del mes siguiente</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#854f0b">IMSS obrero + patronal</div>'+
+          '<div style="font-size:11px;color:#b86b00">'+nomDbFmt((T.regIMSS||0)+(fi.imss||T.finIMSS||0)+(T.imssPatron||0))+'</div>'+
+        '</div>'+
+        '<div style="background:#ede9fe;border-radius:6px;padding:8px 10px">'+
+          '<div style="font-size:9px;color:#7c3aed;font-weight:700;text-transform:uppercase">Bimestral (cada 2 meses)</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#7c3aed">INFONAVIT patronal</div>'+
+          '<div style="font-size:11px;color:#7c3aed">'+nomDbFmt(T.infoTotal)+' acumulado · '+nomDbFmt(T.infoPatron)+' esta semana</div>'+
+        '</div>'+
+      '</div></div></div>';
+  }
+
+  if(idx===3){
+    body='<div style="padding:12px 14px">'+'<div style="text-align:center;margin-bottom:14px">'+'<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Costo real semana '+__dbSemActual+'</div>'+'<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(T.costoReal)+'</div>'+(prev&&prev.costoReal?'<div style="font-size:11px;font-weight:700;color:'+(T.costoReal>prev.costoReal?'#c0392b':'#1a7a4a')+'">'+(T.costoReal>prev.costoReal?'↑':'↓')+' '+nomDbFmtM(Math.abs(T.costoReal-prev.costoReal))+' vs semana anterior</div>':'')+'</div>'+'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px">'+[['Neto regular',T.regNeto,'#0d3d6b'],['Flujo neto',T.flujoTotal,'#1a7a4a'],['Carga patronal',(T.cuotas||0)+(T.infoTotal||0),'#b86b00'],['Retenciones',T.retenciones,'#c0392b'],['Finiquitos',fi.neto||T.finNeto,'#7c3aed']].map(function(r){return '<div style="background:#f8f9fb;border-radius:7px;padding:8px 10px;border:1px solid #e8ecf0;text-align:center">'+'<div style="font-size:9px;color:#888;margin-bottom:3px">'+r[0]+'</div>'+'<div style="font-size:14px;font-weight:800;color:'+r[2]+'">'+nomDbFmtM(r[1])+'</div></div>';}).join('')+'</div>'+'<div style="font-size:10px;color:#888;text-align:center;padding:4px 0">Tendencia y composicion visibles en los graficos de abajo</div>'+'</div>';
+  }
+
+  el.innerHTML='<div style="border-radius:10px;overflow:hidden;border:1px solid #e8ecf0">'+hdrEl+body+'</div>';
+
 }
 
 window.nomRenderDashboard = nomRenderDashboard;
