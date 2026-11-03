@@ -1423,10 +1423,13 @@ function nomDbShowDet(idx,row,T,fi,fd,prev){
       '</div>'+
       '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
         '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Flujo neto por concepto</div>'+
-        fd.filter(function(f){return f.total>0;}).sort(function(a,b){return b.total-a.total;}).map(function(f){
-          var mx=Math.max.apply(null,fd.map(function(x){return x.total||0;}));
-          return nomDbBarRow((f.concepto||'').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').replace('Horas extras ','Hrs ext. ').substring(0,18),f.total,mx,'#185fa5',nomDbFmtM(f.total));
-        }).join('')+
+        (function(){
+          var mp={};
+          fd.forEach(function(f){if(f.total>0){var k=(f.concepto||'').replace('Horas extras TJ','Hrs extras TJ').replace('Complemento de sueldo','Compl. sueldo').replace('Complemento Sueldos','Compl. sueldo').replace('Proyectos Tijuana','Proy. Tijuana').replace('Proyectos Monterrey','Proy. Monterrey').replace('Bono Asistencia Monterrey','Bono Monterrey').replace('Horas extras y complementos TJ','Hrs+Compl. TJ').substring(0,20);mp[k]=(mp[k]||0)+f.total;}});
+          var its=Object.keys(mp).map(function(k){return{l:k,v:mp[k]};}).sort(function(a,b){return b.v-a.v;});
+          var mx=Math.max.apply(null,its.map(function(x){return x.v||0;}));
+          return its.map(function(it){return nomDbBarRow(it.l,it.v,mx,'#185fa5',nomDbFmtM(it.v));}).join('');
+        }())+
       '</div></div></div>';
   }
 
@@ -1515,7 +1518,24 @@ function nomDbRenderFlujo(fd,T){
   if(!window.Chart)return;
   if(__dbCharts.flujo)__dbCharts.flujo.destroy();
   var items=[];
-  if(fd.length){fd.forEach(function(f){if(f.total>0)items.push({l:(f.concepto||'').replace('Horas extras ','Hrs ext. ').replace('Complemento de sueldo','Compl.').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').substring(0,18),v:Math.round(f.total/1000)});});items.sort(function(a,b){return b.v-a.v;});}
+  if(fd.length){
+    var map={};
+    fd.forEach(function(f){
+      if(!f.total||f.total<=0)return;
+      var lbl=(f.concepto||'')
+        .replace('Horas extras TJ','Hrs extras TJ')
+        .replace('Complemento de sueldo','Compl. sueldo')
+        .replace('Complemento Sueldos','Compl. sueldo')
+        .replace('Proyectos Tijuana','Proy. Tijuana')
+        .replace('Proyectos Monterrey','Proy. Monterrey')
+        .replace('Bono Asistencia Monterrey','Bono Monterrey')
+        .replace('Horas extras y complementos TJ','Hrs+Compl. TJ')
+        .substring(0,20);
+      map[lbl]=(map[lbl]||0)+f.total;
+    });
+    Object.keys(map).forEach(function(k){items.push({l:k,v:Math.round(map[k]/1000)});});
+    items.sort(function(a,b){return b.v-a.v;});
+  }
   else if(T.flujoTotal)items=[{l:'Flujo neto total',v:Math.round(T.flujoTotal/1000)}];
   var cv=document.getElementById('db-chart-flujo');if(!cv||!items.length)return;
   __dbCharts.flujo=new Chart(cv,{type:'bar',data:{labels:items.map(function(x){return x.l;}),datasets:[{data:items.map(function(x){return x.v;}),backgroundColor:'#185fa5',borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'K'}},grid:{color:'#f0f0ed'}},y:{ticks:{font:{size:9},color:'#555'},grid:{display:false}}}}});
