@@ -1441,8 +1441,8 @@ function nomDbRenderSem(semana){
       arc(tjPct,o0,'#1d4ed8')+arc(mtyPct,o1,'#0f6e56')+(cdmxPct>0?arc(cdmxPct,o2,'#ba7517'):'')+
       '<text x="60" y="55" text-anchor="middle" font-size="18" font-weight="500" fill="var(--text-primary)">'+tjPct+'%</text>'+
       '<text x="60" y="70" text-anchor="middle" font-size="10" fill="var(--text-muted)">Tijuana</text></svg>';
-    var totLabel='<div style="padding-top:6px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:2px"><span>Total nomina regular</span><span style="font-weight:500">'+F(T.regPercep)+'</span></div>';
-    var rows=['<div style="display:grid;grid-template-columns:72px 1fr 32px 68px;gap:4px;align-items:center;font-size:9px;color:var(--text-muted);padding:0 2px 4px;border-bottom:0.5px solid var(--border)"><span>Ciudad</span><span></span><span style="text-align:right">%</span><span style="text-align:right">Monto</span></div>'];
+    var totLabel='<div style="padding-top:6px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:2px"><span>Efectivo total</span><span style="font-weight:500">'+F(T.totalEfectivo)+'</span></div>';
+    var rows=['<div style="display:grid;grid-template-columns:72px 1fr 32px 68px;gap:4px;align-items:center;font-size:9px;color:var(--text-muted);padding:0 2px 4px;border-bottom:0.5px solid var(--border)"><span>Ciudad</span><span></span><span style="text-align:right">%</span><span style="text-align:right">Efectivo</span></div>'];
     [[tjPct,'#1d4ed8','Tijuana',cds.tj],[mtyPct,'#0f6e56','Monterrey',cds.mty],[cdmxPct,'#ba7517','CDMX',cds.cdmx]].forEach(function(x){
       var pct=x[0],col=x[1],nm=x[2],c=x[3];
       rows.push('<div class="db-city-row"><div class="db-city-dot" style="background:'+col+'"></div><div class="db-city-nm">'+nm+'</div><div class="db-city-bg"><div class="db-city-f" style="width:'+pct+'%;background:'+col+'"></div></div><div class="db-city-pct" style="color:'+col+'">'+pct+'%</div><div class="db-city-amt">'+F(c.efectivo||0)+'</div></div>');
@@ -1463,7 +1463,7 @@ function nomDbRenderSem(semana){
     return '<div class="cdad-card">'+
       '<div class="cdad-head" onclick="nomDbToggleCdad(\''+cfg.cd+'\')">'+
         '<div class="cdad-dot" style="background:'+cfg.color+'"></div>'+
-        '<div class="cdad-nm" style="color:'+cfg.color+'">'+cfg.nm+'</div>'+
+        '<div class="cdad-nm">'+cfg.nm+'</div>'+
         '<div class="cdad-stats">'+
           '<div><div class="cdad-stat-l">Empleados</div><div class="cdad-stat-v">'+emps+'</div></div>'+
           '<div><div class="cdad-stat-l">Efectivo</div><div class="cdad-stat-v">'+ef+'</div></div>'+
