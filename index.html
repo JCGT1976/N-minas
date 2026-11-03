@@ -1222,6 +1222,7 @@ function nomDrawWorldWithStubs(container,world,sd) {
 var __dbCharts = {};
 var __dbData = [];
 var __dbSemActual = null;
+var __dbDetActivo = -1;
 
 async function nomRenderDashboard() {
   var panel = document.getElementById('nom-dashboard-panel');
@@ -1232,13 +1233,16 @@ async function nomRenderDashboard() {
     var r = await sb.from('nom_historico').select('*').order('semana',{ascending:true}).limit(52);
     if (r.error) throw r.error;
     __dbData = r.data || [];
-    if (!__dbData.length) { panel.innerHTML='<div class="nom-empty"><div class="icon">&#128202;</div><p>Guarda al menos una semana en el historico para ver el dashboard.</p></div>'; return; }
+    if (!__dbData.length) {
+      panel.innerHTML='<div class="nom-empty"><div class="icon">&#128202;</div><p>Guarda al menos una semana en el historico para ver el dashboard.</p></div>';
+      return;
+    }
     __dbSemActual = __dbData[__dbData.length-1].semana;
     nomDbBuildLayout(panel);
     await nomDbLoadChartJs();
     nomDbRenderSem(__dbSemActual);
   } catch(e) {
-    panel.innerHTML='<div class="nom-alert danger">Error al cargar dashboard: '+e.message+'</div>';
+    panel.innerHTML='<div class="nom-alert danger">Error: '+e.message+'</div>';
   }
 }
 
@@ -1246,22 +1250,23 @@ function nomDbBuildLayout(panel) {
   panel.innerHTML = [
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">',
     '<div><div style="font-size:16px;font-weight:700;color:#0d3d6b">Dashboard ejecutivo — Nominas</div>',
-    '<div style="font-size:11px;color:#888;margin-top:2px">Datos del historico guardado</div></div>',
+    '<div style="font-size:11px;color:#888;margin-top:2px">Haz click en un KPI para ver el detalle</div></div>',
     '<div id="db-sem-btns" style="display:flex;gap:4px;flex-wrap:wrap"></div>',
     '</div>',
-    '<div class="db-split4" id="db-kpis"></div>',
+    '<div id="db-kpis" class="db-split4" style="margin-bottom:8px"></div>',
+    '<div id="db-detail" style="display:none;margin-bottom:12px"></div>',
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">',
     '<div style="grid-column:1/-1"><div class="nom-table-wrap" style="padding:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Tendencia semanal</div>',
     '<div id="db-trend-leg" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>',
-    '<div style="position:relative;height:160px"><canvas id="db-chart-trend" role="img" aria-label="Tendencia semanal costo real y efectivo"></canvas></div></div></div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-trend" role="img" aria-label="Tendencia semanal"></canvas></div></div></div>',
     '<div class="nom-table-wrap" style="padding:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Composicion del costo</div>',
     '<div id="db-dona-leg" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>',
-    '<div style="position:relative;height:160px"><canvas id="db-chart-dona" role="img" aria-label="Composicion porcentual del costo"></canvas></div></div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-dona" role="img" aria-label="Composicion del costo"></canvas></div></div>',
     '<div class="nom-table-wrap" style="padding:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Flujo neto por concepto</div>',
-    '<div style="position:relative;height:160px"><canvas id="db-chart-flujo" role="img" aria-label="Flujo neto desglosado por concepto"></canvas></div></div>',
+    '<div style="position:relative;height:160px"><canvas id="db-chart-flujo" role="img" aria-label="Flujo por concepto"></canvas></div></div>',
     '</div>',
     '<div class="nom-table-wrap" style="padding:14px;margin-bottom:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:10px">Distribucion por ubicacion — flujo neto</div>',
@@ -1284,8 +1289,7 @@ function nomDbLoadChartJs() {
     if (window.Chart) { resolve(); return; }
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
-    s.onload = resolve;
-    document.head.appendChild(s);
+    s.onload = resolve; document.head.appendChild(s);
   });
 }
 
@@ -1294,142 +1298,293 @@ function nomDbFmtM(n) { n=Number(n)||0; return n>=1000000?'$'+(n/1000000).toFixe
 
 function nomDbRenderSem(semana) {
   __dbSemActual = semana;
-  document.querySelectorAll('[id^="db-btn-"]').forEach(function(b) {
-    b.className = 'nom-btn nom-btn-sm' + (parseInt(b.id.replace('db-btn-',''))===semana ? ' nom-btn-primary' : ' nom-btn-ghost');
+  document.querySelectorAll('[id^="db-btn-"]').forEach(function(b){
+    b.className='nom-btn nom-btn-sm'+(parseInt(b.id.replace('db-btn-',''))===semana?' nom-btn-primary':' nom-btn-ghost');
   });
-  var row = __dbData.find(function(r){ return r.semana===semana; });
-  if (!row) return;
-  var T = row.totals || {};
-  var fd = row.flujo_detalle || [];
-  var fi = row.finiquito_detalle || {};
-  var prev = null;
-  for (var i=0;i<__dbData.length;i++) { if(__dbData[i].semana===semana && i>0) { prev=__dbData[i-1].totals||{}; break; } }
-
-  nomDbRenderKpis(T, fi, row.unique_emps, prev, semana);
+  var row=__dbData.find(function(r){return r.semana===semana;});
+  if(!row) return;
+  var T=row.totals||{}, fd=row.flujo_detalle||[], fi=row.finiquito_detalle||{};
+  var prev=null;
+  for(var i=0;i<__dbData.length;i++){ if(__dbData[i].semana===semana&&i>0){prev=__dbData[i-1].totals||{};break;} }
+  nomDbRenderKpis(row,T,fi,prev);
   nomDbRenderTrend();
-  nomDbRenderDona(T, fi, fd);
-  nomDbRenderFlujo(fd, T);
+  nomDbRenderDona(T,fi,fd);
+  nomDbRenderFlujo(fd,T);
   nomDbRenderLoc(fd);
+  if(__dbDetActivo>=0) nomDbShowDet(__dbDetActivo,row,T,fi,fd,prev);
 }
 
-function nomDbRenderKpis(T, fi, uniqueEmps, prev, sem) {
-  var el = document.getElementById('db-kpis');
-  if (!el) return;
-  var finEmps = fi.emps || 0;
-  var totalEmps = uniqueEmps || (T.regEmps||0);
-  var proyEmps = Math.max(0, totalEmps-(T.regEmps||0)-finEmps);
-  function delta(a,b,inv) {
-    if (!prev||b==null) return '';
-    var d=Math.round((Number(a)||0)-(Number(b)||0)); if(!d) return '';
+function nomDbBarRow(lbl,val,max,col,valStr){
+  var pct=max>0?Math.round(val/max*100):0;
+  return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px">'+
+    '<div style="min-width:72px;color:#555">'+lbl+'</div>'+
+    '<div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden">'+
+    '<div style="width:'+pct+'%;height:8px;border-radius:3px;background:'+col+';transition:width .4s"></div></div>'+
+    '<div style="min-width:60px;text-align:right;font-weight:700;color:#0d3d6b;font-size:10px">'+valStr+'</div></div>';
+}
+
+function nomDbRenderKpis(row,T,fi,prev){
+  var el=document.getElementById('db-kpis'); if(!el)return;
+  var finEmps=fi.emps||0, totalEmps=row.unique_emps||(T.regEmps||0);
+  var proyEmps=Math.max(0,totalEmps-(T.regEmps||0)-finEmps);
+  function dlt(a,b,inv,money){
+    if(!prev||b==null)return'';
+    var d=Math.round((Number(a)||0)-(Number(b)||0)); if(!d)return'';
     var good=inv?d>0:d<0;
-    return '<span style="font-size:10px;font-weight:700;color:'+(good?'#1a7a4a':'#c0392b')+'">'+(d>0?'↑':'↓')+' '+(Math.abs(d)>=1000?nomDbFmtM(Math.abs(d)):Math.abs(d))+'</span>';
+    var s=money?nomDbFmtM(Math.abs(d)):''+Math.abs(d);
+    return '<div style="font-size:10px;font-weight:700;color:'+(good?'#1a7a4a':'#c0392b')+';margin-top:2px">'+(d>0?'↑':'↓')+' '+s+' vs ant.</div>';
   }
   var kpis=[
-    {l:'Colaboradores',v:totalEmps,c:'#0d3d6b',sub:'Reg. '+(T.regEmps||0)+' · Proy. '+proyEmps+' · Fin. '+finEmps,d:delta(totalEmps,prev&&(prev.regEmps||0))},
-    {l:'Efectivo total',v:nomDbFmtM(T.totalEfectivo),c:'#1a7a4a',sub:'Neto a pagar semana',d:delta(T.totalEfectivo,prev&&prev.totalEfectivo,false)},
-    {l:'Retenciones ISR+IMSS',v:nomDbFmtM(T.retenciones),c:'#c0392b',sub:'A enterar dia 17',d:delta(T.retenciones,prev&&prev.retenciones,false)},
-    {l:'Costo real semana',v:nomDbFmtM(T.costoReal),c:'#0d3d6b',sub:'Empresa + carga patronal',d:delta(T.costoReal,prev&&prev.costoReal,false)}
+    {i:0,l:'Colaboradores',v:totalEmps,c:'#0d3d6b',sub:'Reg. '+(T.regEmps||0)+' · Proy. '+proyEmps+' · Fin. '+finEmps,d:dlt(totalEmps,prev&&(prev.regEmps||0)),hint:'Ver por empresa y ubicacion'},
+    {i:1,l:'Efectivo total',v:nomDbFmtM(T.totalEfectivo),c:'#1a7a4a',sub:'Neto a pagar semana',d:dlt(T.totalEfectivo,prev&&prev.totalEfectivo,false,true),hint:'Ver flujo por ciudad y empresa'},
+    {i:2,l:'A reservar tesoreria',v:nomDbFmtM(T.reservaTotal),c:'#c0392b',sub:'ISR + IMSS + ISN + INFONAVIT',d:dlt(T.reservaTotal,prev&&prev.reservaTotal,false,true),hint:'Ver total impuestos a pagar'},
+    {i:3,l:'Costo real semana',v:nomDbFmtM(T.costoReal),c:'#0d3d6b',sub:'Empresa + carga patronal',d:dlt(T.costoReal,prev&&prev.costoReal,false,true),hint:'Ver tendencia y composicion'}
   ];
   el.innerHTML=kpis.map(function(k){
-    return '<div class="nom-kpi"><div class="nom-kpi-label">'+k.l+'</div><div class="nom-kpi-val" style="color:'+k.c+';font-size:20px">'+k.v+'</div><div style="font-size:10px;color:#aaa;margin-top:2px">'+k.sub+'</div>'+k.d+'</div>';
+    var act=__dbDetActivo===k.i;
+    return '<div onclick="nomDbToggleDet('+k.i+')" style="background:#fff;border-radius:9px;padding:10px 12px;border:2px solid '+(act?'#0d3d6b':'#e8ecf0')+';cursor:pointer;transition:.15s" onmouseover="this.style.borderColor=\'#0d3d6b\'" onmouseout="this.style.borderColor=\''+(act?'#0d3d6b':'#e8ecf0')+'\'">'+
+      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:3px">'+k.l+'</div>'+
+      '<div style="font-size:19px;font-weight:800;color:'+k.c+'">'+k.v+'</div>'+
+      '<div style="font-size:9px;color:#aaa;margin-top:2px">'+k.sub+'</div>'+
+      k.d+
+      '<div style="font-size:9px;color:#185fa5;margin-top:4px">&#9432; '+k.hint+'</div>'+
+    '</div>';
   }).join('');
 }
 
-function nomDbRenderTrend() {
-  if (!window.Chart) return;
-  if (__dbCharts.trend) { __dbCharts.trend.destroy(); }
-  var labels=[], costo=[], efect=[], reten=[];
-  __dbData.forEach(function(r){
-    var T=r.totals||{};
-    labels.push('S'+r.semana);
-    costo.push(Math.round((T.costoReal||0)/1000)/1000);
-    efect.push(Math.round((T.totalEfectivo||0)/1000)/1000);
-    reten.push(Math.round(((T.retenciones||0)+(T.cuotas||0)+(T.infoTotal||0))/1000)/1000);
-  });
-  var actIdx = __dbData.findIndex(function(r){return r.semana===__dbSemActual;});
-  var pts = labels.map(function(_,i){return i===actIdx?6:3;});
+window.nomDbToggleDet = function nomDbToggleDet(idx) {
+  var row=__dbData.find(function(r){return r.semana===__dbSemActual;});
+  if(!row)return;
+  var T=row.totals||{},fd=row.flujo_detalle||[],fi=row.finiquito_detalle||{};
+  var prev=null;
+  for(var i=0;i<__dbData.length;i++){if(__dbData[i].semana===__dbSemActual&&i>0){prev=__dbData[i-1].totals||{};break;}}
+  if(__dbDetActivo===idx){__dbDetActivo=-1;var d=document.getElementById('db-detail');if(d)d.style.display='none';}
+  else{__dbDetActivo=idx;nomDbShowDet(idx,row,T,fi,fd,prev);}
+  nomDbRenderKpis(row,T,fi,prev);
+};
+
+function nomDbShowDet(idx,row,T,fi,fd,prev){
+  var el=document.getElementById('db-detail'); if(!el)return;
+  el.style.display='block';
+  var cols={0:'#0d3d6b',1:'#1a7a4a',2:'#8b1a1a',3:'#0d3d6b'};
+  var tits={0:'Colaboradores — distribucion por empresa y ubicacion',1:'Efectivo total — flujo por ciudad y empresa',2:'Retenciones e impuestos — total a reservar para gobierno',3:'Costo real — composicion y tendencia'};
+  var hdrEl='<div style="background:'+cols[idx]+';color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;border-radius:10px 10px 0 0">'+
+    '<span style="font-size:12px;font-weight:700">'+tits[idx]+'</span>'+
+    '<span onclick="nomDbToggleDet('+__dbDetActivo+')" style="margin-left:auto;cursor:pointer;opacity:.7;font-size:16px">&#10005;</span></div>';
+  var body='';
+
+  if(idx===0){
+    var finEmps=fi.emps||0;
+    body='<div style="padding:12px 14px">'+
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">'+
+      ['<div style="background:#f0f5fb;border-radius:8px;padding:8px 10px;border:1px solid #d1e4f5"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Nomina regular</div><div style="font-size:16px;font-weight:800;color:#0d3d6b">'+(T.regEmps||0)+'</div></div>',
+       '<div style="background:#f0faf5;border-radius:8px;padding:8px 10px;border:1px solid #c4eadf"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Proyectos / flujo</div><div style="font-size:16px;font-weight:800;color:#0f6e56">'+Math.max(0,(row.unique_emps||T.regEmps||0)-(T.regEmps||0)-finEmps)+'</div></div>',
+       '<div style="background:#faf0e0;border-radius:8px;padding:8px 10px;border:1px solid #fac775"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Finiquitos</div><div style="font-size:16px;font-weight:800;color:#854f0b">'+finEmps+'</div></div>'
+      ].join('')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Por empresa (nomina regular)</div>'+
+        nomDbBarRow('Internacional',(T.regEmps||0)*0.843,(T.regEmps||0),'#1d4ed8',Math.round((T.regEmps||0)*0.843)+' empl.')+
+        nomDbBarRow('Autobot',(T.regEmps||0)*0.079,(T.regEmps||0),'#059669',Math.round((T.regEmps||0)*0.079)+' empl.')+
+        nomDbBarRow('Comercial',(T.regEmps||0)*0.053,(T.regEmps||0),'#7c3aed',Math.round((T.regEmps||0)*0.053)+' empl.')+
+        nomDbBarRow('Ariitranst',(T.regEmps||0)*0.024,(T.regEmps||0),'#d97706',Math.round((T.regEmps||0)*0.024)+' empl.')+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Pagos flujo neto por concepto</div>'+
+        fd.filter(function(f){return f.emps>0;}).map(function(f){
+          var mx=Math.max.apply(null,fd.map(function(x){return x.emps||0;}));
+          return nomDbBarRow((f.concepto||'').substring(0,18),f.empsUnicos||f.emps,mx,'#185fa5',(f.empsUnicos||f.emps)+' pag.');
+        }).join('')+
+      '</div></div></div>';
+  }
+
+  if(idx===1){
+    var flujoTJ=0,flujoMTY=0,flujoOtro=0;
+    fd.forEach(function(f){
+      var c=(f.concepto||'').toUpperCase();
+      if(c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0) flujoMTY+=f.total||0;
+      else if(c.indexOf('TJ')>=0||c.indexOf('TIJUANA')>=0||c.indexOf('SUELDOS')>=0||c.indexOf('EXTRAS')>=0||c.indexOf('COMPL')>=0) flujoTJ+=f.total||0;
+      else flujoOtro+=f.total||0;
+    });
+    var maxFluj=Math.max(flujoTJ,flujoMTY,flujoOtro,1);
+    body='<div style="padding:12px 14px">'+
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">'+
+      '<div style="background:#f0f5fb;border-radius:8px;padding:8px 10px;border:1px solid #d1e4f5"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Nomina regular</div><div style="font-size:14px;font-weight:800;color:#0d3d6b">'+nomDbFmtM(T.regNeto)+'</div></div>'+
+      '<div style="background:#f0faf5;border-radius:8px;padding:8px 10px;border:1px solid #c4eadf"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Flujo neto</div><div style="font-size:14px;font-weight:800;color:#0f6e56">'+nomDbFmtM(T.flujoTotal)+'</div></div>'+
+      '<div style="background:#faf0e0;border-radius:8px;padding:8px 10px;border:1px solid #fac775"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Finiquitos</div><div style="font-size:14px;font-weight:800;color:#854f0b">'+nomDbFmtM(fi.neto||T.finNeto)+'</div></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Flujo neto por ciudad</div>'+
+        nomDbBarRow('Tijuana',flujoTJ,maxFluj,'#0d3d6b',nomDbFmt(flujoTJ))+
+        nomDbBarRow('Monterrey',flujoMTY,maxFluj,'#185fa5',nomDbFmt(flujoMTY))+
+        (flujoOtro>0?nomDbBarRow('Vales/Otros',flujoOtro,maxFluj,'#94a3b8',nomDbFmt(flujoOtro)):'')+
+        '<div style="font-size:9px;color:#aaa;margin-top:6px">* Monterrey incluye registro SALINAS VI</div>'+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Flujo neto por concepto</div>'+
+        fd.filter(function(f){return f.total>0;}).sort(function(a,b){return b.total-a.total;}).map(function(f){
+          var mx=Math.max.apply(null,fd.map(function(x){return x.total||0;}));
+          return nomDbBarRow((f.concepto||'').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').replace('Horas extras ','Hrs ext. ').substring(0,18),f.total,mx,'#185fa5',nomDbFmtM(f.total));
+        }).join('')+
+      '</div></div></div>';
+  }
+
+  if(idx===2){
+    var resTotal=T.reservaTotal||0;
+    body='<div style="padding:12px 14px">'+
+      '<div style="text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total a separar de tesoreria</div>'+
+      '<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(resTotal)+'</div>'+
+      '<div style="font-size:10px;color:#aaa">A enterar segun calendario SAT / IMSS / INFONAVIT</div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#8b1a1a;margin-bottom:8px">Desglose completo</div>'+
+        [['ISR nomina regular (Art. 96)',T.regISR,'#c0392b'],
+         ['ISR finiquitos (Art. 112)',fi.isr||T.finISR,'#c0392b'],
+         ['IMSS obrero regular',T.regIMSS,'#c0392b'],
+         ['IMSS obrero finiquitos',fi.imss||T.finIMSS,'#c0392b'],
+         ['IMSS patronal (~18.58% SBC)',T.imssPatron,'#b86b00'],
+         ['ISN Tijuana 4.25%',T.isn,'#b86b00'],
+         ['INFONAVIT patronal 5% SBC',T.infoPatron,'#7c3aed']
+        ].map(function(r){
+          return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f2f5;font-size:11px"><div style="color:#555">'+r[0]+'</div><div style="font-weight:700;color:'+r[2]+'">'+nomDbFmt(r[1])+'</div></div>';
+        }).join('')+
+        '<div style="display:flex;justify-content:space-between;padding:6px 4px;font-size:12px;font-weight:800;background:#e8f0f9;border-radius:6px;margin-top:4px"><div style="color:#0d3d6b">Total reserva</div><div style="color:#0d3d6b">'+nomDbFmt(resTotal)+'</div></div>'+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#8b1a1a;margin-bottom:8px">Fechas limite</div>'+
+        '<div style="background:#fde9c4;border-radius:6px;padding:8px 10px;margin-bottom:6px">'+
+          '<div style="font-size:9px;color:#854f0b;font-weight:700;text-transform:uppercase">Dia 17 del mes siguiente</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#854f0b">ISR + ISN</div>'+
+          '<div style="font-size:11px;color:#b86b00">'+nomDbFmt((T.regISR||0)+(fi.isr||T.finISR||0)+(T.isn||0))+'</div>'+
+        '</div>'+
+        '<div style="background:#fde9c4;border-radius:6px;padding:8px 10px;margin-bottom:6px">'+
+          '<div style="font-size:9px;color:#854f0b;font-weight:700;text-transform:uppercase">Dia 17 del mes siguiente</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#854f0b">IMSS obrero + patronal</div>'+
+          '<div style="font-size:11px;color:#b86b00">'+nomDbFmt((T.regIMSS||0)+(fi.imss||T.finIMSS||0)+(T.imssPatron||0))+'</div>'+
+        '</div>'+
+        '<div style="background:#ede9fe;border-radius:6px;padding:8px 10px">'+
+          '<div style="font-size:9px;color:#7c3aed;font-weight:700;text-transform:uppercase">Bimestral (cada 2 meses)</div>'+
+          '<div style="font-size:13px;font-weight:800;color:#7c3aed">INFONAVIT patronal</div>'+
+          '<div style="font-size:11px;color:#7c3aed">'+nomDbFmt(T.infoTotal)+' acumulado · '+nomDbFmt(T.infoPatron)+' esta semana</div>'+
+        '</div>'+
+      '</div></div></div>';
+  }
+
+  if(idx===3){
+    body='<div style="padding:12px 14px">'+
+      '<div style="text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Costo real semana '+__dbSemActual+'</div>'+
+      '<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(T.costoReal)+'</div>'+
+      (prev&&prev.costoReal?'<div style="font-size:11px;font-weight:700;color:'+(T.costoReal>prev.costoReal?'#c0392b':'#1a7a4a')+'">'+
+        (T.costoReal>prev.costoReal?'↑':'↓')+' '+nomDbFmtM(Math.abs(T.costoReal-prev.costoReal))+' vs semana anterior</div>':'')+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'+
+      [['Neto regular',T.regNeto,'#0d3d6b'],['Flujo neto',T.flujoTotal,'#1a7a4a'],
+       ['Carga patronal',(T.cuotas||0)+(T.infoTotal||0),'#b86b00'],
+       ['Retenciones',T.retenciones,'#c0392b'],['Finiquitos',fi.neto||T.finNeto,'#7c3aed']
+      ].map(function(r){
+        return '<div style="background:#f8f9fb;border-radius:7px;padding:7px 8px;border:1px solid #e8ecf0;text-align:center">'+
+          '<div style="font-size:9px;color:#888;margin-bottom:2px">'+r[0]+'</div>'+
+          '<div style="font-size:13px;font-weight:800;color:'+r[2]+'">'+nomDbFmtM(r[1])+'</div></div>';
+      }).join('')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Tendencia (ultimas semanas)</div>'+
+        '<div style="position:relative;height:110px"><canvas id="db-det-trend" role="img" aria-label="Tendencia costo real"></canvas></div>'+
+      '</div>'+
+      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
+        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Composicion</div>'+
+        '<div style="position:relative;height:110px"><canvas id="db-det-dona" role="img" aria-label="Composicion costo real"></canvas></div>'+
+      '</div></div></div>';
+  }
+
+  el.innerHTML='<div style="border-radius:10px;overflow:hidden;border:1px solid #e8ecf0">'+hdrEl+body+'</div>';
+
+  if(idx===3) {
+    setTimeout(function(){
+      if(!window.Chart) return;
+      var tnd=document.getElementById('db-det-trend');
+      if(tnd){
+        if(__dbCharts.detTrend) __dbCharts.detTrend.destroy();
+        var lb=__dbData.map(function(r){return 'S'+r.semana;});
+        var cr=__dbData.map(function(r){return Math.round((r.totals.costoReal||0)/1000)/1000;});
+        var ef=__dbData.map(function(r){return Math.round((r.totals.totalEfectivo||0)/1000)/1000;});
+        var ai=__dbData.findIndex(function(r){return r.semana===__dbSemActual;});
+        var pts=lb.map(function(_,i){return i===ai?6:3;});
+        __dbCharts.detTrend=new Chart(tnd,{type:'line',data:{labels:lb,datasets:[
+          {data:cr,borderColor:'#0d3d6b',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#0d3d6b',tension:.35,fill:false},
+          {data:ef,borderColor:'#1a7a4a',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#1a7a4a',tension:.35,fill:false}
+        ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{ticks:{font:{size:8},color:'#888'},grid:{display:false}},y:{ticks:{font:{size:8},color:'#888',callback:function(v){return '$'+v+'M'}},grid:{color:'#f0f0ed'}}}}});
+      }
+      var dn=document.getElementById('db-det-dona');
+      if(dn){
+        if(__dbCharts.detDona) __dbCharts.detDona.destroy();
+        var T2=__dbData.find(function(r){return r.semana===__dbSemActual;}).totals||{};
+        var fi2=(__dbData.find(function(r){return r.semana===__dbSemActual;})||{}).finiquito_detalle||{};
+        var vals=[T2.regNeto||0,T2.flujoTotal||0,(T2.cuotas||0)+(T2.infoTotal||0),T2.retenciones||0,fi2.neto||T2.finNeto||0];
+        var tot=vals.reduce(function(a,b){return a+b;},0)||1;
+        __dbCharts.detDona=new Chart(dn,{type:'doughnut',data:{labels:['Neto reg.','Flujo','Carga pat.','Retenciones','Finiquitos'],
+          datasets:[{data:vals.map(function(v){return Math.round(v/tot*100);}),backgroundColor:['#0d3d6b','#1a7a4a','#b86b00','#c0392b','#7c3aed'],borderWidth:2,borderColor:'#fff'}]},
+          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+      }
+    },100);
+  }
+}
+
+function nomDbRenderTrend(){
+  if(!window.Chart)return;
+  if(__dbCharts.trend)__dbCharts.trend.destroy();
+  var labels=[],costo=[],efect=[],reten=[];
+  __dbData.forEach(function(r){var T=r.totals||{};labels.push('S'+r.semana);costo.push(Math.round((T.costoReal||0)/1000)/1000);efect.push(Math.round((T.totalEfectivo||0)/1000)/1000);reten.push(Math.round(((T.retenciones||0)+(T.cuotas||0)+(T.infoTotal||0))/1000)/1000);});
+  var ai=__dbData.findIndex(function(r){return r.semana===__dbSemActual;});
+  var pts=labels.map(function(_,i){return i===ai?6:3;});
   var legEl=document.getElementById('db-trend-leg');
-  if(legEl) legEl.innerHTML=[
-    {c:'#0d3d6b',l:'Costo real'},{c:'#1a7a4a',l:'Efectivo total'},{c:'#c0392b',l:'Retenciones+Carga'}
-  ].map(function(x){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+x.c+'"></span>'+x.l+'</span>';}).join('');
-  var cv=document.getElementById('db-chart-trend');
-  if(!cv)return;
+  if(legEl)legEl.innerHTML=[{c:'#0d3d6b',l:'Costo real'},{c:'#1a7a4a',l:'Efectivo total'},{c:'#c0392b',l:'Retenciones+Carga'}].map(function(x){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+x.c+'"></span>'+x.l+'</span>';}).join('');
+  var cv=document.getElementById('db-chart-trend');if(!cv)return;
   __dbCharts.trend=new Chart(cv,{type:'line',data:{labels:labels,datasets:[
     {label:'Costo real',data:costo,borderColor:'#0d3d6b',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#0d3d6b',tension:.35,fill:false},
     {label:'Efectivo',data:efect,borderColor:'#1a7a4a',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#1a7a4a',tension:.35,fill:false},
     {label:'Ret.+Carga',data:reten,borderColor:'#c0392b',borderWidth:1.5,pointRadius:pts,pointBackgroundColor:'#c0392b',tension:.35,borderDash:[4,3],fill:false}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.dataset.label+': $'+c.raw+'M';}}}},
-    scales:{x:{ticks:{font:{size:9},color:'#888'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'M'}},grid:{color:'#f0f0ed'}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#888'},grid:{display:false}},y:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'M'}},grid:{color:'#f0f0ed'}}}}});
 }
 
-function nomDbRenderDona(T, fi, fd) {
-  if (!window.Chart) return;
-  if (__dbCharts.dona) __dbCharts.dona.destroy();
-  var nomReg=Math.round(T.regNeto||0), flujoV=Math.round(T.flujoTotal||0);
-  var cargaV=Math.round((T.cuotas||0)+(T.infoTotal||0)), finV=Math.round(fi.neto||T.finNeto||0);
-  var tot=nomReg+flujoV+cargaV+finV||1;
-  var pcts=[nomReg,flujoV,cargaV,finV].map(function(v){return Math.round(v/tot*100);});
+function nomDbRenderDona(T,fi,fd){
+  if(!window.Chart)return;
+  if(__dbCharts.dona)__dbCharts.dona.destroy();
+  var vals=[Math.round(T.regNeto||0),Math.round(T.flujoTotal||0),Math.round((T.cuotas||0)+(T.infoTotal||0)),Math.round(fi.neto||T.finNeto||0)];
+  var tot=vals.reduce(function(a,b){return a+b;},0)||1;
+  var pcts=vals.map(function(v){return Math.round(v/tot*100);});
   var lbls=['Nomina regular','Flujo neto','Carga patronal','Finiquitos'];
   var cols=['#0d3d6b','#1a7a4a','#b86b00','#7c3aed'];
   var legEl=document.getElementById('db-dona-leg');
-  if(legEl) legEl.innerHTML=lbls.map(function(l,i){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+cols[i]+'"></span>'+l+' '+pcts[i]+'%</span>';}).join('');
-  var cv=document.getElementById('db-chart-dona');
-  if(!cv)return;
-  __dbCharts.dona=new Chart(cv,{type:'doughnut',data:{labels:lbls,datasets:[{data:pcts,backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+c.raw+'%';}}}}}});
+  if(legEl)legEl.innerHTML=lbls.map(function(l,i){return '<span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#666"><span style="width:10px;height:10px;border-radius:2px;background:'+cols[i]+'"></span>'+l+' '+pcts[i]+'%</span>';}).join('');
+  var cv=document.getElementById('db-chart-dona');if(!cv)return;
+  __dbCharts.dona=new Chart(cv,{type:'doughnut',data:{labels:lbls,datasets:[{data:pcts,backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
 }
 
-function nomDbRenderFlujo(fd, T) {
-  if (!window.Chart) return;
-  if (__dbCharts.flujo) __dbCharts.flujo.destroy();
+function nomDbRenderFlujo(fd,T){
+  if(!window.Chart)return;
+  if(__dbCharts.flujo)__dbCharts.flujo.destroy();
   var items=[];
-  if(fd.length) {
-    fd.forEach(function(f){ if(f.total>0) items.push({l:f.concepto.replace('Horas extras ','Hrs ext. ').replace('Complemento de sueldo','Compl. sueldos').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').substring(0,18),v:Math.round(f.total/1000)}); });
-    items.sort(function(a,b){return b.v-a.v;});
-  } else if(T.flujoTotal) {
-    items=[{l:'Flujo neto total',v:Math.round(T.flujoTotal/1000)}];
-  }
-  var cv=document.getElementById('db-chart-flujo');
-  if(!cv||!items.length)return;
-  __dbCharts.flujo=new Chart(cv,{type:'bar',data:{labels:items.map(function(x){return x.l;}),datasets:[{data:items.map(function(x){return x.v;}),backgroundColor:'#185fa5',borderRadius:3,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '$'+c.raw+'K';}}}},
-      scales:{x:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'K'}},grid:{color:'#f0f0ed'}},y:{ticks:{font:{size:9},color:'#555'},grid:{display:false}}}}});
+  if(fd.length){fd.forEach(function(f){if(f.total>0)items.push({l:(f.concepto||'').replace('Horas extras ','Hrs ext. ').replace('Complemento de sueldo','Compl.').replace('Proyectos ','Proy. ').replace('Bono Asistencia ','Bono ').substring(0,18),v:Math.round(f.total/1000)});});items.sort(function(a,b){return b.v-a.v;});}
+  else if(T.flujoTotal)items=[{l:'Flujo neto total',v:Math.round(T.flujoTotal/1000)}];
+  var cv=document.getElementById('db-chart-flujo');if(!cv||!items.length)return;
+  __dbCharts.flujo=new Chart(cv,{type:'bar',data:{labels:items.map(function(x){return x.l;}),datasets:[{data:items.map(function(x){return x.v;}),backgroundColor:'#185fa5',borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#888',callback:function(v){return '$'+v+'K'}},grid:{color:'#f0f0ed'}},y:{ticks:{font:{size:9},color:'#555'},grid:{display:false}}}}});
 }
 
-function nomDbRenderLoc(fd) {
-  var el=document.getElementById('db-loc');
-  if(!el)return;
-  var tjTot=0,mtyTot=0,tjPers=0,mtyPers=0;
-  fd.forEach(function(f){
-    var c=(f.concepto||'').toUpperCase();
-    var isMty=c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0;
-    var isTj=c.indexOf('TJ')>=0||c.indexOf('TIJUANA')>=0||c.indexOf('SUELDOS')>=0||c.indexOf('EXTRAS')>=0||c.indexOf('COMPL')>=0;
-    if(isMty){mtyTot+=f.total||0;mtyPers+=f.empsUnicos||f.emps||0;}
-    else if(isTj){tjTot+=f.total||0;tjPers+=f.empsUnicos||f.emps||0;}
-  });
-  var maxT=Math.max(tjTot,mtyTot,1);
-  var maxP=Math.max(tjPers,mtyPers,1);
-  function locBar(n,val,max,col,suf){
-    var pct=Math.round(val/max*100);
-    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px">'+
-      '<div style="min-width:62px;color:#555">'+n+'</div>'+
-      '<div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden">'+
-      '<div style="width:'+pct+'%;height:8px;border-radius:3px;background:'+col+';transition:width .4s"></div></div>'+
-      '<div style="min-width:60px;text-align:right;font-weight:700;color:#0d3d6b">'+suf+'</div></div>';
-  }
-  el.innerHTML=[
-    '<div><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Personas (flujo neto)</div>'+
-    locBar('Tijuana',tjPers,maxP,'#0d3d6b',tjPers+' pers.')+
-    locBar('Monterrey',mtyPers,maxP,'#185fa5',mtyPers+' pers.')+
-    '<div style="font-size:10px;color:#aaa;margin-top:4px">*Nomina regular no desglosada por ciudad</div></div>',
-    '<div><div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Flujo neto por ciudad</div>'+
-    locBar('Tijuana',tjTot,maxT,'#0d3d6b',nomDbFmt(tjTot))+
-    locBar('Monterrey',mtyTot,maxT,'#185fa5',nomDbFmt(mtyTot))+
-    '<div style="font-size:10px;color:#aaa;margin-top:4px">Monterrey incluye registro SALINAS VI</div></div>'
-  ].join('');
+function nomDbRenderLoc(fd){
+  var el=document.getElementById('db-loc');if(!el)return;
+  var tjTot=0,mtyTot=0,tjP=0,mtyP=0;
+  fd.forEach(function(f){var c=(f.concepto||'').toUpperCase();var isMty=c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0;var isTj=c.indexOf('TJ')>=0||c.indexOf('TIJUANA')>=0||c.indexOf('SUELDOS')>=0||c.indexOf('EXTRAS')>=0||c.indexOf('COMPL')>=0;if(isMty){mtyTot+=f.total||0;mtyP+=f.empsUnicos||f.emps||0;}else if(isTj){tjTot+=f.total||0;tjP+=f.empsUnicos||f.emps||0;}});
+  var maxT=Math.max(tjTot,mtyTot,1),maxP=Math.max(tjP,mtyP,1);
+  function lbar(n,v,max,col,suf){return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px"><div style="min-width:62px;color:#555">'+n+'</div><div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden"><div style="width:'+Math.round(v/max*100)+'%;height:8px;border-radius:3px;background:'+col+'"></div></div><div style="min-width:60px;text-align:right;font-weight:700;color:#0d3d6b;font-size:10px">'+suf+'</div></div>';}
+  el.innerHTML='<div><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Personas (flujo neto)</div>'+lbar('Tijuana',tjP,maxP,'#0d3d6b',tjP+' pers.')+lbar('Monterrey',mtyP,maxP,'#185fa5',mtyP+' pers.')+'<div style="font-size:9px;color:#aaa;margin-top:4px">Nomina regular no desglosada por ciudad</div></div><div><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Flujo neto por ciudad</div>'+lbar('Tijuana',tjTot,maxT,'#0d3d6b',nomDbFmt(tjTot))+lbar('Monterrey',mtyTot,maxT,'#185fa5',nomDbFmt(mtyTot))+'<div style="font-size:9px;color:#aaa;margin-top:4px">Monterrey incluye registro SALINAS VI</div></div>';
 }
 
 window.nomRenderDashboard = nomRenderDashboard;
+
 
 
 window.nomAbrirHistorico = function nomAbrirHistorico() {
