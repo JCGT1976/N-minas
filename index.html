@@ -1470,38 +1470,73 @@ function nomDbShowDet(idx,row,T,fi,fd,prev){
   }
 
   if(idx===1){
-    var flujoTJ=0,flujoMTY=0,flujoOtro=0;
+    var flujoTJ=0,flujoMTY=0,flujoVales=0;
     fd.forEach(function(f){
       var c=(f.concepto||'').toUpperCase();
-      if(c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0) flujoMTY+=f.total||0;
-      else if(c.indexOf('TJ')>=0||c.indexOf('TIJUANA')>=0||c.indexOf('SUELDOS')>=0||c.indexOf('EXTRAS')>=0||c.indexOf('COMPL')>=0) flujoTJ+=f.total||0;
-      else flujoOtro+=f.total||0;
+      if(c.indexOf('VALES')>=0||c.indexOf('DESPENSA')>=0) flujoVales+=f.total||0;
+      else if(c.indexOf('MTY')>=0||c.indexOf('MONTERREY')>=0) flujoMTY+=f.total||0;
+      else flujoTJ+=f.total||0;
     });
-    var maxFluj=Math.max(flujoTJ,flujoMTY,flujoOtro,1);
+    var allItems=[];
+    var mp={};
+    fd.forEach(function(f){if(f.total>0){var k=(f.concepto||'').replace('Horas extras TJ','Hrs extras TJ').replace('Complemento de sueldo','Compl. sueldo').replace('Complemento Sueldos','Compl. sueldo').replace('Proyectos Tijuana','Proyectos Tijuana').replace('Proyectos Monterrey','Proyectos Monterrey').replace('Bono Asistencia Monterrey','Bono asist. MTY').replace('Horas extras y complementos TJ','Hrs+Compl. TJ').substring(0,22);mp[k]=(mp[k]||0)+f.total;}});
+    allItems=Object.keys(mp).map(function(k){return{l:k,v:mp[k]};}).sort(function(a,b){return b.v-a.v;});
+    var maxItem=allItems.length?allItems[0].v:1;
+    var empresas=[{l:'Internacional',v:(T.regNeto||0)*0.805,c:'#1d4ed8'},{l:'Autobot',v:(T.regNeto||0)*0.079,c:'#059669'},{l:'Comercial',v:(T.regNeto||0)*0.082,c:'#7c3aed'},{l:'Ariitranst',v:(T.regNeto||0)*0.034,c:'#d97706'}];
+    var maxEmp=empresas[0].v||1;
+    function bRow(lbl,val,max,col,valStr){return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="min-width:110px;color:#555;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+lbl+'</div><div style="flex:1;background:#f0f2f5;border-radius:3px;height:8px;overflow:hidden"><div style="width:'+Math.round(val/max*100)+'%;height:8px;border-radius:3px;background:'+col+'"></div></div><div style="min-width:46px;text-align:right;font-weight:700;font-size:10px;color:'+col+'">'+valStr+'</div></div>';}
     body='<div style="padding:12px 14px">'+
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">'+
-      '<div style="background:#f0f5fb;border-radius:8px;padding:8px 10px;border:1px solid #d1e4f5"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Nomina regular</div><div style="font-size:14px;font-weight:800;color:#0d3d6b">'+nomDbFmtM(T.regNeto)+'</div></div>'+
-      '<div style="background:#f0faf5;border-radius:8px;padding:8px 10px;border:1px solid #c4eadf"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Flujo neto</div><div style="font-size:14px;font-weight:800;color:#0f6e56">'+nomDbFmtM(T.flujoTotal)+'</div></div>'+
-      '<div style="background:#faf0e0;border-radius:8px;padding:8px 10px;border:1px solid #fac775"><div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase">Finiquitos</div><div style="font-size:14px;font-weight:800;color:#854f0b">'+nomDbFmtM(fi.neto||T.finNeto)+'</div></div>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
-        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Flujo neto por ciudad</div>'+
-        nomDbBarRow('Tijuana',flujoTJ,maxFluj,'#0d3d6b',nomDbFmt(flujoTJ))+
-        nomDbBarRow('Monterrey',flujoMTY,maxFluj,'#185fa5',nomDbFmt(flujoMTY))+
-        (flujoOtro>0?nomDbBarRow('Vales/Otros',flujoOtro,maxFluj,'#94a3b8',nomDbFmt(flujoOtro)):'')+
-        '<div style="font-size:9px;color:#aaa;margin-top:6px">* Monterrey incluye registro SALINAS VI</div>'+
-      '</div>'+
-      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
-        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:8px">Flujo neto por concepto</div>'+
-        (function(){
-          var mp={};
-          fd.forEach(function(f){if(f.total>0){var k=(f.concepto||'').replace('Horas extras TJ','Hrs extras TJ').replace('Complemento de sueldo','Compl. sueldo').replace('Complemento Sueldos','Compl. sueldo').replace('Proyectos Tijuana','Proy. Tijuana').replace('Proyectos Monterrey','Proy. Monterrey').replace('Bono Asistencia Monterrey','Bono Monterrey').replace('Horas extras y complementos TJ','Hrs+Compl. TJ').substring(0,20);mp[k]=(mp[k]||0)+f.total;}});
-          var its=Object.keys(mp).map(function(k){return{l:k,v:mp[k]};}).sort(function(a,b){return b.v-a.v;});
-          var mx=Math.max.apply(null,its.map(function(x){return x.v||0;}));
-          return its.map(function(it){return nomDbBarRow(it.l,it.v,mx,'#185fa5',nomDbFmtM(it.v));}).join('');
-        }())+
-      '</div></div></div>';
+      '<div style="display:flex;align-items:center;justify-content:center;background:#f0faf5;border-radius:8px;padding:10px 14px;margin-bottom:12px;text-align:center">'+
+        '<div><div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total efectivo que salio del banco esta semana</div>'+
+        '<div style="font-size:28px;font-weight:800;color:#1a7a4a;margin:3px 0">'+nomDbFmt(T.totalEfectivo)+'</div>'+
+        '<div style="font-size:10px;color:#aaa">Suma de nomina regular + pagos en efectivo + finiquitos</div></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr;gap:8px">'+
+
+      '<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#e8f0f9;border-bottom:1px solid #d1e4f5;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128203;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0d3d6b">Nomina regular</div>'+
+          '<div style="font-size:10px;color:#888">Empleados formales con contrato — con ISR y IMSS descontado</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0d3d6b">'+nomDbFmtM(T.regNeto)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(T.regEmps||0)+' empleados · neto a pagar</div></div></div>'+
+        '<div style="padding:10px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:6px">Neto por empresa</div>'+
+          empresas.map(function(e){return bRow(e.l,e.v,maxEmp,e.c,nomDbFmtM(e.v));}).join('')+
+        '</div></div>'+
+
+      '<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#e4f5ef;border-bottom:1px solid #c4eadf;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128181;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#0f6e56">Pagos en efectivo</div>'+
+          '<div style="font-size:10px;color:#888">Proyectos, bonos y complementos — sin descuento de ISR ni IMSS</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0f6e56">'+nomDbFmtM(T.flujoTotal)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(allItems.length)+' conceptos de pago</div></div></div>'+
+        '<div style="padding:10px 14px">'+
+          '<div style="font-size:10px;font-weight:700;color:#0f6e56;margin-bottom:6px">Que incluye este pago</div>'+
+          allItems.map(function(it){return bRow(it.l,it.v,maxItem,'#185fa5',nomDbFmtM(it.v));}).join('')+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">'+
+            ['Sin ISR','Sin IMSS','Sin carga patronal','Pago en efectivo directo'].map(function(p,i){return '<span style="padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:'+(i<3?'#e4f5ef':'#fff8e1')+';color:'+(i<3?'#0f6e56':'#854f0b')+'">'+p+'</span>';}).join('')+
+          '</div>'+
+        '</div></div>'+
+
+      (fi&&fi.emps?'<div style="border-radius:8px;overflow:hidden;border:1px solid #e8ecf0">'+
+        '<div style="padding:10px 14px;background:#faf0e0;border-bottom:1px solid #fac775;display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:18px">&#128196;</span>'+
+          '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#854f0b">Finiquitos</div>'+
+          '<div style="font-size:10px;color:#888">Empleados que terminaron su relacion laboral esta semana</div></div>'+
+          '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#854f0b">'+nomDbFmtM(fi.neto||T.finNeto)+'</div>'+
+          '<div style="font-size:9px;color:#aaa">'+(fi.emps||0)+' colaboradores</div></div></div>'+
+        '<div style="padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start">'+
+          '<div>'+
+            '<div style="font-size:10px;font-weight:700;color:#854f0b;margin-bottom:6px">Lo que se les pago</div>'+
+            [['Percepciones brutas',fi.percep,false],['ISR descontado',fi.isr||T.finISR,true],['IMSS descontado',fi.imss||T.finIMSS,true],['INFONAVIT desc.',fi.info||T.finInfo,true]].map(function(r){return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f5f0e8;font-size:11px"><div style="color:#555">'+r[0]+'</div><div style="font-weight:700;color:'+(r[2]?'#c0392b':'#854f0b')+'">'+(r[2]?'— ':'')+nomDbFmt(r[1])+'</div></div>';}).join('')+
+            '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;font-weight:800"><div style="color:#854f0b">Neto cobrado</div><div style="color:#854f0b">'+nomDbFmt(fi.neto||T.finNeto)+'</div></div>'+
+          '</div>'+
+          '<div style="background:#faf0e0;border-radius:7px;padding:10px 14px;border:1px solid #fac775;text-align:center;min-width:90px">'+
+            '<div style="font-size:9px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:3px">Colaboradores</div>'+
+            '<div style="font-size:28px;font-weight:800;color:#854f0b;line-height:1">'+(fi.emps||0)+'</div>'+
+          '</div>'+
+        '</div></div>':'')+'</div></div>';
   }
 
   if(idx===2){
