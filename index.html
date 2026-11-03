@@ -2982,7 +2982,7 @@ window.nomSwitchTab = function nomSwitchTab(tab) {
   if (pan)  pan.style.display  = tab === 'calc'      ? 'block' : 'none';
   if (dash) dash.style.display = tab === 'dashboard' ? 'block' : 'none';
   if (tab === 'calc')      { calcShowLanding(); }
-  if (tab === 'dashboard') { nomRenderDashboard(); }
+  if (tab === 'dashboard') { __dbData = []; nomRenderDashboard(); }
 };
 
 window.calcShowLanding = function calcShowLanding() {
