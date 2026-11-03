@@ -1473,30 +1473,7 @@ function nomDbShowDet(idx,row,T,fi,fd,prev){
   }
 
   if(idx===3){
-    body='<div style="padding:12px 14px">'+
-      '<div style="text-align:center;margin-bottom:12px">'+
-      '<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Costo real semana '+__dbSemActual+'</div>'+
-      '<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(T.costoReal)+'</div>'+
-      (prev&&prev.costoReal?'<div style="font-size:11px;font-weight:700;color:'+(T.costoReal>prev.costoReal?'#c0392b':'#1a7a4a')+'">'+
-        (T.costoReal>prev.costoReal?'↑':'↓')+' '+nomDbFmtM(Math.abs(T.costoReal-prev.costoReal))+' vs semana anterior</div>':'')+'</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'+
-      [['Neto regular',T.regNeto,'#0d3d6b'],['Flujo neto',T.flujoTotal,'#1a7a4a'],
-       ['Carga patronal',(T.cuotas||0)+(T.infoTotal||0),'#b86b00'],
-       ['Retenciones',T.retenciones,'#c0392b'],['Finiquitos',fi.neto||T.finNeto,'#7c3aed']
-      ].map(function(r){
-        return '<div style="background:#f8f9fb;border-radius:7px;padding:7px 8px;border:1px solid #e8ecf0;text-align:center">'+
-          '<div style="font-size:9px;color:#888;margin-bottom:2px">'+r[0]+'</div>'+
-          '<div style="font-size:13px;font-weight:800;color:'+r[2]+'">'+nomDbFmtM(r[1])+'</div></div>';
-      }).join('')+'</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
-        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Tendencia (ultimas semanas)</div>'+
-        '<div style="position:relative;height:110px"><canvas id="db-det-trend" role="img" aria-label="Tendencia costo real"></canvas></div>'+
-      '</div>'+
-      '<div style="background:#f8f9fb;border-radius:8px;padding:10px 12px;border:1px solid #e8ecf0">'+
-        '<div style="font-size:10px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Composicion</div>'+
-        '<div style="position:relative;height:110px"><canvas id="db-det-dona" role="img" aria-label="Composicion costo real"></canvas></div>'+
-      '</div></div></div>';
+    body='<div style="padding:12px 14px">'+'<div style="text-align:center;margin-bottom:14px">'+'<div style="font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Costo real semana '+__dbSemActual+'</div>'+'<div style="font-size:36px;font-weight:800;color:#0d3d6b;margin:4px 0">'+nomDbFmt(T.costoReal)+'</div>'+(prev&&prev.costoReal?'<div style="font-size:11px;font-weight:700;color:'+(T.costoReal>prev.costoReal?'#c0392b':'#1a7a4a')+'">'+(T.costoReal>prev.costoReal?'↑':'↓')+' '+nomDbFmtM(Math.abs(T.costoReal-prev.costoReal))+' vs semana anterior</div>':'')+'</div>'+'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:10px">'+[['Neto regular',T.regNeto,'#0d3d6b'],['Flujo neto',T.flujoTotal,'#1a7a4a'],['Carga patronal',(T.cuotas||0)+(T.infoTotal||0),'#b86b00'],['Retenciones',T.retenciones,'#c0392b'],['Finiquitos',fi.neto||T.finNeto,'#7c3aed']].map(function(r){return '<div style="background:#f8f9fb;border-radius:7px;padding:8px 10px;border:1px solid #e8ecf0;text-align:center">'+'<div style="font-size:9px;color:#888;margin-bottom:3px">'+r[0]+'</div>'+'<div style="font-size:14px;font-weight:800;color:'+r[2]+'">'+nomDbFmtM(r[1])+'</div></div>';}).join('')+'</div>'+'<div style="font-size:10px;color:#888;text-align:center;padding:4px 0">Tendencia y composicion visibles en los graficos de abajo</div>'+'</div>';
   }
 
   el.innerHTML='<div style="border-radius:10px;overflow:hidden;border:1px solid #e8ecf0">'+hdrEl+body+'</div>';
