@@ -1445,9 +1445,9 @@ function nomDbRenderSem(semana){
     var rows=['<div style="display:grid;grid-template-columns:72px 1fr 32px 68px;gap:4px;align-items:center;font-size:9px;color:var(--text-muted);padding:0 2px 4px;border-bottom:0.5px solid var(--border)"><span>Ciudad</span><span></span><span style="text-align:right">%</span><span style="text-align:right">Monto</span></div>'];
     [[tjPct,'#1d4ed8','Tijuana',cds.tj],[mtyPct,'#0f6e56','Monterrey',cds.mty],[cdmxPct,'#ba7517','CDMX',cds.cdmx]].forEach(function(x){
       var pct=x[0],col=x[1],nm=x[2],c=x[3];
-      rows.push('<div class="db-city-row"><div class="db-city-dot" style="background:'+col+'"></div><div class="db-city-nm">'+nm+'</div><div class="db-city-bg"><div class="db-city-f" style="width:'+pct+'%;background:'+col+'"></div></div><div class="db-city-pct" style="color:'+col+'">'+pct+'%</div><div class="db-city-amt">'+F(c.percep||0)+'</div></div>');
+      rows.push('<div class="db-city-row"><div class="db-city-dot" style="background:'+col+'"></div><div class="db-city-nm">'+nm+'</div><div class="db-city-bg"><div class="db-city-f" style="width:'+pct+'%;background:'+col+'"></div></div><div class="db-city-pct" style="color:'+col+'">'+pct+'%</div><div class="db-city-amt">'+F(c.efectivo||0)+'</div></div>');
     });
-    heroEl.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:10px;font-weight:500;color:var(--text-muted)">Nomina regular</div>'+donutSvg+'</div><div>'+rows.join('')+totLabel+'</div>';
+    heroEl.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:10px;font-weight:500;color:var(--text-muted)">Efectivo total</div>'+donutSvg+'</div><div>'+rows.join('')+totLabel+'</div>';
   }else{
     heroEl.innerHTML='<div class="db-no-data" style="grid-column:1/-1">Recarga y guarda el archivo de esta semana para ver el desglose por ubicacion.</div>';
   }
