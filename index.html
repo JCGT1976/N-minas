@@ -1501,36 +1501,6 @@ function nomDbShowDet(idx,row,T,fi,fd,prev){
 
   el.innerHTML='<div style="border-radius:10px;overflow:hidden;border:1px solid #e8ecf0">'+hdrEl+body+'</div>';
 
-  if(idx===3) {
-    setTimeout(function(){
-      if(!window.Chart) return;
-      var tnd=document.getElementById('db-det-trend');
-      if(tnd){
-        if(__dbCharts.detTrend) __dbCharts.detTrend.destroy();
-        var lb=__dbData.map(function(r){return 'S'+r.semana;});
-        var cr=__dbData.map(function(r){return Math.round((r.totals.costoReal||0)/1000)/1000;});
-        var ef=__dbData.map(function(r){return Math.round((r.totals.totalEfectivo||0)/1000)/1000;});
-        var ai=__dbData.findIndex(function(r){return r.semana===__dbSemActual;});
-        var pts=lb.map(function(_,i){return i===ai?6:3;});
-        __dbCharts.detTrend=new Chart(tnd,{type:'line',data:{labels:lb,datasets:[
-          {data:cr,borderColor:'#0d3d6b',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#0d3d6b',tension:.35,fill:false},
-          {data:ef,borderColor:'#1a7a4a',borderWidth:2,pointRadius:pts,pointBackgroundColor:'#1a7a4a',tension:.35,fill:false}
-        ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-          scales:{x:{ticks:{font:{size:8},color:'#888'},grid:{display:false}},y:{ticks:{font:{size:8},color:'#888',callback:function(v){return '$'+v+'M'}},grid:{color:'#f0f0ed'}}}}});
-      }
-      var dn=document.getElementById('db-det-dona');
-      if(dn){
-        if(__dbCharts.detDona) __dbCharts.detDona.destroy();
-        var T2=__dbData.find(function(r){return r.semana===__dbSemActual;}).totals||{};
-        var fi2=(__dbData.find(function(r){return r.semana===__dbSemActual;})||{}).finiquito_detalle||{};
-        var vals=[T2.regNeto||0,T2.flujoTotal||0,(T2.cuotas||0)+(T2.infoTotal||0),T2.retenciones||0,fi2.neto||T2.finNeto||0];
-        var tot=vals.reduce(function(a,b){return a+b;},0)||1;
-        __dbCharts.detDona=new Chart(dn,{type:'doughnut',data:{labels:['Neto reg.','Flujo','Carga pat.','Retenciones','Finiquitos'],
-          datasets:[{data:vals.map(function(v){return Math.round(v/tot*100);}),backgroundColor:['#0d3d6b','#1a7a4a','#b86b00','#c0392b','#7c3aed'],borderWidth:2,borderColor:'#fff'}]},
-          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-      }
-    },100);
-  }
 }
 
 function nomDbRenderTrend(){
