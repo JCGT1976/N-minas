@@ -862,7 +862,7 @@ async function nomCargarUsuarioYArrancar(authUser){
   }
 
   var modulos = Array.isArray(user.modulos) ? user.modulos : [];
-  var tieneAcceso = user.rol === 'admin_master' || modulos.indexOf(MODULO_ID) >= 0 || (user.rol && user.rol.indexOf('nom_') === 0);
+  var tieneAcceso = user.rol === 'admin_master' || user.rol === 'admin' || user.rol === 'view' || user.rol === 'cohost' || modulos.indexOf(MODULO_ID) >= 0 || (user.rol && user.rol.indexOf('nom_') === 0);
   if (!tieneAcceso) { mostrarDenegado('Sin acceso al módulo de Nóminas.'); return; }
 
   window.__USERNAME__ = username;
