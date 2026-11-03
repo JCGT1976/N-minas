@@ -753,7 +753,7 @@ var NOM_ROLES_FULL        = ['admin_master','admin'];
 var NOM_ROLES_CAPTURISTA  = ['admin_master','admin','nom_capturista'];
 var NOM_ROLES_AUTORIZADOR = ['admin_master','admin','nom_autorizador'];
 var NOM_ROLES_TESORERO    = ['admin_master','admin','nom_tesorero'];
-var NOM_ROLES_VIEW        = ['admin_master','admin','nom_capturista','nom_autorizador','nom_tesorero','nom_view'];
+var NOM_ROLES_VIEW        = ['admin_master','admin','nom_capturista','nom_autorizador','nom_tesorero','nom_view','view','cohost'];
 
 function nomPuede(roles) { return roles.indexOf(__nomRole) >= 0; }
 
@@ -873,10 +873,11 @@ async function nomCargarUsuarioYArrancar(authUser){
 }
 
 function nomAplicarPermisos(username) {
+  var isViewOnly = (__nomRole === 'view' || __nomRole === 'cohost');
   var PRENOMINA_USERS = ['jcgonzalez'];
-  var WRITE_USERS     = ['jcgonzalez', 'kcastaneda', 'eperez'];
-  var canPrenomina    = PRENOMINA_USERS.indexOf(username) >= 0;
-  var canWrite        = WRITE_USERS.indexOf(username) >= 0;
+  var WRITE_USERS     = ['jcgonzalez', 'kcastaneda', 'eperez', 'mabarca', 'yburgos'];
+  var canPrenomina    = !isViewOnly && PRENOMINA_USERS.indexOf(username) >= 0;
+  var canWrite        = !isViewOnly && (WRITE_USERS.indexOf(username) >= 0 || __nomRole === 'admin' || __nomRole === 'admin_master');
 
   window.__nomCanWrite      = canWrite;
   window.__nomCanPrenomina  = canPrenomina;
@@ -885,8 +886,13 @@ function nomAplicarPermisos(username) {
   var tabPago = document.getElementById('nomTabPago');
   if (tabPago) { tabPago.style.display = canPrenomina ? '' : 'none'; }
 
-  // Si no tiene pre-nomina asegurar que empieza en Costo Laboral
-  if (!canPrenomina) { nomSwitchTab('calc'); }
+  // Costo Laboral tab: oculto para view/cohost
+  var tabCalc = document.getElementById('nomTabCalc');
+  if (tabCalc) { tabCalc.style.display = isViewOnly ? 'none' : ''; }
+
+  // Si es view-only: ir directo al Dashboard
+  if (isViewOnly) { nomSwitchTab('dashboard'); }
+  else if (!canPrenomina) { nomSwitchTab('calc'); }
 
   // Badge solo visualizacion (mabarca, yburgos)
   var badge = document.getElementById('nom-view-badge');
