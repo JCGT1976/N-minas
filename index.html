@@ -1321,7 +1321,7 @@ function nomDbBuildLayout(panel) {
     '</div>',
     '<div id="db-kpis" class="db-split4" style="margin-bottom:8px"></div>',
     '<div id="db-detail" style="display:none;margin-bottom:12px"></div>',
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">',
+    '<div style="display:grid;grid-template-columns:2fr 3fr;gap:10px;margin-bottom:14px">',
     '<div style="grid-column:1/-1"><div class="nom-table-wrap" style="padding:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Tendencia semanal</div>',
     '<div id="db-trend-leg" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap"></div>',
@@ -1330,9 +1330,7 @@ function nomDbBuildLayout(panel) {
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Composicion del costo</div>',
     '<div id="db-dona-leg" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>',
     '<div style="position:relative;height:160px"><canvas id="db-chart-dona" role="img" aria-label="Composicion del costo"></canvas></div></div>',
-    '<div class="nom-table-wrap" style="padding:14px">',
-    '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:4px">Flujo neto por concepto</div>',
-    '<div style="position:relative;height:160px"><canvas id="db-chart-flujo" role="img" aria-label="Flujo por concepto"></canvas></div></div>',
+
     '</div>',
     '<div class="nom-table-wrap" style="padding:14px;margin-bottom:14px">',
     '<div style="font-size:12px;font-weight:700;color:#0d3d6b;margin-bottom:10px">Distribucion por ubicacion — flujo neto</div>',
@@ -1383,7 +1381,6 @@ function nomDbRenderSem(semana) {
   nomDbRenderKpis(row,T,fi,prev);
   nomDbRenderTrend();
   nomDbRenderDona(T,fi,fd);
-  nomDbRenderFlujo(fd,T);
   nomDbRenderLoc(fd);
   if(__dbDetActivo>=0) nomDbShowDet(__dbDetActivo,row,T,fi,fd,prev);
 }
