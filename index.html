@@ -3381,7 +3381,7 @@ function calcParseSimpSheet(rows, idSet) {
 }
 
 function calcDetectSemana(wb) {
-  var sh = wb.Sheets['Nomina a Pagar'];
+  var sh = wb.Sheets['Nomina a Pagar'] || wb.Sheets['Total Nomina'];
   if (!sh) return '?';
   var rawRows = XLSX.utils.sheet_to_json(sh, {header:1, defval:'', raw:false});
   for (var i = 0; i < Math.min(rawRows.length, 8); i++) {
@@ -3395,7 +3395,7 @@ function calcDetectSemana(wb) {
 }
 
 function calcReadNominaAPagar(wb) {
-  var sh = wb.Sheets['Nomina a Pagar'];
+  var sh = wb.Sheets['Nomina a Pagar'] || wb.Sheets['Total Nomina'];
   if (!sh) return null;
   var rows = XLSX.utils.sheet_to_json(sh, {header:1, defval:null, raw:true});
   var R = {
@@ -3480,9 +3480,13 @@ function calcReadNominaAPagar(wb) {
 }
 
 function calcFindSheet(wb, name) {
-  var n = name.toUpperCase();
-  var sn = wb.SheetNames.find(function(s){ return s.toUpperCase().indexOf(n) >= 0; });
-  return sn ? {sh: wb.Sheets[sn], name: sn} : null;
+  var pats = Array.isArray(name) ? name : [name];
+  for (var pi = 0; pi < pats.length; pi++) {
+    var n = pats[pi].toUpperCase();
+    var sn = wb.SheetNames.find(function(s){ return s.toUpperCase().indexOf(n) >= 0; });
+    if (sn) return {sh: wb.Sheets[sn], name: sn};
+  }
+  return null;
 }
 
 function calcDetectForma(r, sample) {
@@ -3568,7 +3572,7 @@ function calcProcessWorkbook(wb, fileName) {
   if (ref && ref.semana !== '?') semana = ref.semana;
   var allIds = {};
   var EMPRESA_DEFS = [
-    {empresa:'Internacional', color:'#1d4ed8', sheets:['INT. TRANSFERENCIA','INT. EFECTIVO'], refKey:'intNeto'},
+    {empresa:'Internacional', color:'#1d4ed8', sheets:[['INT. TRANSFERENCIA','INTERNACIONAL TRANSF','NOM. INTERNACIONAL'],['INT. EFECTIVO','INTERNACIONAL EFEC']], refKey:'intNeto'},
     {empresa:'Comercial',     color:'#7c3aed', sheets:['NOM. COMERCIAL'],                    refKey:'comNeto'},
     {empresa:'Autobot',       color:'#059669', sheets:['NOM. AUTOBOT'],                      refKey:'autNeto'},
     {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST'],                   refKey:'ariNeto'}
@@ -3597,16 +3601,16 @@ function calcProcessWorkbook(wb, fileName) {
     }
   });
   var FLUJO_DEFS = [
-    {pat:'HORAS EXTRAS', tipo:'Hrs extras',   concepto:'Horas extras y complementos TJ',  refKey:'hrsExtras'},
-    {pat:'PROY. TIJUANA',tipo:'Proyectos TJ', concepto:'Proyectos Tijuana',                refKey:'proyTJ'},
-    {pat:'PROY. MTY',   tipo:'Proyectos MTY', concepto:'Proyectos Monterrey',              refKey:'proyMTY'},
-    {pat:'BONO ASISTENCIA',tipo:'Bonos MTY',  concepto:'Bono Asistencia Monterrey',        refKey:'bonoMTY', checkDup:true},
-    {pat:'COMP. SUELDOS',tipo:'Complemento',  concepto:'Complemento Sueldos',              refKey:null}
+    {pats:['HORAS EXTRAS','PRENOMINA'], tipo:'Hrs extras',   concepto:'Horas extras y complementos TJ',  refKey:'hrsExtras'},
+    {pats:['PROY. TIJUANA','PROYECTOS TIJUANA'], tipo:'Proyectos TJ', concepto:'Proyectos Tijuana',       refKey:'proyTJ'},
+    {pats:['PROY. MTY','PROYECTOS MONTERREY','PROYECTOS MTY'], tipo:'Proyectos MTY', concepto:'Proyectos Monterrey', refKey:'proyMTY'},
+    {pats:['BONO ASISTENCIA','BONO AISTENCIA'], tipo:'Bonos MTY', concepto:'Bono Asistencia Monterrey',  refKey:'bonoMTY', checkDup:true},
+    {pats:['COMP. SUELDOS','COMPL. SUELDOS'], tipo:'Complemento', concepto:'Complemento Sueldos',        refKey:null}
   ];
   var flujoNeto = [];
   var duplicates = [];
   FLUJO_DEFS.forEach(function(def) {
-    var found = calcFindSheet(wb, def.pat);
+    var found = calcFindSheet(wb, def.pats || def.pat);
     if (!found) return;
     var rows = calcSmartSheetRows(found.sh);
     if (!rows.length) return;
