@@ -1418,8 +1418,8 @@ function nomDbRenderSem(semana){
   var prev=null;for(var i=0;i<__dbData.length;i++){if(__dbData[i].semana===semana&&i>0){prev=__dbData[i-1];break;}}
   var pT=prev?prev.totals||{}:{};
   function delta(a,b,fmt,inv){var d=a-b;var s=d>=0?'\u2191':'\u2193';var c=d>=0?(inv?'dc':'uc'):(inv?'uc':'dc');return '<span class="'+c+'">'+s+' '+fmt(Math.abs(d))+(prev?' vs sem. '+prev.semana:'')+'</span>';}
-  var totalEmp=(T.regEmps||0)+(T.flujoEmps||0)+((row.finiquito_detalle||{}).emps||0);
-  var pTotalEmp=prev?((pT.regEmps||0)+(pT.flujoEmps||0)+((prev.finiquito_detalle||{}).emps||0)):0;
+  var totalEmp=(T.regEmps||0)+((row.finiquito_detalle||{}).emps||0);
+  var pTotalEmp=prev?((pT.regEmps||0)+((prev.finiquito_detalle||{}).emps||0)):0;
   document.getElementById('db-kpi-row').innerHTML=[
     '<div class="db-kpi"><div class="db-kpi-l">Colaboradores</div><div class="db-kpi-v">'+totalEmp+'</div><div class="db-kpi-d">'+(prev?delta(totalEmp,pTotalEmp,function(v){return v;},false):'&mdash;')+'</div></div>',
     '<div class="db-kpi"><div class="db-kpi-l">Efectivo total</div><div class="db-kpi-v">'+F(T.totalEfectivo)+'</div><div class="db-kpi-d">'+(prev?delta(T.totalEfectivo,pT.totalEfectivo,F,false):'&mdash;')+'</div></div>',
