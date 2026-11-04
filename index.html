@@ -1517,7 +1517,7 @@ async function nomRenderDashboard() {
   if (!panel) return;
   panel.innerHTML = '<div class="nom-loading">Cargando...</div>';
   try {
-    var r = await sb.from('nom_historico').select('*').order('semana',{ascending:true}).limit(52);
+    var r = await sb.from('nom_historico').select('semana,totals,flujo_detalle,finiquito_detalle,unique_emps,created_at').order('semana',{ascending:true}).limit(52);
     if (r.error) throw r.error;
     __dbData = r.data || [];
     if (!__dbData.length) {
@@ -1881,9 +1881,20 @@ var __colabCity = 'all';
 var __colabTipo = 'all';
 var __colabQ = '';
 
-window.nomDbOpenColabModal = function nomDbOpenColabModal() {
+window.nomDbOpenColabModal = async function nomDbOpenColabModal() {
   var row = __dbData.find(function(r){return r.semana===__dbSemActual;});
   if (!row) return;
+  if (!row.__ciudadesLoaded) {
+    var ov = document.getElementById('ph-colab-overlay');
+    if (ov) ov.className = 'ph-colab-overlay open';
+    var badge = document.getElementById('ph-colab-badge');
+    if (badge) badge.textContent = 'Cargando...';
+    try {
+      var rc = await sb.from('nom_historico').select('ciudades').eq('semana',row.semana).maybeSingle();
+      if (!rc.error && rc.data) row.ciudades = rc.data.ciudades;
+    } catch(e) {}
+    row.__ciudadesLoaded = true;
+  }
   var cds = null;
   try { cds = row.ciudades ? (typeof row.ciudades==='string' ? JSON.parse(row.ciudades) : row.ciudades) : null; } catch(e) {}
   var fi = row.finiquito_detalle || {};
