@@ -470,6 +470,52 @@ html[data-theme="dark"] .ph-tab.active{background:var(--ph-accent);border-color:
 .ph-ret-mini-lbl{font-size:9px;color:var(--ph-text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
 .ph-ret-mini-val{font-size:13px;font-weight:700;color:var(--ph-text)}
 
+
+/* ═══ Modal colaboradores ═══ */
+.ph-colab-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-start;justify-content:center;padding-top:20px;border-radius:inherit}
+.ph-colab-overlay.open{display:flex}
+.ph-colab-modal{background:var(--ph-modal-bg);border-radius:14px;border:1px solid var(--ph-modal-border);width:680px;max-width:98%;display:flex;flex-direction:column;max-height:520px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.clab-hd{background:#0c447c;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+html[data-theme="dark"] .clab-hd{background:#0a3060}
+.clab-hd-title{color:#fff;font-size:13px;font-weight:700;flex:1}
+.clab-hd-badge{background:rgba(255,255,255,.18);color:#fff;font-size:11px;padding:3px 10px;border-radius:10px}
+.clab-hd-x{background:none;border:none;color:rgba(255,255,255,.65);font-size:16px;cursor:pointer;line-height:1;font-family:inherit;padding:0 4px}
+.clab-filters{padding:9px 14px;border-bottom:1px solid var(--ph-divider);display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0;background:var(--ph-msec-bg)}
+.clab-flbl{font-size:9px;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.clab-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:14px;border:0.5px solid var(--ph-card-border);background:var(--ph-card-bg);color:var(--ph-text-sec);cursor:pointer;font-family:inherit}
+.clab-pill.on{background:#0c447c;border-color:#0c447c;color:#fff}
+html[data-theme="dark"] .clab-pill.on{background:#2176c4;border-color:#2176c4}
+.clab-fsep{width:1px;height:14px;background:var(--ph-divider);margin:0 2px;flex-shrink:0}
+.clab-search{padding:8px 14px;border-bottom:1px solid var(--ph-divider);flex-shrink:0}
+.clab-search input{width:100%;border:0.5px solid var(--ph-card-border);border-radius:8px;padding:5px 10px;font-size:12px;background:var(--ph-msec-bg);color:var(--ph-text);font-family:inherit}
+.clab-legend{padding:5px 14px;border-bottom:1px solid var(--ph-divider);display:flex;gap:12px;align-items:center;flex-shrink:0;background:var(--ph-msec-bg)}
+.clab-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.clab-leg-txt{font-size:10px;color:var(--ph-text-sec)}
+.clab-tbl-wrap{flex:1;overflow-y:auto}
+.clab-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.clab-tbl thead th{background:var(--ph-card-bg);color:var(--ph-text-muted);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;border-bottom:1px solid var(--ph-divider);text-align:left;position:sticky;top:0}
+.clab-tbl thead th.r{text-align:right}
+.clab-tbl td{padding:7px 8px;border-bottom:0.5px solid var(--ph-divider);color:var(--ph-text-sec);vertical-align:middle}
+.clab-tbl tr:hover td{background:var(--ph-msec-bg)}
+.clab-name{color:var(--ph-text);font-weight:500;font-size:11px}
+.clab-cd{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px}
+.clab-amt-nom{color:#0c447c;font-weight:600}
+html[data-theme="dark"] .clab-amt-nom{color:#60a5fa}
+.clab-amt-proy{color:#2176c4;font-weight:600}
+html[data-theme="dark"] .clab-amt-proy{color:#93c5fd}
+.clab-amt-adic{color:#b45309;font-weight:600}
+html[data-theme="dark"] .clab-amt-adic{color:#fbbf24}
+.clab-dash{color:var(--ph-text-muted)}
+.clab-total{color:#0c447c;font-weight:700;font-size:12px;text-align:right}
+html[data-theme="dark"] .clab-total{color:#60a5fa}
+.clab-bar{display:flex;border-radius:3px;overflow:hidden;height:6px;width:70px;gap:1px;flex-shrink:0}
+.clab-bar-seg{height:6px}
+.clab-foot{padding:8px 14px;border-top:1px solid var(--ph-divider);display:flex;align-items:center;background:var(--ph-msec-bg);flex-shrink:0;gap:0}
+.clab-fs{flex:1;text-align:center;padding:0 6px;border-right:0.5px solid var(--ph-divider)}
+.clab-fs:last-child{border:none}
+.clab-fs-lbl{font-size:9px;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.4px}
+.clab-fs-val{font-size:12px;font-weight:700;margin-top:2px;color:var(--ph-text)}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -1493,6 +1539,24 @@ function nomDbBuildLayout(panel) {
           '<div id="ph-modal-body" class="ph-modal-body"></div>',
         '</div>',
       '</div>',
+    '<div id="ph-colab-overlay" class="ph-colab-overlay" onclick="if(event.target===this)nomDbCloseColabModal()">',
+      '<div class="ph-colab-modal">',
+        '<div class="clab-hd">',
+          '<div class="clab-hd-title">Composicion de pago por colaborador</div>',
+          '<span id="ph-colab-badge" class="clab-hd-badge"></span>',
+          '<button class="clab-hd-x" onclick="nomDbCloseColabModal()">&#x2715;</button>',
+        '</div>',
+        '<div class="clab-filters" id="ph-colab-filters"></div>',
+        '<div class="clab-search"><input type="text" id="ph-colab-search" placeholder="Buscar nombre..." oninput="nomDbColabSearch(this.value)"></div>',
+        '<div class="clab-legend">',
+          '<div class="clab-leg-dot" style="background:#0c447c"></div><span class="clab-leg-txt">Nomina regular</span>',
+          '<div class="clab-leg-dot" style="background:#2176c4;margin-left:8px"></div><span class="clab-leg-txt">Proyecto</span>',
+          '<div class="clab-leg-dot" style="background:#f59e0b;margin-left:8px"></div><span class="clab-leg-txt">Adicionales</span>',
+        '</div>',
+        '<div id="ph-colab-tbl" class="clab-tbl-wrap"></div>',
+        '<div id="ph-colab-foot" class="clab-foot"></div>',
+      '</div>',
+    '</div>',
     '</div>'
   ].join('');
 }
@@ -1556,7 +1620,12 @@ function nomDbRenderSem(semana) {
   /* Cards y strip ciudad */
   var cardsHtml = [
     '<div class="ph-grid">',
-      phCard('ti-users','Total de colaboradores',String(emps),'Nómina regular + finiquitos',false),
+      '<div class="ph-card ph-card-click" onclick="nomDbOpenColabModal()">'+
+      '<div class="ph-card-lbl"><i class="ti ti-users" aria-hidden="true"></i> Total de colaboradores</div>'+
+      '<div class="ph-card-num ph-card-num-big">'+String(emps)+'</div>'+
+      '<div class="ph-card-sub">Nomina regular + finiquitos</div>'+
+      '<div class="ph-card-hint"><i class="ti ti-zoom-in" aria-hidden="true"></i> Ver desglose por colaborador</div>'+
+    '</div>',
       phCard('ti-building-bank','Nómina regular',F(percep),'Incl. vales de despensa',true),
       phCard('ti-cash','Nómina en efectivo',F(efectivo),'Proyectos y temporales',true),
       phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Hrs extras, compl. y bonos',true),
@@ -1780,6 +1849,143 @@ function phPercRow(lbl,val,bold) {
 window.nomDbCloseModal = function nomDbCloseModal() {
   var ov = document.getElementById('ph-overlay');
   if (ov) ov.className = 'ph-overlay';
+};
+
+
+var __colabAll = [];
+var __colabCity = 'all';
+var __colabTipo = 'all';
+var __colabQ = '';
+
+window.nomDbOpenColabModal = function nomDbOpenColabModal() {
+  var row = __dbData.find(function(r){return r.semana===__dbSemActual;});
+  if (!row) return;
+  var cds = null;
+  try { cds = row.ciudades ? (typeof row.ciudades==='string' ? JSON.parse(row.ciudades) : row.ciudades) : null; } catch(e) {}
+  var fi = row.finiquito_detalle || {};
+  var F = nomFmt;
+  var empMap = {};
+  var CDMAP = {tj:'Tijuana',mty:'Monterrey',cdmx:'CDMX'};
+  function addEmp(nombre, ciudad, nomReg, proyecto, adicional) {
+    var key = nombre.toLowerCase().trim();
+    if (!empMap[key]) empMap[key] = {n:nombre, ciudad:ciudad, nomReg:0, proyecto:0, adicional:0};
+    empMap[key].nomReg   += (nomReg   || 0);
+    empMap[key].proyecto += (proyecto || 0);
+    empMap[key].adicional+= (adicional|| 0);
+    if (ciudad) empMap[key].ciudad = ciudad;
+  }
+  ['tj','mty','cdmx'].forEach(function(cd) {
+    var city = cds ? (cds[cd] || {}) : {};
+    (city.emp_nomina || []).forEach(function(e) {
+      if (e.n) addEmp(e.n, cd, e.m||0, 0, 0);
+    });
+    (city.flujo || []).forEach(function(f) {
+      var kU = (f.concepto||'').toUpperCase();
+      var isProy = kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0;
+      (f.emp || []).forEach(function(e) {
+        if (!e.n) return;
+        if (isProy) addEmp(e.n, cd, 0, e.m||0, 0);
+        else        addEmp(e.n, cd, 0, 0, e.m||0);
+      });
+    });
+  });
+  __colabAll = Object.keys(empMap).map(function(k){return empMap[k];}).sort(function(a,b){
+    return (b.nomReg+b.proyecto+b.adicional)-(a.nomReg+a.proyecto+a.adicional);
+  });
+  __colabCity = 'all'; __colabTipo = 'all'; __colabQ = '';
+  var totalEmps = __colabAll.length + (fi.emps||0);
+  var badge = document.getElementById('ph-colab-badge');
+  if (badge) badge.textContent = totalEmps + ' personas \u00b7 Sem. ' + __dbSemActual;
+  nomDbColabBuildFilters();
+  nomDbColabRender();
+  var ov = document.getElementById('ph-colab-overlay');
+  if (ov) ov.className = 'ph-colab-overlay open';
+  var inp = document.getElementById('ph-colab-search');
+  if (inp) inp.value = '';
+};
+
+function nomDbColabBuildFilters() {
+  var el = document.getElementById('ph-colab-filters'); if (!el) return;
+  function pill(label, action, active) {
+    return '<button class="clab-pill'+(active?' on':'')+'" onclick="'+action+'">'+label+'</button>';
+  }
+  el.innerHTML =
+    '<span class="clab-flbl">Ciudad</span>'+
+    pill('Todos',    "nomDbColabFilter('city','all')",  __colabCity==='all')+
+    pill('Tijuana',  "nomDbColabFilter('city','tj')",   __colabCity==='tj')+
+    pill('Monterrey',"nomDbColabFilter('city','mty')",  __colabCity==='mty')+
+    pill('CDMX',     "nomDbColabFilter('city','cdmx')", __colabCity==='cdmx')+
+    '<div class="clab-fsep"></div>'+
+    '<span class="clab-flbl">Tipo</span>'+
+    pill('Todos',         "nomDbColabFilter('tipo','all')", __colabTipo==='all')+
+    pill('Solo nomina',   "nomDbColabFilter('tipo','nom')", __colabTipo==='nom')+
+    pill('Solo proyecto', "nomDbColabFilter('tipo','proy')",__colabTipo==='proy')+
+    pill('Con adicionales',"nomDbColabFilter('tipo','adic')",__colabTipo==='adic');
+}
+
+window.nomDbColabFilter = function nomDbColabFilter(type, val) {
+  if (type==='city') __colabCity = val; else __colabTipo = val;
+  nomDbColabBuildFilters();
+  nomDbColabRender();
+};
+
+window.nomDbColabSearch = function nomDbColabSearch(q) {
+  __colabQ = q.toLowerCase().trim();
+  nomDbColabRender();
+};
+
+function nomDbColabRender() {
+  var F = nomFmt;
+  var filtered = __colabAll.filter(function(e) {
+    if (__colabCity !== 'all' && e.ciudad !== __colabCity) return false;
+    if (__colabTipo === 'nom'  && !(e.nomReg>0 && !e.proyecto && !e.adicional)) return false;
+    if (__colabTipo === 'proy' && !(e.proyecto>0 && !e.nomReg)) return false;
+    if (__colabTipo === 'adic' && !(e.adicional>0)) return false;
+    if (__colabQ && e.n.toLowerCase().indexOf(__colabQ)<0) return false;
+    return true;
+  });
+  var CD = {tj:'TJ',mty:'MTY',cdmx:'CDMX'};
+  var CD_COL = {tj:'background:#e6f1fb;color:#0c447c',mty:'background:#e4f5ef;color:#166534',cdmx:'background:#fef3c7;color:#92400e'};
+  var rows = filtered.slice(0,300).map(function(e,i) {
+    var total = (e.nomReg||0)+(e.proyecto||0)+(e.adicional||0);
+    var pNom  = total>0?Math.round(e.nomReg  /total*100):0;
+    var pProy = total>0?Math.round(e.proyecto/total*100):0;
+    var pAdic = 100-pNom-pProy; if(pAdic<0)pAdic=0;
+    var cdStyle = e.ciudad && CD_COL[e.ciudad] ? CD_COL[e.ciudad] : 'background:#f0f2f5;color:#444';
+    return '<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td class="clab-name">'+e.n+'</td>'+
+      '<td><span class="clab-cd" style="'+cdStyle+'">'+(CD[e.ciudad]||'?')+'</span></td>'+
+      '<td style="text-align:right">'+(e.nomReg>0?'<span class="clab-amt-nom">'+F(e.nomReg)+'</span>':'<span class="clab-dash">\u2014</span>')+'</td>'+
+      '<td style="text-align:right">'+(e.proyecto>0?'<span class="clab-amt-proy">'+F(e.proyecto)+'</span>':'<span class="clab-dash">\u2014</span>')+'</td>'+
+      '<td style="text-align:right">'+(e.adicional>0?'<span class="clab-amt-adic">'+F(e.adicional)+'</span>':'<span class="clab-dash">\u2014</span>')+'</td>'+
+      '<td><div class="clab-bar">'+
+        (pNom>0?'<div class="clab-bar-seg" style="width:'+pNom+'%;background:#0c447c"></div>':'')+
+        (pProy>0?'<div class="clab-bar-seg" style="width:'+pProy+'%;background:#2176c4"></div>':'')+
+        (pAdic>0?'<div class="clab-bar-seg" style="width:'+pAdic+'%;background:#f59e0b"></div>':'')+
+      '</div></td>'+
+      '<td class="clab-total">'+F(total)+'</td>'+
+    '</tr>';
+  }).join('');
+  if (!filtered.length) rows = '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--ph-text-muted);font-size:12px">Sin datos.</td></tr>';
+  if (filtered.length>300) rows += '<tr><td colspan="8" style="text-align:center;padding:8px;font-size:10px;color:var(--ph-text-muted)">Mostrando 300 de '+filtered.length+' \u2014 usa el buscador para filtrar</td></tr>';
+  var tbl = document.getElementById('ph-colab-tbl');
+  if (tbl) tbl.innerHTML = '<table class="clab-tbl"><thead><tr><th>#</th><th>Nombre</th><th>Ciudad</th><th class="r" style="color:#0c447c">Nom. regular</th><th class="r" style="color:#2176c4">Proyecto</th><th class="r" style="color:#b45309">Adicionales</th><th></th><th class="r">Total recibido</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  var tN=filtered.reduce(function(s,e){return s+(e.nomReg||0);},0);
+  var tP=filtered.reduce(function(s,e){return s+(e.proyecto||0);},0);
+  var tA=filtered.reduce(function(s,e){return s+(e.adicional||0);},0);
+  var foot = document.getElementById('ph-colab-foot');
+  if (foot) foot.innerHTML =
+    '<div class="clab-fs"><div class="clab-fs-lbl">Personas</div><div class="clab-fs-val" style="color:#0c447c">'+filtered.length+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Nom. regular</div><div class="clab-fs-val" style="color:#0c447c">'+F(tN)+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Proyectos</div><div class="clab-fs-val" style="color:#2176c4">'+F(tP)+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Adicionales</div><div class="clab-fs-val" style="color:#b45309">'+F(tA)+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Total pagado</div><div class="clab-fs-val">'+F(tN+tP+tA)+'</div></div>';
+}
+
+window.nomDbCloseColabModal = function nomDbCloseColabModal() {
+  var ov = document.getElementById('ph-colab-overlay');
+  if (ov) ov.className = 'ph-colab-overlay';
 };
 
 window.nomRenderDashboard = nomRenderDashboard;
