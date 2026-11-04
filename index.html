@@ -1535,8 +1535,9 @@ function nomDbRenderSem(semana) {
     efectivo = 0; adicionales = 0;
     flujoArr.forEach(function(f) {
       var k = (f.concepto||'').toUpperCase();
-      if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
-      else efectivo += (f.total||0);
+      var isProy = k.indexOf('PROY')>=0||k.indexOf('TEMPORAL')>=0||k.indexOf('PROYECTO')>=0;
+      if (isProy) efectivo += (f.total||0);
+      else adicionales += (f.total||0);
     });
   } else {
     /* Fallback: totales globales cuando no hay datos por ciudad */
@@ -1545,8 +1546,9 @@ function nomDbRenderSem(semana) {
     efectivo = 0; adicionales = 0;
     flujoGlobal.forEach(function(f) {
       var k = (f.concepto||'').toUpperCase();
-      if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
-      else efectivo += (f.total||0);
+      var isProy = k.indexOf('PROY')>=0||k.indexOf('TEMPORAL')>=0||k.indexOf('PROYECTO')>=0;
+      if (isProy) efectivo += (f.total||0);
+      else adicionales += (f.total||0);
     });
   }
   var total = percep + efectivo + adicionales;
@@ -1556,8 +1558,8 @@ function nomDbRenderSem(semana) {
     '<div class="ph-grid">',
       phCard('ti-users','Total de colaboradores',String(emps),'Nómina regular + finiquitos',false),
       phCard('ti-building-bank','Nómina regular',F(percep),'Incl. vales de despensa',true),
-      phCard('ti-cash','Nómina en efectivo',F(efectivo),'Proyectos y complementos',true),
-      phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Bonos y variables',true),
+      phCard('ti-cash','Nómina en efectivo',F(efectivo),'Proyectos y temporales',true),
+      phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Hrs extras, compl. y bonos',true),
     '</div>',
     '<div class="ph-total-strip">',
       '<div>',
