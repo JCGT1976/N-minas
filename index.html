@@ -1503,10 +1503,10 @@ function nomCiudadesCompact(cds){
     var c=cds[cd];
     out[cd]={emps:c.emps,percep:c.percep,isr:c.isr,imss:c.imss,imssPat:c.imssPat,isn:c.isn,
       infoPat:c.infoPat,neto:c.neto,vales:c.vales,efectivo:c.efectivo,costoReal:c.costoReal,reserva:c.reserva,
-      emp_nomina:(c.emp_nomina||[]).slice(0,700),
+      emp_nomina:(c.emp_nomina||[]).slice(0,600).map(function(e){return{n:e.n,m:e.m,e:e.e||''}}),
       flujo:c.flujo.map(function(f){
         return{k:f.k,concepto:f.concepto,total:f.total,emps:f.emps,
-          emp:(f.emp||[]).slice(0,300).map(function(e){return{n:e.n,m:e.m};})};
+          emp:(f.emp||[]).slice(0,200).map(function(e){return{n:e.n,m:e.m};})};
       })};
   });
   return out;
