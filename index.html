@@ -1335,8 +1335,8 @@ function nomDbBuildLayout(panel){
     '.db-city-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;cursor:default}',
     '.db-city-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}',
     '.db-city-nm{font-size:11px;font-weight:500;min-width:72px}',
-    '.db-city-bg{flex:1;background:var(--surface-0);border-radius:3px;height:6px;overflow:hidden;border:0.5px solid var(--border)}',
-    '.db-city-f{height:6px;border-radius:3px}',
+    '.db-city-bg{flex:1;background:var(--surface-1);border-radius:4px;height:10px;overflow:hidden;border:0.5px solid var(--border-strong)}',
+    '.db-city-f{height:10px;border-radius:4px}',
     '.db-city-pct{font-size:11px;font-weight:500;min-width:30px;text-align:right}',
     '.db-city-amt{font-size:10px;color:var(--text-muted);min-width:72px;text-align:right}',
     '.cdad-card{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:7px}',
@@ -1354,8 +1354,8 @@ function nomDbBuildLayout(panel){
     '.conc-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;margin-bottom:3px;border:0.5px solid transparent}',
     '.conc-row:hover{background:var(--surface-0);border-color:var(--border)}',
     '.conc-lbl{min-width:90px;font-size:10px;color:var(--text-secondary)}',
-    '.conc-bg{flex:1;background:var(--surface-0);border-radius:3px;height:6px;overflow:hidden;border:0.5px solid var(--border)}',
-    '.conc-fill{height:6px;border-radius:3px}',
+    '.conc-bg{flex:1;background:var(--surface-1);border-radius:4px;height:9px;overflow:hidden;border:0.5px solid var(--border-strong)}',
+    '.conc-fill{height:9px;border-radius:4px}',
     '.conc-val{min-width:40px;text-align:right;font-size:10px;font-weight:500}',
     '.conc-arr{font-size:10px;color:var(--text-accent);flex-shrink:0;opacity:0}',
     '.conc-row:hover .conc-arr{opacity:1}',
@@ -1430,11 +1430,12 @@ function nomDbRenderSem(semana){
   // Hero donut
   var heroEl=document.getElementById('db-hero');
   if(cds){
-    var totPercep=(cds.tj.percep||0)+(cds.mty.percep||0)+(cds.cdmx.percep||0)||1;
+    var ef=function(x){return(x.efectivo||x.neto||x.percep||0);};
+    var totPercep=ef(cds.tj)+ef(cds.mty)+ef(cds.cdmx)||1;
     var C=314.16,r50=50;
     function arc(pct,offset,col){var d=C*pct/100;return '<circle cx="60" cy="60" r="'+r50+'" fill="none" stroke="'+col+'" stroke-width="20" stroke-dasharray="'+d.toFixed(1)+' '+C+'" stroke-dashoffset="'+offset.toFixed(1)+'"/>';}
-    var tjPct=Math.round((cds.tj.percep||0)/totPercep*100);
-    var mtyPct=Math.round((cds.mty.percep||0)/totPercep*100);
+    var tjPct=Math.round(ef(cds.tj)/totPercep*100);
+    var mtyPct=Math.round(ef(cds.mty)/totPercep*100);
     var cdmxPct=100-tjPct-mtyPct;
     var o0=78.5,o1=-(C*tjPct/100-78.5),o2=-(C*(tjPct+mtyPct)/100-78.5);
     var donutSvg='<svg width="130" height="130" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-0)" stroke-width="20"/>'+
@@ -1523,30 +1524,35 @@ window.nomDbToggleCdad=function nomDbToggleCdad(cd){
 };
 
 window.nomDbOpenPop=function nomDbOpenPop(title,ciudad,empJson){
-  var emp=[];try{emp=JSON.parse(empJson);}catch(e){}
+  var emp=[];
+  try{var p=JSON.parse(empJson);emp=typeof p==='string'?JSON.parse(p):(Array.isArray(p)?p:[]);}catch(e){}
   __dbPopData=emp;
-  var wrap=document.getElementById('db-modal-wrap');
-  if(!wrap)return;
+  var old=document.getElementById('db-pop-overlay');if(old)old.remove();
+  var ov=document.createElement('div');
+  ov.id='db-pop-overlay';
+  ov.setAttribute('style','position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9000');
+  ov.onclick=function(ev){if(ev.target===ov)nomDbClosePop();};
   var rows=emp.slice(0,500).map(function(e,i){
     return '<tr><td>'+(i+1)+'</td><td>'+e.n+'</td><td>'+nomFmt(e.m)+'</td></tr>';
   }).join('');
   var total=emp.reduce(function(s,e){return s+e.m;},0);
-  wrap.innerHTML='<div class="db-modal-ov" onclick="if(event.target===this)nomDbClosePop()">'+
+  ov.innerHTML=
     '<div class="db-modal">'+
       '<div class="db-modal-hd">'+
         '<div><div class="db-modal-ti">'+title+'</div><div class="db-modal-su">'+ciudad+' &middot; '+emp.length+' personas</div></div>'+
         '<button class="db-modal-x" onclick="nomDbClosePop()">&#x2715;</button>'+
       '</div>'+
       '<div class="db-modal-sr"><input type="text" placeholder="Buscar nombre..." oninput="nomDbFilterPop(this.value)"></div>'+
-      '<div class="db-modal-bd"><table class="db-etable"><thead><tr><th>#</th><th>Nombre</th><th>Monto</th></tr></thead><tbody id="db-pop-tbody">'+rows+'</tbody></table>'+(!emp.length?'<div class="db-no-data">Sin detalle disponible. Recarga el archivo para ver empleados.</div>':'')+'</div>'+
+      '<div class="db-modal-bd"><table class="db-etable"><thead><tr><th>#</th><th>Nombre</th><th>Monto</th></tr></thead><tbody id="db-pop-tbody">'+rows+'</tbody></table>'+
+      (!emp.length?'<div class="db-no-data">Sin detalle. Recarga el archivo y guarda para ver empleados.</div>':'')+
+      '</div>'+
       '<div class="db-modal-ft"><div><div class="db-modal-ft-l">Total</div><div class="db-modal-ft-v">'+nomFmt(total)+'</div></div></div>'+
-    '</div>'+
-  '</div>';
+    '</div>';
+  document.body.appendChild(ov);
 };
 
 window.nomDbClosePop=function nomDbClosePop(){
-  var wrap=document.getElementById('db-modal-wrap');
-  if(wrap)wrap.innerHTML='';
+  var el=document.getElementById('db-pop-overlay');if(el)el.remove();
 };
 
 window.nomDbFilterPop=function nomDbFilterPop(q){
