@@ -334,6 +334,119 @@ html[data-theme="dark"] body{background:#0b1220;color:#e6ecf5}
 .nom-historico-btn{display:flex;align-items:center;gap:7px;background:#0d3d6b;border:none;border-radius:20px;padding:7px 18px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;margin-right:8px;transition:.15s;white-space:nowrap;letter-spacing:.2px;font-family:inherit}
 .nom-historico-btn:hover{background:#0b3360;box-shadow:0 3px 12px rgba(13,61,107,.35);transform:translateY(-1px)}
 .nom-view-badge{display:inline-flex;align-items:center;gap:4px;background:#fff8e1;border:1px solid #fbbf24;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:#92400e;margin-right:8px}
+
+/* ═══ Payroll Hub — Dashboard Institucional ═══ */
+:root{
+  --ph-accent:#185fa5;
+  --ph-accent-dk:#0c447c;
+  --ph-accent-bg:#e6f1fb;
+  --ph-accent-text:#fff;
+  --ph-card-bg:#fff;
+  --ph-card-border:#e0e8f4;
+  --ph-card-hover-border:#185fa5;
+  --ph-bg:#f0f2f5;
+  --ph-text:#1a1a1a;
+  --ph-text-sec:#5a6473;
+  --ph-text-muted:#9099a6;
+  --ph-strip-from:#0c447c;
+  --ph-strip-to:#185fa5;
+  --ph-hint-bg:#f0f4fa;
+  --ph-ret-worker-bg:#fef2f2;
+  --ph-ret-worker-col:#991b1b;
+  --ph-ret-patron-bg:#f0fdf4;
+  --ph-ret-patron-col:#166534;
+  --ph-modal-bg:#fff;
+  --ph-modal-border:#e0e8f4;
+  --ph-msec-bg:#f8fafc;
+  --ph-emp-box-bg:#fff;
+  --ph-divider:#e0e8f4;
+}
+html[data-theme="dark"]{
+  --ph-accent:#4a9de0;
+  --ph-accent-dk:#2176c4;
+  --ph-accent-bg:#0c2a4a;
+  --ph-accent-text:#fff;
+  --ph-card-bg:#1a2436;
+  --ph-card-border:#2a3650;
+  --ph-card-hover-border:#4a9de0;
+  --ph-bg:#0b1220;
+  --ph-text:#e6ecf5;
+  --ph-text-sec:#9bafc8;
+  --ph-text-muted:#5a7090;
+  --ph-strip-from:#0c447c;
+  --ph-strip-to:#185fa5;
+  --ph-hint-bg:#0f2040;
+  --ph-ret-worker-bg:#2a1010;
+  --ph-ret-worker-col:#fca5a5;
+  --ph-ret-patron-bg:#0f2a14;
+  --ph-ret-patron-col:#86efac;
+  --ph-modal-bg:#1a2436;
+  --ph-modal-border:#2a3650;
+  --ph-msec-bg:#111c2c;
+  --ph-emp-box-bg:#1a2436;
+  --ph-divider:#2a3650;
+}
+.ph-wrap{padding:16px 20px;max-width:1100px;margin:0 auto;width:100%}
+.ph-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.ph-title{font-size:17px;font-weight:700;color:var(--ph-accent-dk);letter-spacing:-.2px}
+html[data-theme="dark"] .ph-title{color:var(--ph-accent)}
+.ph-period{font-size:12px;color:var(--ph-text-muted);background:var(--ph-card-bg);border:1px solid var(--ph-card-border);border-radius:20px;padding:4px 14px;font-weight:500}
+.ph-tabs{display:flex;gap:6px;margin-bottom:20px}
+.ph-tab{font-size:13px;font-weight:600;padding:7px 22px;border-radius:22px;border:1.5px solid var(--ph-card-border);background:var(--ph-card-bg);color:var(--ph-text-sec);cursor:pointer;transition:all .15s;user-select:none}
+.ph-tab:hover{border-color:var(--ph-accent);color:var(--ph-accent)}
+.ph-tab.active{background:var(--ph-accent-dk);border-color:var(--ph-accent-dk);color:#fff}
+html[data-theme="dark"] .ph-tab.active{background:var(--ph-accent);border-color:var(--ph-accent)}
+.ph-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.ph-card{background:var(--ph-card-bg);border:1px solid var(--ph-card-border);border-radius:14px;padding:16px 18px;transition:border-color .15s}
+.ph-card-click{cursor:pointer}
+.ph-card-click:hover{border-color:var(--ph-card-hover-border)}
+.ph-card-lbl{font-size:11px;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.ph-card-lbl i{font-size:13px}
+.ph-card-num{font-size:22px;font-weight:700;color:var(--ph-text);line-height:1.1}
+.ph-card-num-big{font-size:34px}
+.ph-card-sub{font-size:11px;color:var(--ph-text-muted);margin-top:5px}
+.ph-card-hint{font-size:10px;color:var(--ph-accent);margin-top:7px;display:flex;align-items:center;gap:3px;background:var(--ph-hint-bg);border-radius:6px;padding:3px 8px;width:fit-content}
+.ph-total-strip{background:var(--ph-strip-from);border-radius:14px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.ph-total-lbl{font-size:11px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.ph-total-num{font-size:30px;font-weight:700;color:#fff;line-height:1}
+.ph-total-divider{width:1px;background:rgba(255,255,255,.25);height:44px;margin:0 20px}
+.ph-total-right{text-align:right}
+.ph-total-badge{display:inline-block;background:rgba(255,255,255,.18);color:#fff;font-size:11px;padding:3px 10px;border-radius:10px;margin-bottom:5px}
+.ph-total-breakdown{font-size:11px;color:rgba(255,255,255,.75)}
+.ph-sem-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--ph-divider)}
+.ph-sem-lbl{font-size:10px;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-right:4px}
+.ph-sem-btn{background:transparent;border:1px solid var(--ph-card-border);border-radius:8px;padding:4px 11px;font-size:11px;font-weight:600;color:var(--ph-text-sec);cursor:pointer;transition:all .12s}
+.ph-sem-btn:hover{border-color:var(--ph-accent);color:var(--ph-accent)}
+.ph-sem-btn.active{background:var(--ph-accent);border-color:var(--ph-accent);color:#fff}
+/* Modal */
+.ph-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding-top:24px;border-radius:inherit}
+.ph-overlay.open{display:flex}
+.ph-modal{background:var(--ph-modal-bg);border-radius:14px;border:1px solid var(--ph-modal-border);width:540px;max-width:96%;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.ph-modal-head{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--ph-divider)}
+.ph-modal-title{font-size:14px;font-weight:700;color:var(--ph-text)}
+.ph-modal-badge{font-size:11px;color:var(--ph-accent);background:var(--ph-accent-bg);padding:3px 10px;border-radius:10px;margin-left:8px;font-weight:600}
+.ph-modal-close{width:28px;height:28px;border:1px solid var(--ph-card-border);border-radius:7px;background:var(--ph-card-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ph-text-muted);font-size:14px;flex-shrink:0;font-family:inherit}
+.ph-modal-close:hover{background:var(--ph-accent-bg);color:var(--ph-accent)}
+.ph-modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;max-height:460px;overflow-y:auto}
+.ph-msec{background:var(--ph-msec-bg);border-radius:10px;padding:12px 14px}
+.ph-msec-title{font-size:11px;font-weight:700;color:var(--ph-text-sec);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ph-msec-title i{font-size:14px}
+.ph-emp-row{display:flex;gap:8px}
+.ph-emp-box{flex:1;background:var(--ph-emp-box-bg);border:1px solid var(--ph-card-border);border-radius:9px;padding:10px 12px;text-align:center}
+.ph-emp-num{font-size:22px;font-weight:700;color:var(--ph-text)}
+.ph-emp-accent{color:var(--ph-accent)}
+.ph-emp-lbl{font-size:10px;color:var(--ph-text-muted);margin-top:2px}
+.ph-perc-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--ph-divider);font-size:12px;color:var(--ph-text-sec)}
+.ph-perc-row:last-child{border:none}
+.ph-perc-row span:last-child{font-weight:600;color:var(--ph-text)}
+.ph-perc-bold{font-weight:700;color:var(--ph-text) !important}
+.ph-perc-bold span:last-child{color:var(--ph-accent) !important}
+.ph-ret-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ph-ret-box{background:var(--ph-emp-box-bg);border:1px solid var(--ph-card-border);border-radius:9px;padding:10px 12px}
+.ph-ret-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--ph-divider)}
+.ph-ret-worker{color:var(--ph-ret-worker-col)}
+.ph-ret-patron{color:var(--ph-ret-patron-col)}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -1227,6 +1340,7 @@ function nomDrawWorldWithStubs(container,world,sd) {
 
 var __dbData = [];
 var __dbSemActual = null;
+var __dbCity = 'tj';
 var __dbPopData = null;
 
 function calcSplitByCiudad(wb) {
@@ -1306,262 +1420,227 @@ function nomCiudadesCompact(cds){
 }
 
 async function nomRenderDashboard() {
-  var panel=document.getElementById('nom-dashboard-panel');
-  if(!panel)return;
-  panel.innerHTML='<div class="nom-loading">Cargando...</div>';
-  try{
-    var r=await sb.from('nom_historico').select('*').order('semana',{ascending:true}).limit(52);
-    if(r.error)throw r.error;
-    __dbData=r.data||[];
-    if(!__dbData.length){panel.innerHTML='<div class="nom-empty"><div style="font-size:36px;margin-bottom:10px">📊</div><p>Guarda al menos una semana para ver el dashboard.</p></div>';return;}
-    __dbSemActual=__dbData[__dbData.length-1].semana;
+  var panel = document.getElementById('nom-dashboard-panel');
+  if (!panel) return;
+  panel.innerHTML = '<div class="nom-loading">Cargando...</div>';
+  try {
+    var r = await sb.from('nom_historico').select('*').order('semana',{ascending:true}).limit(52);
+    if (r.error) throw r.error;
+    __dbData = r.data || [];
+    if (!__dbData.length) {
+      panel.innerHTML = '<div class="nom-empty"><p>Guarda al menos una semana para ver el dashboard.</p></div>';
+      return;
+    }
+    __dbSemActual = __dbData[__dbData.length-1].semana;
     nomDbBuildLayout(panel);
     nomDbRenderSem(__dbSemActual);
-  }catch(e){panel.innerHTML='<div class="nom-alert danger">Error: '+e.message+'</div>';}
-}
-
-function nomDbBuildLayout(panel){
-  var semBtns=__dbData.map(function(r){
-    return '<button class="nom-btn nom-btn-sm nom-btn-ghost db-sem-btn" id="db-btn-'+r.semana+'" onclick="nomDbRenderSem('+r.semana+')">Sem. '+r.semana+'</button>';
-  }).join('');
-  panel.innerHTML=[
-    '<style>',
-    '.db-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}',
-    '.db-kpi{background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;padding:9px 12px}',
-    '.db-kpi-l{font-size:10px;color:var(--text-muted);margin-bottom:2px}',
-    '.db-kpi-v{font-size:17px;font-weight:500;color:var(--text-primary);line-height:1.1}',
-    '.db-kpi-d{font-size:10px;margin-top:3px}',
-    '.db-hero{display:grid;grid-template-columns:170px 1fr;gap:14px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;align-items:center}',
-    '.db-city-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;cursor:default}',
-    '.db-city-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}',
-    '.db-city-nm{font-size:11px;font-weight:500;min-width:72px}',
-    '.db-city-bg{flex:1;background:var(--surface-1);border-radius:4px;height:10px;overflow:hidden;border:0.5px solid var(--border-strong)}',
-    '.db-city-f{height:10px;border-radius:4px}',
-    '.db-city-pct{font-size:11px;font-weight:500;min-width:30px;text-align:right}',
-    '.db-city-amt{font-size:10px;color:var(--text-muted);min-width:72px;text-align:right}',
-    '.cdad-card{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:7px}',
-    '.cdad-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--surface-2);user-select:none}',
-    '.cdad-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}',
-    '.cdad-nm{font-size:13px;font-weight:500;flex:1}',
-    '.cdad-stats{display:flex;gap:12px}',
-    '.cdad-stat-l{font-size:9px;color:var(--text-muted)}',
-    '.cdad-stat-v{font-size:12px;font-weight:500}',
-    '.cdad-chev{font-size:11px;color:var(--text-muted);transition:transform .2s}',
-    '.cdad-chev.op{transform:rotate(180deg)}',
-    '.cdad-body{background:var(--surface-1);border-top:0.5px solid var(--border);padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}',
-    '.db-sec-h{font-size:10px;font-weight:500;color:var(--text-muted);margin-bottom:8px}',
-    '.db-tip{font-size:9px;color:var(--text-muted);font-style:italic;font-weight:400}',
-    '.conc-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;margin-bottom:3px;border:0.5px solid transparent}',
-    '.conc-row:hover{background:var(--surface-0);border-color:var(--border)}',
-    '.conc-lbl{min-width:90px;font-size:10px;color:var(--text-secondary)}',
-    '.conc-bg{flex:1;background:var(--surface-1);border-radius:4px;height:9px;overflow:hidden;border:0.5px solid var(--border-strong)}',
-    '.conc-fill{height:9px;border-radius:4px}',
-    '.conc-val{min-width:40px;text-align:right;font-size:10px;font-weight:500}',
-    '.conc-arr{font-size:10px;color:var(--text-accent);flex-shrink:0;opacity:0}',
-    '.conc-row:hover .conc-arr{opacity:1}',
-    '.obl-tbl{width:100%;border-collapse:collapse}',
-    '.obl-tbl td{font-size:10px;padding:3px 0;border-bottom:0.5px solid var(--border);color:var(--text-secondary)}',
-    '.obl-tbl td:last-child{text-align:right;font-weight:500;color:var(--text-primary)}',
-    '.obl-tbl tr:last-child td{border:none;font-size:11px;font-weight:500;color:var(--text-primary)}',
-    '.reserva-chip{margin-top:8px;padding:6px 8px;background:var(--bg-warning);border-radius:7px;font-size:10px;color:var(--text-warning)}',
-    '.db-modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;border-radius:inherit}',
-    '.db-modal{background:var(--surface-2);border-radius:12px;border:0.5px solid var(--border);width:540px;max-height:400px;display:flex;flex-direction:column;overflow:hidden}',
-    '.db-modal-hd{background:#0d3d6b;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}',
-    '.db-modal-ti{color:#fff;font-size:12px;font-weight:500;flex:1}',
-    '.db-modal-su{color:rgba(255,255,255,.65);font-size:10px}',
-    '.db-modal-x{color:rgba(255,255,255,.7);cursor:pointer;border:none;background:none;font-size:16px;line-height:1;padding:0 2px;font-family:inherit}',
-    '.db-modal-sr{padding:7px 12px;border-bottom:0.5px solid var(--border);flex-shrink:0}',
-    '.db-modal-sr input{width:100%;border:0.5px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;background:var(--surface-1);color:var(--text-primary);font-family:inherit}',
-    '.db-modal-bd{overflow-y:auto;flex:1}',
-    '.db-etable{width:100%;border-collapse:collapse}',
-    '.db-etable thead th{font-size:10px;color:var(--text-muted);padding:5px 12px;border-bottom:0.5px solid var(--border);text-align:left;font-weight:500;background:var(--surface-2)}',
-    '.db-etable thead th:last-child,.db-etable td:last-child{text-align:right}',
-    '.db-etable td{font-size:11px;color:var(--text-secondary);padding:4px 12px;border-bottom:0.5px solid var(--border)}',
-    '.db-etable td:nth-child(3){font-weight:500;color:var(--text-primary)}',
-    '.db-etable tr:hover td{background:var(--surface-1)}',
-    '.db-modal-ft{padding:7px 12px;border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface-1)}',
-    '.db-modal-ft-l{font-size:10px;color:var(--text-muted)}',
-    '.db-modal-ft-v{font-size:12px;font-weight:500}',
-    '.db-no-data{padding:20px;text-align:center;color:var(--text-muted);font-size:11px}',
-    '</style>',
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">',
-    '<div style="font-size:14px;font-weight:500;flex:1;color:var(--text-primary)">Nominas por ubicacion</div>',
-    '<div style="display:flex;gap:4px" id="db-sem-row">'+semBtns+'</div>',
-    '</div>',
-    '<div class="db-kpi-row" id="db-kpi-row"></div>',
-    '<div class="db-hero" id="db-hero"></div>',
-    '<div id="db-acordeones"></div>',
-    '<div id="db-modal-wrap" style="position:relative;min-height:1px"></div>'
-  ].join('');
-}
-
-var CDAD_CFG=[
-  {cd:'tj',nm:'Tijuana',color:'#1d4ed8',isrLabel:'ISN Tijuana 4.25%'},
-  {cd:'mty',nm:'Monterrey',color:'#0f6e56',isrLabel:'ISN Monterrey 3%'},
-  {cd:'cdmx',nm:'CDMX / Cuautitlan',color:'#ba7517',isrLabel:'ISN CDMX 3%'}
-];
-
-function nomDbRenderSem(semana){
-  __dbSemActual=semana;
-  document.querySelectorAll('.db-sem-btn').forEach(function(b){
-    var s=parseInt(b.id.replace('db-btn-',''));
-    b.className='nom-btn nom-btn-sm'+(s===semana?' nom-btn-primary':' nom-btn-ghost')+' db-sem-btn';
-  });
-  var row=__dbData.find(function(r){return r.semana===semana;});
-  if(!row)return;
-  var T=row.totals||{};
-  var cds=null;
-  try{cds=row.ciudades?(typeof row.ciudades==='string'?JSON.parse(row.ciudades):row.ciudades):null;}catch(e){cds=null;}
-  var F=nomFmt;
-
-  // KPIs
-  var prev=null;for(var i=0;i<__dbData.length;i++){if(__dbData[i].semana===semana&&i>0){prev=__dbData[i-1];break;}}
-  var pT=prev?prev.totals||{}:{};
-  function delta(a,b,fmt,inv){var d=a-b;var s=d>=0?'\u2191':'\u2193';var c=d>=0?(inv?'dc':'uc'):(inv?'uc':'dc');return '<span class="'+c+'">'+s+' '+fmt(Math.abs(d))+(prev?' vs sem. '+prev.semana:'')+'</span>';}
-  var totalEmp=(T.regEmps||0)+((row.finiquito_detalle||{}).emps||0);
-  var pTotalEmp=prev?((pT.regEmps||0)+((prev.finiquito_detalle||{}).emps||0)):0;
-  document.getElementById('db-kpi-row').innerHTML=[
-    '<div class="db-kpi"><div class="db-kpi-l">Colaboradores</div><div class="db-kpi-v">'+totalEmp+'</div><div class="db-kpi-d">'+(prev?delta(totalEmp,pTotalEmp,function(v){return v;},false):'&mdash;')+'</div></div>',
-    '<div class="db-kpi"><div class="db-kpi-l">Efectivo total</div><div class="db-kpi-v">'+F(T.totalEfectivo)+'</div><div class="db-kpi-d">'+(prev?delta(T.totalEfectivo,pT.totalEfectivo,F,false):'&mdash;')+'</div></div>',
-    '<div class="db-kpi"><div class="db-kpi-l">A reservar</div><div class="db-kpi-v" style="color:#c0392b">'+F(T.reservaTotal)+'</div><div class="db-kpi-d">'+(prev?delta(T.reservaTotal,pT.reservaTotal,F,true):'&mdash;')+'</div></div>',
-    '<div class="db-kpi"><div class="db-kpi-l">Costo real</div><div class="db-kpi-v">'+F(T.costoReal)+'</div><div class="db-kpi-d">'+(prev?delta(T.costoReal,pT.costoReal,F,false):'&mdash;')+'</div></div>'
-  ].join('');
-
-  // Hero donut
-  var heroEl=document.getElementById('db-hero');
-  if(cds){
-    var ef=function(x){return(x.efectivo||x.neto||x.percep||0);};
-    var totPercep=ef(cds.tj)+ef(cds.mty)+ef(cds.cdmx)||1;
-    var C=314.16,r50=50;
-    function arc(pct,offset,col){var d=C*pct/100;return '<circle cx="60" cy="60" r="'+r50+'" fill="none" stroke="'+col+'" stroke-width="20" stroke-dasharray="'+d.toFixed(1)+' '+C+'" stroke-dashoffset="'+offset.toFixed(1)+'"/>';}
-    var tjPct=Math.round(ef(cds.tj)/totPercep*100);
-    var mtyPct=Math.round(ef(cds.mty)/totPercep*100);
-    var cdmxPct=100-tjPct-mtyPct;
-    var o0=78.5,o1=-(C*tjPct/100-78.5),o2=-(C*(tjPct+mtyPct)/100-78.5);
-    var donutSvg='<svg width="130" height="130" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-0)" stroke-width="20"/>'+
-      arc(tjPct,o0,'#1d4ed8')+arc(mtyPct,o1,'#0f6e56')+(cdmxPct>0?arc(cdmxPct,o2,'#ba7517'):'')+
-      '<text x="60" y="55" text-anchor="middle" font-size="18" font-weight="500" fill="var(--text-primary)">'+tjPct+'%</text>'+
-      '<text x="60" y="70" text-anchor="middle" font-size="10" fill="var(--text-muted)">Tijuana</text></svg>';
-    var totLabel='<div style="padding-top:6px;border-top:0.5px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:2px"><span>Efectivo total</span><span style="font-weight:500">'+F(T.totalEfectivo)+'</span></div>';
-    var rows=['<div style="display:grid;grid-template-columns:72px 1fr 32px 68px;gap:4px;align-items:center;font-size:9px;color:var(--text-muted);padding:0 2px 4px;border-bottom:0.5px solid var(--border)"><span>Ciudad</span><span></span><span style="text-align:right">%</span><span style="text-align:right">Efectivo</span></div>'];
-    [[tjPct,'#1d4ed8','Tijuana',cds.tj],[mtyPct,'#0f6e56','Monterrey',cds.mty],[cdmxPct,'#ba7517','CDMX',cds.cdmx]].forEach(function(x){
-      var pct=x[0],col=x[1],nm=x[2],c=x[3];
-      rows.push('<div class="db-city-row"><div class="db-city-dot" style="background:'+col+'"></div><div class="db-city-nm">'+nm+'</div><div class="db-city-bg"><div class="db-city-f" style="width:'+pct+'%;background:'+col+'"></div></div><div class="db-city-pct" style="color:'+col+'">'+pct+'%</div><div class="db-city-amt">'+F(c.efectivo||0)+'</div></div>');
-    });
-    heroEl.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:10px;font-weight:500;color:var(--text-muted)">Efectivo total</div>'+donutSvg+'</div><div>'+rows.join('')+totLabel+'</div>';
-  }else{
-    heroEl.innerHTML='<div class="db-no-data" style="grid-column:1/-1">Recarga y guarda el archivo de esta semana para ver el desglose por ubicacion.</div>';
+  } catch(e) {
+    panel.innerHTML = '<div class="nom-alert danger">Error: '+e.message+'</div>';
   }
-
-  // Acordeones
-  var acEl=document.getElementById('db-acordeones');
-  acEl.innerHTML=CDAD_CFG.map(function(cfg,i){
-    var c=cds?cds[cfg.cd]:{};
-    var emps=c.emps||0;
-    var ef=F(c.efectivo||0);
-    var cr=F(c.costoReal||0);
-    var rv=F(c.reserva||0);
-    return '<div class="cdad-card">'+
-      '<div class="cdad-head" onclick="nomDbToggleCdad(\''+cfg.cd+'\')">'+
-        '<div class="cdad-dot" style="background:'+cfg.color+'"></div>'+
-        '<div class="cdad-nm">'+cfg.nm+'</div>'+
-        '<div class="cdad-stats">'+
-          '<div><div class="cdad-stat-l">Empleados</div><div class="cdad-stat-v">'+emps+'</div></div>'+
-          '<div><div class="cdad-stat-l">Efectivo</div><div class="cdad-stat-v">'+ef+'</div></div>'+
-          '<div><div class="cdad-stat-l">A reservar</div><div class="cdad-stat-v" style="color:#c0392b">'+rv+'</div></div>'+
-          '<div><div class="cdad-stat-l">Costo real</div><div class="cdad-stat-v">'+cr+'</div></div>'+
-        '</div>'+
-        '<div class="cdad-chev" id="chev-'+cfg.cd+'">&#9662;</div>'+
-      '</div>'+
-      '<div class="cdad-body" id="body-'+cfg.cd+'" style="display:none">'+nomDbCdadBody(cfg,c,cds)+'</div>'+
-    '</div>';
-  }).join('');
-  if(CDAD_CFG.length){nomDbToggleCdad(CDAD_CFG[0].cd);}
 }
 
-function nomDbCdadBody(cfg,c,cds){
-  if(!cds)return '<div class="db-no-data" style="grid-column:1/-1">Sin datos de ciudad guardados.</div>';
-  var F=nomFmt;
-  var flujo=c.flujo||[];
-  var maxF=flujo.reduce(function(m,f){return Math.max(m,f.total||0);},1);
-  var flujoHtml=flujo.length?flujo.map(function(f){
-    var pct=Math.round((f.total||0)/maxF*100);
-    var hasEmp=f.emp&&f.emp.length>0;
-    return '<div class="conc-row" onclick="'+( hasEmp?'nomDbOpenPop('+JSON.stringify(f.concepto)+','+JSON.stringify(cfg.nm)+','+JSON.stringify(JSON.stringify(f.emp||[]))+')':'void 0')+'">'+
-      '<div class="conc-lbl">'+f.concepto+'</div>'+
-      '<div class="conc-bg"><div class="conc-fill" style="width:'+pct+'%;background:'+cfg.color+'"></div></div>'+
-      '<div class="conc-val">'+F(f.total)+'</div>'+
-      (hasEmp?'<div class="conc-arr">&#8599;</div>':'<div class="conc-arr" style="color:var(--text-muted);opacity:.4">&#183;</div>')+
-    '</div>';
-  }).join(''):'<div class="db-no-data">Sin pagos de flujo registrados.</div>';
-  var obl='<table class="obl-tbl">'+
-    '<tr><td>Percepciones</td><td>'+F(c.percep)+'</td></tr>'+
-    '<tr><td>ISR retenido</td><td style="color:#c0392b">'+F(c.isr)+'</td></tr>'+
-    '<tr><td>IMSS obrero</td><td style="color:#c0392b">'+F(c.imss)+'</td></tr>'+
-    '<tr><td>IMSS patronal</td><td style="color:#c0392b">'+F(c.imssPat)+'</td></tr>'+
-    '<tr><td>'+cfg.isrLabel+'</td><td style="color:#c0392b">'+F(c.isn)+'</td></tr>'+
-    '<tr><td>INFONAVIT patronal</td><td style="color:#c0392b">'+F(c.infoPat)+'</td></tr>'+
-    '<tr><td>Costo real '+cfg.nm+'</td><td>'+F(c.costoReal)+'</td></tr>'+
-  '</table>'+
-  '<div class="reserva-chip">A reservar esta semana: <strong>'+F(c.reserva)+'</strong></div>';
-  var nomReg=c.emp_nomina&&c.emp_nomina.length?
-    '<div class="conc-row" onclick="nomDbOpenPop(\'Nomina regular \'+'+JSON.stringify(cfg.nm)+','+JSON.stringify(cfg.nm)+','+JSON.stringify(JSON.stringify(c.emp_nomina||[]))+')">'+
-      '<div class="conc-lbl">Nomina regular</div>'+
-      '<div class="conc-bg"><div class="conc-fill" style="width:100%;background:'+cfg.color+'"></div></div>'+
-      '<div class="conc-val">'+F(c.neto)+'</div>'+
-      '<div class="conc-arr">&#8599;</div>'+
-    '</div>':'';
-  return '<div><div class="db-sec-h">Flujo neto &mdash; <span class="db-tip">click para ver empleados</span></div>'+nomReg+flujoHtml+'</div><div><div class="db-sec-h">Obligaciones fiscales</div>'+obl+'</div>';
+function nomDbBuildLayout(panel) {
+  var semBtns = __dbData.map(function(r) {
+    return '<button class="ph-sem-btn" id="ph-btn-'+r.semana+'" onclick="nomDbRenderSem('+r.semana+')">Sem. '+r.semana+'</button>';
+  }).join('');
+  panel.innerHTML = [
+    '<div class="ph-wrap">',
+      '<div class="ph-header">',
+        '<div class="ph-title">Payroll Hub &mdash; MI Global</div>',
+        '<div id="ph-period" class="ph-period"></div>',
+      '</div>',
+      '<div class="ph-tabs">',
+        '<button class="ph-tab active" id="ph-tab-tj" onclick="nomDbSetCity(\'tj\')">Tijuana</button>',
+        '<button class="ph-tab" id="ph-tab-mty" onclick="nomDbSetCity(\'mty\')">Monterrey</button>',
+        '<button class="ph-tab" id="ph-tab-cdmx" onclick="nomDbSetCity(\'cdmx\')">CDMX</button>',
+      '</div>',
+      '<div id="ph-cards"></div>',
+      '<div class="ph-sem-row">',
+        '<span class="ph-sem-lbl">Semana</span>'+semBtns,
+      '</div>',
+      '<div id="ph-overlay" class="ph-overlay" onclick="if(event.target===this)nomDbCloseModal()">',
+        '<div class="ph-modal">',
+          '<div class="ph-modal-head">',
+            '<div>',
+              '<span class="ph-modal-title">Desglose de nomina semanal</span>',
+              '<span id="ph-modal-badge" class="ph-modal-badge"></span>',
+            '</div>',
+            '<button class="ph-modal-close" onclick="nomDbCloseModal()">&#x2715;</button>',
+          '</div>',
+          '<div id="ph-modal-body" class="ph-modal-body"></div>',
+        '</div>',
+      '</div>',
+    '</div>'
+  ].join('');
 }
 
-window.nomDbToggleCdad=function nomDbToggleCdad(cd){
-  var body=document.getElementById('body-'+cd);
-  var chev=document.getElementById('chev-'+cd);
-  if(!body)return;
-  var open=body.style.display!=='none';
-  body.style.display=open?'none':'grid';
-  if(chev)chev.classList.toggle('op',!open);
+window.nomDbSetCity = function nomDbSetCity(city) {
+  __dbCity = city;
+  ['tj','mty','cdmx'].forEach(function(c) {
+    var btn = document.getElementById('ph-tab-'+c);
+    if (btn) btn.className = 'ph-tab' + (c===city?' active':'');
+  });
+  nomDbRenderSem(__dbSemActual);
 };
 
-window.nomDbOpenPop=function nomDbOpenPop(title,ciudad,empJson){
-  var emp=[];
-  try{var p=JSON.parse(empJson);emp=typeof p==='string'?JSON.parse(p):(Array.isArray(p)?p:[]);}catch(e){}
-  __dbPopData=emp;
-  var old=document.getElementById('db-pop-overlay');if(old)old.remove();
-  var ov=document.createElement('div');
-  ov.id='db-pop-overlay';
-  ov.setAttribute('style','position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9000');
-  ov.onclick=function(ev){if(ev.target===ov)nomDbClosePop();};
-  var rows=emp.slice(0,500).map(function(e,i){
-    return '<tr><td>'+(i+1)+'</td><td>'+e.n+'</td><td>'+nomFmt(e.m)+'</td></tr>';
-  }).join('');
-  var total=emp.reduce(function(s,e){return s+e.m;},0);
-  ov.innerHTML=
-    '<div class="db-modal">'+
-      '<div class="db-modal-hd">'+
-        '<div><div class="db-modal-ti">'+title+'</div><div class="db-modal-su">'+ciudad+' &middot; '+emp.length+' personas</div></div>'+
-        '<button class="db-modal-x" onclick="nomDbClosePop()">&#x2715;</button>'+
-      '</div>'+
-      '<div class="db-modal-sr"><input type="text" placeholder="Buscar nombre..." oninput="nomDbFilterPop(this.value)"></div>'+
-      '<div class="db-modal-bd"><table class="db-etable"><thead><tr><th>#</th><th>Nombre</th><th>Monto</th></tr></thead><tbody id="db-pop-tbody">'+rows+'</tbody></table>'+
-      (!emp.length?'<div class="db-no-data">Sin detalle. Recarga el archivo y guarda para ver empleados.</div>':'')+
-      '</div>'+
-      '<div class="db-modal-ft"><div><div class="db-modal-ft-l">Total</div><div class="db-modal-ft-v">'+nomFmt(total)+'</div></div></div>'+
-    '</div>';
-  document.body.appendChild(ov);
+function nomDbRenderSem(semana) {
+  __dbSemActual = semana;
+  document.querySelectorAll('.ph-sem-btn').forEach(function(b) {
+    var s = parseInt(b.id.replace('ph-btn-',''));
+    b.className = 'ph-sem-btn' + (s===semana?' active':'');
+  });
+  var row = __dbData.find(function(r){return r.semana===semana;});
+  if (!row) return;
+  var T = row.totals || {};
+  var cds = null;
+  try { cds = row.ciudades ? (typeof row.ciudades==='string' ? JSON.parse(row.ciudades) : row.ciudades) : null; } catch(e) { cds=null; }
+  var c = cds ? (cds[__dbCity] || {}) : {};
+  var F = nomFmt;
+  var FM = function(n) { n=Math.round(Number(n)||0); return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K'; };
+  var period = document.getElementById('ph-period');
+  if (period) period.textContent = 'Semana ' + semana;
+  var emps = c.emps || T.regEmps || 0;
+  var percep = (c.percep||0) + (c.vales||0);
+  var flujoArr = c.flujo || [];
+  var efectivo = 0, adicionales = 0;
+  flujoArr.forEach(function(f) {
+    var k = (f.concepto||'').toUpperCase();
+    if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
+    else efectivo += (f.total||0);
+  });
+  if (!percep && !efectivo && !adicionales) {
+    percep = (T.regPercep||0)+(T.valesTotal||0);
+    efectivo = T.flujoTotal||0;
+    adicionales = 0;
+  }
+  var total = percep + efectivo + adicionales;
+  var html = [
+    '<div class="ph-grid">',
+      phCard('ti-users','Total de colaboradores',String(emps),'Colaboradores activos',false),
+      phCard('ti-building-bank','Nomina regular',F(percep),'Incl. vales de despensa',true),
+      phCard('ti-cash','Nomina en efectivo',F(efectivo),'Proyectos y complementos',true),
+      phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Bonos y variables',true),
+    '</div>',
+    '<div class="ph-total-strip">',
+      '<div>',
+        '<div class="ph-total-lbl">Costo total de nomina</div>',
+        '<div class="ph-total-num">'+F(total)+'</div>',
+      '</div>',
+      '<div class="ph-total-divider"></div>',
+      '<div class="ph-total-right">',
+        '<div class="ph-total-badge">Sem. '+semana+'</div>',
+        '<div class="ph-total-breakdown">Regular: '+FM(percep)+' &nbsp;&#183;&nbsp; Efectivo: '+FM(efectivo)+' &nbsp;&#183;&nbsp; Adicionales: '+FM(adicionales)+'</div>',
+      '</div>',
+    '</div>'
+  ].join('');
+  document.getElementById('ph-cards').innerHTML = html;
+}
+
+function phCard(icon, lbl, val, sub, clickable) {
+  var onclick = clickable ? ' onclick="nomDbOpenModal()"' : '';
+  var hint = clickable ? '<div class="ph-card-hint"><i class="ti ti-zoom-in" aria-hidden="true"></i> Ver desglose</div>' : '';
+  return [
+    '<div class="ph-card'+(clickable?' ph-card-click':'')+'"'+onclick+'>',
+      '<div class="ph-card-lbl"><i class="ti '+icon+'" aria-hidden="true"></i> '+lbl+'</div>',
+      '<div class="ph-card-num'+(clickable?'':' ph-card-num-big')+'">'+val+'</div>',
+      '<div class="ph-card-sub">'+sub+'</div>',
+      hint,
+    '</div>'
+  ].join('');
+}
+
+window.nomDbOpenModal = function nomDbOpenModal() {
+  var city = __dbCity;
+  var semana = __dbSemActual;
+  var CITY_NAMES = {tj:'Tijuana', mty:'Monterrey', cdmx:'CDMX'};
+  var row = __dbData.find(function(r){return r.semana===semana;});
+  if (!row) return;
+  var T = row.totals || {};
+  var cds = null;
+  try { cds = row.ciudades ? (typeof row.ciudades==='string' ? JSON.parse(row.ciudades) : row.ciudades) : null; } catch(e) {}
+  var c = cds ? (cds[city]||{}) : {};
+  var F = nomFmt;
+  var flujoArr = c.flujo || [];
+  var empReg = c.emps || 0;
+  var empProy = flujoArr.reduce(function(s,f){return s+(f.emp?f.emp.length:0);},0);
+  var hrsExtras = 0, complementos = 0, otroFlujo = 0, adicionales = 0;
+  flujoArr.forEach(function(f) {
+    var k = (f.concepto||'').toLowerCase();
+    var kU = k.toUpperCase();
+    var isBono = kU.indexOf('BONO')>=0||kU.indexOf('ASISTENCIA')>=0;
+    if (isBono) { adicionales += (f.total||0); return; }
+    if (k.indexOf('extra')>=0||k.indexOf('hrs')>=0) hrsExtras += (f.total||0);
+    else if (k.indexOf('compl')>=0) complementos += (f.total||0);
+    else otroFlujo += (f.total||0);
+  });
+  var vales = c.vales || 0;
+  var sueldoBase = c.percep || 0;
+  var totalPercep = sueldoBase + hrsExtras + complementos + vales;
+  var isrRet = c.isr || 0;
+  var imssObrero = c.imss || 0;
+  var imssPatron = c.imssPat || 0;
+  var infonavit = c.infoPat || 0;
+  var isn = c.isn || 0;
+  var totalRet = isrRet + imssObrero;
+  var totalPat = imssPatron + infonavit + isn;
+  var badge = document.getElementById('ph-modal-badge');
+  if (badge) badge.textContent = CITY_NAMES[city]||city;
+  var body = [
+    '<div class="ph-msec">',
+      '<div class="ph-msec-title"><i class="ti ti-users" aria-hidden="true"></i> Segmentacion del personal</div>',
+      '<div class="ph-emp-row">',
+        phEmpBox(empReg,'Nomina regular',false),
+        phEmpBox(empProy,'Proyectos',false),
+        phEmpBox(empReg+empProy,'Total',true),
+      '</div>',
+    '</div>',
+    '<div class="ph-msec">',
+      '<div class="ph-msec-title"><i class="ti ti-receipt" aria-hidden="true"></i> Percepciones y complementos</div>',
+      phPercRow('Sueldo base',F(sueldoBase),false),
+      phPercRow('Horas extras',F(hrsExtras),false),
+      phPercRow('Complementos de sueldo',F(complementos),false),
+      phPercRow('Vales de despensa',F(vales),false),
+      phPercRow('Total percepciones',F(totalPercep),true),
+    '</div>',
+    '<div class="ph-msec">',
+      '<div class="ph-msec-title"><i class="ti ti-building-bank" aria-hidden="true"></i> Retenciones y costos patronales</div>',
+      '<div class="ph-ret-cols">',
+        '<div class="ph-ret-box">',
+          '<div class="ph-ret-title ph-ret-worker">Retenciones trabajador</div>',
+          phPercRow('ISR retenido',F(isrRet),false),
+          phPercRow('IMSS obrero',F(imssObrero),false),
+          phPercRow('Total retenciones',F(totalRet),true),
+        '</div>',
+        '<div class="ph-ret-box">',
+          '<div class="ph-ret-title ph-ret-patron">Cuotas patronales</div>',
+          phPercRow('IMSS patron',F(imssPatron),false),
+          phPercRow('INFONAVIT',F(infonavit),false),
+          phPercRow('ISN'+(city==='cdmx'?' (N/A)':''),'$'+Math.round(isn).toLocaleString('es-MX'),false),
+          phPercRow('Total patronal',F(totalPat),true),
+        '</div>',
+      '</div>',
+    '</div>'
+  ].join('');
+  document.getElementById('ph-modal-body').innerHTML = body;
+  var ov = document.getElementById('ph-overlay');
+  if (ov) ov.className = 'ph-overlay open';
 };
 
-window.nomDbClosePop=function nomDbClosePop(){
-  var el=document.getElementById('db-pop-overlay');if(el)el.remove();
+function phEmpBox(n,lbl,accent) {
+  return '<div class="ph-emp-box"><div class="ph-emp-num'+(accent?' ph-emp-accent':'')+'">'+(n||0)+'</div><div class="ph-emp-lbl">'+lbl+'</div></div>';
+}
+
+function phPercRow(lbl,val,bold) {
+  return '<div class="ph-perc-row'+(bold?' ph-perc-bold':'')+'"><span>'+lbl+'</span><span>'+val+'</span></div>';
+}
+
+window.nomDbCloseModal = function nomDbCloseModal() {
+  var ov = document.getElementById('ph-overlay');
+  if (ov) ov.className = 'ph-overlay';
 };
 
-window.nomDbFilterPop=function nomDbFilterPop(q){
-  q=q.toLowerCase();
-  var rows=document.querySelectorAll('#db-pop-tbody tr');
-  rows.forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(q)>=0?'':'none';});
-};
+window.nomRenderDashboard = nomRenderDashboard;
 
-window.nomRenderDashboard=nomRenderDashboard;
 
 
 
