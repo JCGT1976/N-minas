@@ -447,6 +447,29 @@ html[data-theme="dark"] .ph-tab.active{background:var(--ph-accent);border-color:
 .ph-ret-worker{color:var(--ph-ret-worker-col)}
 .ph-ret-patron{color:var(--ph-ret-patron-col)}
 
+
+/* ═══ Consolidado nómina completa ═══ */
+.ph-conso-wrap{margin-top:20px}
+.ph-conso-lbl{font-size:10px;font-weight:500;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ph-conso-lbl::after{content:'';flex:1;height:0.5px;background:var(--ph-divider)}
+.ph-conso-card{background:var(--ph-card-bg);border:1px solid var(--ph-card-border);border-radius:14px;padding:18px 20px}
+.ph-conso-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.ph-conso-grand{font-size:28px;font-weight:700;color:var(--ph-text)}
+.ph-conso-grand-lbl{font-size:11px;color:var(--ph-text-muted);margin-top:2px}
+.ph-conso-badge{font-size:11px;color:var(--ph-accent);background:var(--ph-accent-bg);padding:3px 10px;border-radius:10px;font-weight:600}
+.ph-conso-propbar{display:flex;border-radius:6px;overflow:hidden;height:8px;margin-bottom:16px;gap:1px}
+.ph-conso-seg{height:8px}
+.ph-conso-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.ph-conso-col{padding:12px 14px;border-radius:10px;border:1px solid var(--ph-card-border)}
+.ph-conso-col-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:4px;font-weight:500}
+.ph-conso-col-val{font-size:17px;font-weight:700;line-height:1.1}
+.ph-conso-col-sub{font-size:10px;color:var(--ph-text-muted);margin-top:4px}
+.ph-conso-col-pct{font-size:11px;font-weight:600;margin-top:6px;padding-top:6px;border-top:1px solid var(--ph-divider)}
+.ph-ret-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding-top:12px;border-top:1px solid var(--ph-divider)}
+.ph-ret-mini{text-align:center;padding:8px 6px;background:var(--ph-msec-bg);border-radius:8px;border:1px solid var(--ph-card-border)}
+.ph-ret-mini-lbl{font-size:9px;color:var(--ph-text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.ph-ret-mini-val{font-size:13px;font-weight:700;color:var(--ph-text)}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -1494,46 +1517,141 @@ function nomDbRenderSem(semana) {
   var T = row.totals || {};
   var cds = null;
   try { cds = row.ciudades ? (typeof row.ciudades==='string' ? JSON.parse(row.ciudades) : row.ciudades) : null; } catch(e) { cds=null; }
-  var c = cds ? (cds[__dbCity] || {}) : {};
+  var city = cds ? (cds[__dbCity] || {}) : {};
   var F = nomFmt;
   var FM = function(n) { n=Math.round(Number(n)||0); return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K'; };
   var period = document.getElementById('ph-period');
   if (period) period.textContent = 'Semana ' + semana;
-  var emps = c.emps || T.regEmps || 0;
-  var percep = (c.percep||0) + (c.vales||0);
-  var flujoArr = c.flujo || [];
-  var efectivo = 0, adicionales = 0;
-  flujoArr.forEach(function(f) {
-    var k = (f.concepto||'').toUpperCase();
-    if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
-    else efectivo += (f.total||0);
-  });
-  if (!percep && !efectivo && !adicionales) {
-    percep = (T.regPercep||0)+(T.valesTotal||0);
-    efectivo = T.flujoTotal||0;
-    adicionales = 0;
+
+  /* KPI colaboradores: SIEMPRE formula global T, nunca ciudad */
+  var fi = row.finiquito_detalle || {};
+  var emps = (T.regEmps||0) + (fi.emps||0);
+
+  /* Montos por ciudad (tab activo) */
+  var percep, efectivo, adicionales;
+  if (city && (city.percep||0) > 0) {
+    percep = (city.percep||0) + (city.vales||0);
+    var flujoArr = city.flujo || [];
+    efectivo = 0; adicionales = 0;
+    flujoArr.forEach(function(f) {
+      var k = (f.concepto||'').toUpperCase();
+      if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
+      else efectivo += (f.total||0);
+    });
+  } else {
+    /* Fallback: totales globales cuando no hay datos por ciudad */
+    percep = (T.regPercep||0) + (T.valesTotal||0);
+    var flujoGlobal = row.flujo_detalle || [];
+    efectivo = 0; adicionales = 0;
+    flujoGlobal.forEach(function(f) {
+      var k = (f.concepto||'').toUpperCase();
+      if (k.indexOf('BONO')>=0||k.indexOf('ASISTENCIA')>=0) adicionales += (f.total||0);
+      else efectivo += (f.total||0);
+    });
   }
   var total = percep + efectivo + adicionales;
-  var html = [
+
+  /* Cards y strip ciudad */
+  var cardsHtml = [
     '<div class="ph-grid">',
-      phCard('ti-users','Total de colaboradores',String(emps),'Colaboradores activos',false),
-      phCard('ti-building-bank','Nomina regular',F(percep),'Incl. vales de despensa',true),
-      phCard('ti-cash','Nomina en efectivo',F(efectivo),'Proyectos y complementos',true),
+      phCard('ti-users','Total de colaboradores',String(emps),'Nómina regular + finiquitos',false),
+      phCard('ti-building-bank','Nómina regular',F(percep),'Incl. vales de despensa',true),
+      phCard('ti-cash','Nómina en efectivo',F(efectivo),'Proyectos y complementos',true),
       phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Bonos y variables',true),
     '</div>',
     '<div class="ph-total-strip">',
       '<div>',
-        '<div class="ph-total-lbl">Costo total de nomina</div>',
+        '<div class="ph-total-lbl">Total — ' + (__dbCity==='tj'?'Tijuana':__dbCity==='mty'?'Monterrey':'CDMX') + '</div>',
         '<div class="ph-total-num">'+F(total)+'</div>',
       '</div>',
       '<div class="ph-total-divider"></div>',
       '<div class="ph-total-right">',
         '<div class="ph-total-badge">Sem. '+semana+'</div>',
-        '<div class="ph-total-breakdown">Regular: '+FM(percep)+' &nbsp;&#183;&nbsp; Efectivo: '+FM(efectivo)+' &nbsp;&#183;&nbsp; Adicionales: '+FM(adicionales)+'</div>',
+        '<div class="ph-total-breakdown">Regular: '+FM(percep)+' &#183; Efectivo: '+FM(efectivo)+' &#183; Adic.: '+FM(adicionales)+'</div>',
       '</div>',
     '</div>'
   ].join('');
-  document.getElementById('ph-cards').innerHTML = html;
+  document.getElementById('ph-cards').innerHTML = cardsHtml;
+
+  /* Consolidado grupo completo */
+  nomDbRenderConsolidado(row, T, semana);
+}
+
+function nomDbRenderConsolidado(row, T, semana) {
+  var el = document.getElementById('ph-cards');
+  if (!el) return;
+  var F = nomFmt;
+  var fi = row.finiquito_detalle || {};
+
+  /* Fuentes de verdad — siempre desde T (globales) */
+  var nomReg   = (T.regPercep||0) + (T.valesTotal||0);   /* percepciones + vales */
+  var efectivo = T.flujoTotal || 0;                        /* proyectos + compl + bonos */
+  var finNeto  = T.finNeto || 0;                           /* finiquitos neto */
+  var isr      = T.regISR || 0;
+  var imssO    = T.regIMSS || 0;
+  var imssP    = T.imssPatron || 0;
+  var infonav  = T.infoPatron || 0;
+  var isn      = T.isn || 0;
+  var totalRet = isr + imssO + imssP + infonav + isn;
+  var costoReal = T.costoReal || (nomReg + efectivo + finNeto + totalRet);
+  var grandTotal = nomReg + efectivo + finNeto + isr + imssO; /* lo que sale del banco */
+  if (!grandTotal) grandTotal = T.totalEfectivo || 0;
+
+  /* Proporciones para la barra */
+  var base = costoReal || 1;
+  var pReg  = Math.round(nomReg/base*100);
+  var pEf   = Math.round(efectivo/base*100);
+  var pFin  = Math.round(finNeto/base*100);
+  var pRet  = 100 - pReg - pEf - pFin;
+  if (pRet < 0) pRet = 0;
+
+  var div = document.createElement('div');
+  div.className = 'ph-conso-wrap';
+  div.innerHTML = [
+    '<div class="ph-conso-lbl"><i class="ti ti-report-money" aria-hidden="true" style="font-size:12px"></i> Consolidado nomina completa &#8212; grupo MI Global</div>',
+    '<div class="ph-conso-card">',
+      '<div class="ph-conso-head">',
+        '<div>',
+          '<div class="ph-conso-grand-lbl">Costo real del grupo &#183; Sem. '+semana+'</div>',
+          '<div class="ph-conso-grand">'+F(costoReal)+'</div>',
+        '</div>',
+        '<span class="ph-conso-badge">'+((T.regEmps||0)+(fi.emps||0))+' colaboradores</span>',
+      '</div>',
+      '<div class="ph-conso-propbar">',
+        '<div class="ph-conso-seg" style="width:'+pReg+'%;background:#0c447c"></div>',
+        '<div class="ph-conso-seg" style="width:'+pEf+'%;background:#2176c4"></div>',
+        '<div class="ph-conso-seg" style="width:'+pFin+'%;background:#60a5fa"></div>',
+        '<div class="ph-conso-seg" style="width:'+pRet+'%;background:#94a3b8"></div>',
+      '</div>',
+      '<div class="ph-conso-cols">',
+        phConsoCol('#0c447c','#e6f1fb','ti-building-bank','Nomina regular',F(nomReg),'Incl. vales de despensa',pReg+'% del costo real'),
+        phConsoCol('#2176c4','#eff6ff','ti-cash','Efectivo + proyectos',F(efectivo),'Proyectos y complementos',pEf+'% del costo real'),
+        phConsoCol('#60a5fa','#f0f7ff','ti-users','Finiquitos',F(finNeto),'Liquidaciones y finiquitos',pFin+'% del costo real'),
+        phConsoCol('var(--ph-text-sec)','var(--ph-msec-bg)','ti-report-analytics','Retenciones y carga',F(totalRet),'ISR + IMSS + ISN + INFONAV.',pRet+'% del costo real'),
+      '</div>',
+      '<div class="ph-ret-row">',
+        phRetMini('ISR retenido',F(isr)),
+        phRetMini('IMSS obrero',F(imssO)),
+        phRetMini('IMSS patron',F(imssP)),
+        phRetMini('INFONAVIT',F(infonav)),
+        phRetMini('ISN',F(isn)),
+      '</div>',
+    '</div>'
+  ].join('');
+  el.appendChild(div);
+}
+
+function phConsoCol(acol,abg,icon,lbl,val,sub,pct) {
+  return '<div class="ph-conso-col" style="border-color:'+acol+';background:'+abg+'">'+
+    '<div class="ph-conso-col-lbl" style="color:'+acol+'"><i class="ti '+icon+'" aria-hidden="true"></i> '+lbl+'</div>'+
+    '<div class="ph-conso-col-val" style="color:'+acol+'">'+val+'</div>'+
+    '<div class="ph-conso-col-sub">'+sub+'</div>'+
+    '<div class="ph-conso-col-pct" style="color:'+acol+';border-color:'+acol+'33">'+pct+'</div>'+
+  '</div>';
+}
+
+function phRetMini(lbl,val) {
+  return '<div class="ph-ret-mini"><div class="ph-ret-mini-lbl">'+lbl+'</div><div class="ph-ret-mini-val">'+val+'</div></div>';
 }
 
 function phCard(icon, lbl, val, sub, clickable) {
@@ -3889,3 +4007,4 @@ function calcHtmlCompleta(R) {
 bootstrapAuth();
 </script>
 </body></html>
+
