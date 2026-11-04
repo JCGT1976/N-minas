@@ -1583,54 +1583,77 @@ function nomDbRenderConsolidado(row, T, semana) {
   var el = document.getElementById('ph-cards');
   if (!el) return;
   var F = nomFmt;
+  var FM = function(n){n=Math.round(Number(n)||0);return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+(n/1000).toFixed(0)+'K';};
   var fi = row.finiquito_detalle || {};
 
-  /* Fuentes de verdad — siempre desde T (globales) */
-  var nomReg   = (T.regPercep||0) + (T.valesTotal||0);   /* percepciones + vales */
-  var efectivo = T.flujoTotal || 0;                        /* proyectos + compl + bonos */
-  var finNeto  = T.finNeto || 0;                           /* finiquitos neto */
-  var isr      = T.regISR || 0;
-  var imssO    = T.regIMSS || 0;
-  var imssP    = T.imssPatron || 0;
-  var infonav  = T.infoPatron || 0;
-  var isn      = T.isn || 0;
-  var totalRet = isr + imssO + imssP + infonav + isn;
-  var costoReal = T.costoReal || (nomReg + efectivo + finNeto + totalRet);
-  var grandTotal = nomReg + efectivo + finNeto + isr + imssO; /* lo que sale del banco */
-  if (!grandTotal) grandTotal = T.totalEfectivo || 0;
+  /* ── Fuentes correctas:
+     T.regNeto   = neto nómina regular (lo que va al banco para empleados, POST deducciones)
+     T.valesTotal= vales despensa
+     T.flujoTotal= proyectos + hrs extras + complementos + bonos
+     T.finNeto   = finiquitos neto
+     T.totalEfectivo = todo lo anterior = lo que sale del banco = TOTAL NOMINA Excel
+     Retenciones y carga = ADICIONAL, no incluido en totalEfectivo ──*/
 
-  /* Proporciones para la barra */
+  var nomNeto   = (T.regNeto||0) + (T.valesTotal||0);
+  var flujo     = T.flujoTotal || 0;
+  var finiq     = T.finNeto || 0;
+  var totNomina = T.totalEfectivo || (nomNeto + flujo + finiq);
+
+  var isr    = T.regISR || 0;
+  var imssO  = T.regIMSS || 0;
+  var imssP  = T.imssPatron || 0;
+  var infonav= T.infoPatron || 0;
+  var isn    = T.isn || 0;
+  var totalOblig = isr + imssO + imssP + infonav + isn;
+  var costoReal  = T.costoReal || (totNomina + totalOblig);
+
+  /* proporciones sobre costoReal */
   var base = costoReal || 1;
-  var pReg  = Math.round(nomReg/base*100);
-  var pEf   = Math.round(efectivo/base*100);
-  var pFin  = Math.round(finNeto/base*100);
-  var pRet  = 100 - pReg - pEf - pFin;
-  if (pRet < 0) pRet = 0;
+  var pNom = Math.round(nomNeto/base*100);
+  var pFlu = Math.round(flujo/base*100);
+  var pFin = Math.round(finiq/base*100);
+  var pObl = 100 - pNom - pFlu - pFin;
+  if (pObl < 0) pObl = 0;
 
   var div = document.createElement('div');
   div.className = 'ph-conso-wrap';
   div.innerHTML = [
     '<div class="ph-conso-lbl"><i class="ti ti-report-money" aria-hidden="true" style="font-size:12px"></i> Consolidado nomina completa &#8212; grupo MI Global</div>',
     '<div class="ph-conso-card">',
+      /* encabezado: total nomina (= Excel) + costo real como badge */
       '<div class="ph-conso-head">',
         '<div>',
-          '<div class="ph-conso-grand-lbl">Costo real del grupo &#183; Sem. '+semana+'</div>',
-          '<div class="ph-conso-grand">'+F(costoReal)+'</div>',
+          '<div class="ph-conso-grand-lbl">Total nomina semanal &#183; Sem. '+semana+'</div>',
+          '<div class="ph-conso-grand">'+F(totNomina)+'</div>',
+          '<div style="font-size:11px;color:var(--ph-text-muted);margin-top:3px">Costo real del grupo (incl. obligaciones): <strong style="color:var(--ph-text)">'+F(costoReal)+'</strong></div>',
         '</div>',
         '<span class="ph-conso-badge">'+((T.regEmps||0)+(fi.emps||0))+' colaboradores</span>',
       '</div>',
+      /* barra proporcional */
       '<div class="ph-conso-propbar">',
-        '<div class="ph-conso-seg" style="width:'+pReg+'%;background:#0c447c"></div>',
-        '<div class="ph-conso-seg" style="width:'+pEf+'%;background:#2176c4"></div>',
+        '<div class="ph-conso-seg" style="width:'+pNom+'%;background:#0c447c"></div>',
+        '<div class="ph-conso-seg" style="width:'+pFlu+'%;background:#2176c4"></div>',
         '<div class="ph-conso-seg" style="width:'+pFin+'%;background:#60a5fa"></div>',
-        '<div class="ph-conso-seg" style="width:'+pRet+'%;background:#94a3b8"></div>',
+        '<div class="ph-conso-seg" style="width:'+pObl+'%;background:#94a3b8"></div>',
       '</div>',
-      '<div class="ph-conso-cols">',
-        phConsoCol('#0c447c','#e6f1fb','ti-building-bank','Nomina regular',F(nomReg),'Incl. vales de despensa',pReg+'% del costo real'),
-        phConsoCol('#2176c4','#eff6ff','ti-cash','Efectivo + proyectos',F(efectivo),'Proyectos y complementos',pEf+'% del costo real'),
-        phConsoCol('#60a5fa','#f0f7ff','ti-users','Finiquitos',F(finNeto),'Liquidaciones y finiquitos',pFin+'% del costo real'),
-        phConsoCol('var(--ph-text-sec)','var(--ph-msec-bg)','ti-report-analytics','Retenciones y carga',F(totalRet),'ISR + IMSS + ISN + INFONAV.',pRet+'% del costo real'),
+      /* 3 tarjetas que suman al totalNomina */
+      '<div class="ph-conso-cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">',
+        phConsoCol('#0c447c','#e6f1fb','ti-building-bank',
+          'Nomina regular neta',F(nomNeto),
+          'Transferencias + vales (neto)',Math.round(nomNeto/totNomina*100||0)+'% del total nomina'),
+        phConsoCol('#2176c4','#eff6ff','ti-cash',
+          'Efectivo y proyectos',F(flujo),
+          'Proyectos, hrs extras, compl., bonos',Math.round(flujo/totNomina*100||0)+'% del total nomina'),
+        phConsoCol('#60a5fa','#f0f7ff','ti-users',
+          'Finiquitos',F(finiq),
+          'Liquidaciones y finiquitos',Math.round(finiq/totNomina*100||0)+'% del total nomina'),
       '</div>',
+      /* separador obligaciones */
+      '<div style="font-size:10px;font-weight:500;color:var(--ph-text-sec);text-transform:uppercase;letter-spacing:.5px;margin:4px 0 10px;padding-top:12px;border-top:1px solid var(--ph-divider);display:flex;align-items:center;gap:8px">',
+        '<i class="ti ti-building-bank" aria-hidden="true" style="font-size:12px"></i>',
+        'Obligaciones fiscales y patronales &#8212; <strong>'+F(totalOblig)+'</strong> adicional al total nomina',
+      '</div>',
+      /* 5 mini retenciones */
       '<div class="ph-ret-row">',
         phRetMini('ISR retenido',F(isr)),
         phRetMini('IMSS obrero',F(imssO)),
