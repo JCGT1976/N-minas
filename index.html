@@ -1862,41 +1862,25 @@ var __colabQ = '';
 window.nomDbOpenColabModal = async function nomDbOpenColabModal() {
   var row = __dbData.find(function(r){return r.semana===__dbSemActual;});
   if (!row) return;
-  if (!row.__ciudadesLoaded) {
+  if (!row.__empListLoaded) {
     var ov=document.getElementById('ph-colab-overlay');if(ov)ov.className='ph-colab-overlay open';
     var bg=document.getElementById('ph-colab-badge');if(bg)bg.textContent='Cargando...';
-    try{var rc=await sb.from('nom_historico').select('ciudades').eq('semana',row.semana).maybeSingle();
-      if(!rc.error&&rc.data)row.ciudades=rc.data.ciudades;}catch(e){}
-    row.__ciudadesLoaded=true;
+    try{var rc=await sb.from('nom_historico').select('emp_list').eq('semana',row.semana).maybeSingle();
+      if(!rc.error&&rc.data)row.__empList=rc.data.emp_list||[];}catch(e){row.__empList=[];}
+    row.__empListLoaded=true;
   }
-  var cds=null;
-  try{cds=row.ciudades?(typeof row.ciudades==='string'?JSON.parse(row.ciudades):row.ciudades):null;}catch(e){}
   var fi = row.finiquito_detalle || {};
   var F = nomFmt;
   var empMap = {};
-  var CDMAP = {tj:'Tijuana',mty:'Monterrey',cdmx:'CDMX'};
-  function addEmp(nombre, ciudad, nomReg, proyecto, adicional) {
-    var key = nombre.toLowerCase().trim();
-    if (!empMap[key]) empMap[key] = {n:nombre, ciudad:ciudad, nomReg:0, proyecto:0, adicional:0};
-    empMap[key].nomReg   += (nomReg   || 0);
-    empMap[key].proyecto += (proyecto || 0);
-    empMap[key].adicional+= (adicional|| 0);
-    if (ciudad) empMap[key].ciudad = ciudad;
-  }
-  ['tj','mty','cdmx'].forEach(function(cd) {
-    var city = cds ? (cds[cd] || {}) : {};
-    (city.emp_nomina || []).forEach(function(e) {
-      if (e.n) addEmp(e.n, cd, e.m||0, 0, 0);
-    });
-    (city.flujo || []).forEach(function(f) {
-      var kU = (f.concepto||'').toUpperCase();
-      var isProy = kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0;
-      (f.emp || []).forEach(function(e) {
-        if (!e.n) return;
-        if (isProy) addEmp(e.n, cd, 0, e.m||0, 0);
-        else        addEmp(e.n, cd, 0, 0, e.m||0);
-      });
-    });
+  (row.__empList||[]).forEach(function(emp){
+    if(!emp.n)return;
+    var key=emp.n.toLowerCase().trim();
+    if(!empMap[key])empMap[key]={n:emp.n,ciudad:emp.cd||'',emp:emp.e||'',nomReg:0,proyecto:0,adicional:0};
+    if(emp.tipo==='nom') empMap[key].nomReg   +=(emp.m||0);
+    else if(emp.tipo==='proy')empMap[key].proyecto+=(emp.m||0);
+    else                 empMap[key].adicional+=(emp.m||0);
+    if(emp.e) empMap[key].emp=emp.e;
+    if(emp.cd)empMap[key].ciudad=emp.cd;
   });
   __colabAll = Object.keys(empMap).map(function(k){return empMap[k];}).sort(function(a,b){
     return (b.nomReg+b.proyecto+b.adicional)-(a.nomReg+a.proyecto+a.adicional);
@@ -2516,6 +2500,19 @@ window.nomHistEliminar = nomHistEliminar;
 window.nomHistSwitchTab = nomHistSwitchTab;
 
 
+function nomBuildEmpList(cds){
+  var list=[];if(!cds)return list;
+  ['tj','mty','cdmx'].forEach(function(cd){
+    var city=cds[cd]||{};
+    (city.emp_nomina||[]).forEach(function(e){if(e.n)list.push({n:e.n,m:Math.round(e.m||0),e:e.e||'',cd:cd,tipo:'nom'});});
+    (city.flujo||[]).forEach(function(f){
+      var kU=(f.concepto||f.k||'').toUpperCase();
+      var tipo=kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0?'proy':'adic';
+      (f.emp||[]).forEach(function(e){if(e.n)list.push({n:e.n,m:Math.round(e.m||0),e:'',cd:cd,tipo:tipo});});
+    });
+  });
+  return list;
+}
 window.nomGuardarHistorico = function nomGuardarHistorico() {
   if (!window.__nomCanWrite) { return; }
   var btn = document.getElementById('nomGuardarBtn');
@@ -2541,6 +2538,7 @@ window.nomGuardarHistorico = function nomGuardarHistorico() {
       neto:(result.finiquitos||{}).neto||0
     },
     ciudades: (result.ciudades ? JSON.stringify(nomCiudadesCompact(result.ciudades)) : null),
+    emp_list: (result.ciudades ? nomBuildEmpList(result.ciudades) : []),
     created_by: window.__nomUsername || '',
     created_at: new Date().toISOString()
   };
