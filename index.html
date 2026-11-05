@@ -516,6 +516,22 @@ html[data-theme="dark"] .clab-total{color:#60a5fa}
 .clab-fs-lbl{font-size:9px;color:var(--ph-text-muted);text-transform:uppercase;letter-spacing:.4px}
 .clab-fs-val{font-size:12px;font-weight:700;margin-top:2px;color:var(--ph-text)}
 
+
+/* ═══ Strip KPI reactivo ═══ */
+.ph-rstrip{background:#0c447c;border-radius:14px;padding:16px 20px;margin-bottom:12px}
+html[data-theme="dark"] .ph-rstrip{background:#0a3060}
+.ph-rstrip-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.ph-rstrip-lbl{font-size:10px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ph-rstrip-total{font-size:30px;font-weight:700;color:#fff;line-height:1}
+.ph-rstrip-colabs{font-size:11px;color:rgba(255,255,255,.7);margin-top:6px}
+.ph-rstrip-colabs strong{color:#fff}
+.ph-rstrip-pct-badge{background:rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:700;padding:5px 14px;border-radius:10px}
+.ph-rstrip-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ph-rstrip-item{border-radius:9px;padding:11px 13px;border:0.5px solid rgba(255,255,255,.2)}
+.ph-rstrip-item-lbl{font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.ph-rstrip-item-val{font-size:17px;font-weight:700;color:#fff}
+.ph-rstrip-item-sub{font-size:9px;color:rgba(255,255,255,.5);margin-top:3px}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -1483,9 +1499,7 @@ function nomCiudadesCompact(cds){
     var c=cds[cd];
     out[cd]={emps:c.emps,percep:c.percep,isr:c.isr,imss:c.imss,imssPat:c.imssPat,isn:c.isn,
       infoPat:c.infoPat,neto:c.neto,vales:c.vales,efectivo:c.efectivo,costoReal:c.costoReal,reserva:c.reserva,
-      emp_nomina:(c.emp_nomina||[]).slice(0,600).map(function(e){return{n:e.n,m:e.m,e:e.e||''}}),
-      flujo:c.flujo.map(function(f){return{k:f.k,concepto:f.concepto,total:f.total,emps:f.emps,emp:(f.emp||[]).slice(0,150).map(function(e){return{n:e.n,m:e.m};})};})};
-  
+      flujo:c.flujo.map(function(f){return{k:f.k,concepto:f.concepto,total:f.total,emps:f.emps};})};
   });
   return out;
 }
@@ -1495,7 +1509,7 @@ async function nomRenderDashboard() {
   if (!panel) return;
   panel.innerHTML = '<div class="nom-loading">Cargando...</div>';
   try {
-    var r = await sb.from('nom_historico').select('semana,totals,flujo_detalle,finiquito_detalle,unique_emps,created_at').order('semana',{ascending:true}).limit(52);
+    var r = await sb.from('nom_historico').select('semana,totals,ciudades,flujo_detalle,finiquito_detalle,unique_emps,created_at').order('semana',{ascending:true}).limit(52);
     if (r.error) throw r.error;
     __dbData = r.data || [];
     if (!__dbData.length) {
@@ -1521,10 +1535,12 @@ function nomDbBuildLayout(panel) {
         '<div id="ph-period" class="ph-period"></div>',
       '</div>',
       '<div class="ph-tabs">',
+        '<button class="ph-tab" id="ph-tab-all" onclick="nomDbSetCity(\'all\')">Global</button>',
         '<button class="ph-tab active" id="ph-tab-tj" onclick="nomDbSetCity(\'tj\')">Tijuana</button>',
         '<button class="ph-tab" id="ph-tab-mty" onclick="nomDbSetCity(\'mty\')">Monterrey</button>',
         '<button class="ph-tab" id="ph-tab-cdmx" onclick="nomDbSetCity(\'cdmx\')">CDMX</button>',
       '</div>',
+      '<div id="ph-strip"></div>',
       '<div id="ph-cards"></div>',
       '<div class="ph-sem-row">',
         '<span class="ph-sem-lbl">Semana</span>'+semBtns,
@@ -1565,7 +1581,7 @@ function nomDbBuildLayout(panel) {
 
 window.nomDbSetCity = function nomDbSetCity(city) {
   __dbCity = city;
-  ['tj','mty','cdmx'].forEach(function(c) {
+  ['all','tj','mty','cdmx'].forEach(function(c) {
     var btn = document.getElementById('ph-tab-'+c);
     if (btn) btn.className = 'ph-tab' + (c===city?' active':'');
   });
@@ -1645,6 +1661,7 @@ function nomDbRenderSem(semana) {
     '</div>'
   ].join('');
   document.getElementById('ph-cards').innerHTML = cardsHtml;
+  nomDbRenderStrip(row, T, cds);
 
   /* Consolidado grupo completo */
   nomDbRenderConsolidado(row, T, semana);
@@ -1748,6 +1765,90 @@ function phConsoCol(acol,abg,icon,lbl,val,sub,pct) {
 
 function phRetMini(lbl,val) {
   return '<div class="ph-ret-mini"><div class="ph-ret-mini-lbl">'+lbl+'</div><div class="ph-ret-mini-val">'+val+'</div></div>';
+}
+
+
+function nomDbRenderStrip(row, T, cds) {
+  var el = document.getElementById('ph-strip'); if (!el) return;
+  var F = nomFmt;
+  var FM = function(n){n=Math.round(Number(n)||0);return n>=1000000?'$'+(n/1e6).toFixed(2)+'M':'$'+(n/1e3).toFixed(0)+'K';};
+  var fi = row.finiquito_detalle || {};
+  var CITY_NAMES = {all:'Grupo MI Global', tj:'Tijuana', mty:'Monterrey', cdmx:'CDMX'};
+  var city = __dbCity;
+  var d = {};
+
+  if (city === 'all' || !cds || !cds[city]) {
+    /* Global desde T */
+    var allFlujo = row.flujo_detalle || [];
+    var gProy=0, gAdic=0, gEmpProy=0;
+    allFlujo.forEach(function(f){
+      var kU=(f.concepto||'').toUpperCase();
+      var isProy=kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0;
+      if(isProy){gProy+=(f.total||0);gEmpProy+=(f.empsUnicos||f.emps||0);}
+      else gAdic+=(f.total||0);
+    });
+    d = {
+      label: CITY_NAMES.all,
+      empsReg: T.regEmps||0, empsProy: gEmpProy,
+      nom: (T.regPercep||0)+(T.valesTotal||0),
+      proy: gProy, adic: gAdic,
+      ret: (T.regISR||0)+(T.regIMSS||0)+(T.imssPatron||0)+(T.infoPatron||0)+(T.isn||0),
+      total: T.costoReal||0
+    };
+  } else {
+    var cd = cds[city];
+    var flujoArr = cd.flujo || [];
+    var cProy=0, cAdic=0, cEmpProy=0;
+    flujoArr.forEach(function(f){
+      var kU=(f.concepto||f.k||'').toUpperCase();
+      var isProy=kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0;
+      if(isProy){cProy+=(f.total||0);cEmpProy+=(f.emps||0);}
+      else cAdic+=(f.total||0);
+    });
+    var cRet=(cd.isr||0)+(cd.imss||0)+(cd.imssPat||0)+(cd.infoPat||0)+(cd.isn||0);
+    var cTotal=cd.costoReal||(( cd.percep||0)+(cd.vales||0)+cProy+cAdic+cRet);
+    d = {
+      label: CITY_NAMES[city]||city,
+      empsReg: cd.emps||0, empsProy: cEmpProy,
+      nom: (cd.percep||0)+(cd.vales||0),
+      proy: cProy, adic: cAdic, ret: cRet, total: cTotal
+    };
+  }
+
+  var totalEmps = d.empsReg + d.empsProy;
+  var pFiscal = d.total>0 ? Math.round(d.ret/d.total*100) : 0;
+  el.innerHTML =
+    '<div class="ph-rstrip">'+
+      '<div class="ph-rstrip-head">'+
+        '<div>'+
+          '<div class="ph-rstrip-lbl">Total &mdash; '+d.label+'</div>'+
+          '<div class="ph-rstrip-total">'+F(d.total)+'</div>'+
+          '<div class="ph-rstrip-colabs">'+
+            '<i class="ti ti-users" aria-hidden="true" style="font-size:11px"></i> '+
+            '<strong>'+totalEmps+'</strong> colaboradores &nbsp;&middot;&nbsp; '+
+            'Regular: <strong>'+d.empsReg+'</strong> &nbsp;&middot;&nbsp; '+
+            'Proyectos: <strong>'+d.empsProy+'</strong>'+
+          '</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div class="ph-rstrip-pct-badge">'+pFiscal+'% carga fiscal</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ph-rstrip-items">'+
+        phStripItem('Nom. regular',FM(d.nom),'Incl. vales','#fff','.25')+
+        phStripItem('Efectivo y proy.',FM(d.proy),'Pagos directos','#fff','.2')+
+        phStripItem('Adicionales',FM(d.adic),'Hrs extras y bonos','#fff','.2')+
+        phStripItem('Retenciones',FM(d.ret),'ISR+IMSS+Patronal','#fff','.2')+
+      '</div>'+
+    '</div>';
+}
+
+function phStripItem(lbl,val,sub,col,alpha){
+  return '<div class="ph-rstrip-item" style="background:rgba(255,255,255,'+alpha+')">'+
+    '<div class="ph-rstrip-item-lbl">'+lbl+'</div>'+
+    '<div class="ph-rstrip-item-val">'+val+'</div>'+
+    '<div class="ph-rstrip-item-sub">'+sub+'</div>'+
+  '</div>';
 }
 
 function phCard(icon, lbl, val, sub, clickable) {
