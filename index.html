@@ -1605,9 +1605,21 @@ function nomDbRenderSem(semana) {
   var period = document.getElementById('ph-period');
   if (period) period.textContent = 'Semana ' + semana;
 
-  /* KPI colaboradores: SIEMPRE formula global T, nunca ciudad */
+  /* KPI colaboradores: global cuando tab=all, por ciudad cuando tab=tj/mty/cdmx */
   var fi = row.finiquito_detalle || {};
-  var emps = (T.regEmps||0) + (fi.emps||0);
+  var emps, empsSub;
+  if (__dbCity === 'all' || !city || !(city.emps > 0)) {
+    emps = (T.regEmps||0) + (fi.emps||0);
+    empsSub = 'Nomina regular + finiquitos';
+  } else {
+    var _cityProy = 0;
+    (city.flujo||[]).forEach(function(f){
+      var kU=(f.concepto||f.k||'').toUpperCase();
+      if(kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0) _cityProy+=(f.emps||0);
+    });
+    emps = (city.emps||0) + _cityProy;
+    empsSub = 'Regular: '+(city.emps||0)+' &nbsp;&#183;&nbsp; Proyectos: '+_cityProy;
+  }
 
   /* Montos por ciudad (tab activo) */
   var percep, efectivo, adicionales;
@@ -1641,7 +1653,7 @@ function nomDbRenderSem(semana) {
       '<div class="ph-card ph-card-click" onclick="nomDbOpenColabModal()">'+
       '<div class="ph-card-lbl"><i class="ti ti-users" aria-hidden="true"></i> Total de colaboradores</div>'+
       '<div class="ph-card-num ph-card-num-big">'+String(emps)+'</div>'+
-      '<div class="ph-card-sub">Nomina regular + finiquitos</div>'+
+      '<div class="ph-card-sub">'+empsSub+'</div>'+
       '<div class="ph-card-hint"><i class="ti ti-zoom-in" aria-hidden="true"></i> Ver desglose por colaborador</div>'+
     '</div>',
       phCard('ti-building-bank','Nómina regular',F(percep),'Incl. vales de despensa',true),
