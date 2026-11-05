@@ -1429,11 +1429,11 @@ var __dbCity = 'tj';
 var __dbPopData = null;
 
 function calcSplitByCiudad(wb) {
-  var REG_MAP = {tijuana:'tj',salinas:'mty',cuautitl:'cdmx',guadalajara:'gdl'};
+  var REG_MAP = {tijuana:'tj',salinas:'mty','general e':'mty','general esc':'mty',cuautitl:'cdmx',guadalajara:'gdl'};
   function cdOf(reg){var r=String(reg||'').toLowerCase();var c='tj';Object.keys(REG_MAP).forEach(function(k){if(r.indexOf(k)>=0)c=REG_MAP[k];});return c;}
-  var CDS={tj:{emps:0,percep:0,isr:0,imss:0,neto:0,vales:0,flujo:[],emp_nomina:[]},
-           mty:{emps:0,percep:0,isr:0,imss:0,neto:0,vales:0,flujo:[],emp_nomina:[]},
-           cdmx:{emps:0,percep:0,isr:0,imss:0,neto:0,vales:0,flujo:[],emp_nomina:[]}};
+  var CDS={tj:{emps:0,percep:0,isr:0,imss:0,imssPat:0,infoPat:0,isn:0,neto:0,vales:0,efectivo:0,costoReal:0,flujo:[],emp_nomina:[]},
+           mty:{emps:0,percep:0,isr:0,imss:0,imssPat:0,infoPat:0,isn:0,neto:0,vales:0,efectivo:0,costoReal:0,flujo:[],emp_nomina:[]},
+           cdmx:{emps:0,percep:0,isr:0,imss:0,imssPat:0,infoPat:0,isn:0,neto:0,vales:0,efectivo:0,costoReal:0,flujo:[],emp_nomina:[]}};
   [['INT. TRANSFERENCIA','INTERNACIONAL TRANSF','NOM. INTERNACIONAL'],
    ['INT. EFECTIVO','INTERNACIONAL EFEC']].forEach(function(pats){
     var f=calcFindSheet(wb,pats);if(!f)return;
@@ -1450,7 +1450,7 @@ function calcSplitByCiudad(wb) {
       var cd=cdOf(r[kReg]);if(!CDS[cd])return;
       CDS[cd].emps++;CDS[cd].percep+=nomParseMoney(r[kPerc]);CDS[cd].isr+=nomParseMoney(r[kISR]);
       CDS[cd].imss+=nomParseMoney(r[kIMSS]);CDS[cd].neto+=neto;CDS[cd].vales+=nomParseMoney(r[kVales]);
-      if(CDS[cd].emp_nomina.length<500)CDS[cd].emp_nomina.push({n:nom,m:neto,e:'INT'});
+      if(CDS[cd].emp_nomina.length<500)CDS[cd].emp_nomina.push({n:nom,m:neto,e:'INT',percep:nomParseMoney(r[kPerc]),isr:nomParseMoney(r[kISR]),imss:nomParseMoney(r[kIMSS]),vales:nomParseMoney(r[kVales])});
     });
   });
   function empList(pats,mKeys,maxN){
