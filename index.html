@@ -1562,6 +1562,8 @@ function nomDbBuildLayout(panel) {
         '<div class="clab-hd">',
           '<div class="clab-hd-title">Composicion de pago por colaborador</div>',
           '<span id="ph-colab-badge" class="clab-hd-badge"></span>',
+          '<button class="clab-win-btn" id="clab-btn-min" onclick="nomDbColabWin(\'min\')" title="Minimizar">&#x2014;</button>',
+          '<button class="clab-win-btn" id="clab-btn-max" onclick="nomDbColabWin(\'max\')" title="Maximizar">&#x25A1;</button>',
           '<button class="clab-hd-x" onclick="nomDbCloseColabModal()">&#x2715;</button>',
         '</div>',
         '<div class="clab-filters" id="ph-colab-filters"></div>',
@@ -1968,6 +1970,9 @@ window.nomDbCloseModal = function nomDbCloseModal() {
 
 
 var __colabAll = [];
+var __colabDragInited = false;
+var __colabWinState = "normal";
+var __colabDrag = {on:false,sx:0,sy:0,ox:0,oy:0};
 var __colabCity = 'all';
 var __colabTipo = 'all';
 var __colabQ = '';
@@ -2008,6 +2013,7 @@ window.nomDbOpenColabModal = async function nomDbOpenColabModal() {
   if (ov) ov.className = 'ph-colab-overlay open';
   var inp = document.getElementById('ph-colab-search');
   if (inp) inp.value = '';
+  if (!__colabDragInited) { nomDbColabInitDrag(); __colabDragInited = true; }
 };
 
 function nomDbColabBuildFilters() {
@@ -2092,18 +2098,91 @@ function nomDbColabRender() {
   var tN=filtered.reduce(function(s,e){return s+(e.nomReg||0);},0);
   var tP=filtered.reduce(function(s,e){return s+(e.proyecto||0);},0);
   var tA=filtered.reduce(function(s,e){return s+(e.adicional||0);},0);
+  /* Footer — usa row.totals cuando no hay filtro activo para cuadrar con el reporte */
+  var rowFt = __dbData.find(function(r){return r.semana===__dbSemActual;})||{};
+  var Tft = rowFt.totals || {};
+  var fiFt = rowFt.finiquito_detalle || {};
+  var totalEmpsAll = __colabAll.length + (fiFt.emps||0);
+  var isAll = __colabCity==='all' && __colabTipo==='all' && !__colabQ;
+  var footEmps  = isAll ? totalEmpsAll : filtered.length;
+  var footNom   = isAll ? ((Tft.regNeto||0)+(Tft.valesTotal||0)) : tN;
+  var footProy  = isAll ? (Tft.flujoTotal||0) : (tP+tA);
+  var footFin   = isAll ? ((fiFt.neto||Tft.finNeto||0)) : 0;
+  var footTot   = isAll ? (Tft.totalEfectivo||0) : (tN+tP+tA);
+  var lblProy   = isAll ? 'Efectivo y proyectos' : 'Proy. y adic.';
   var foot = document.getElementById('ph-colab-foot');
   if (foot) foot.innerHTML =
-    '<div class="clab-fs"><div class="clab-fs-lbl">Personas</div><div class="clab-fs-val" style="color:#0c447c">'+filtered.length+'</div></div>'+
-    '<div class="clab-fs"><div class="clab-fs-lbl">Nom. regular</div><div class="clab-fs-val" style="color:#0c447c">'+F(tN)+'</div></div>'+
-    '<div class="clab-fs"><div class="clab-fs-lbl">Proyectos</div><div class="clab-fs-val" style="color:#2176c4">'+F(tP)+'</div></div>'+
-    '<div class="clab-fs"><div class="clab-fs-lbl">Adicionales</div><div class="clab-fs-val" style="color:#b45309">'+F(tA)+'</div></div>'+
-    '<div class="clab-fs"><div class="clab-fs-lbl">Total pagado</div><div class="clab-fs-val">'+F(tN+tP+tA)+'</div></div>';
+    '<div class="clab-fs"><div class="clab-fs-lbl">Personas</div><div class="clab-fs-val" style="color:#0c447c">'+footEmps+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Nom. regular neta</div><div class="clab-fs-val" style="color:#0c447c">'+F(footNom)+'</div></div>'+
+    '<div class="clab-fs"><div class="clab-fs-lbl">'+lblProy+'</div><div class="clab-fs-val" style="color:#2176c4">'+F(footProy)+'</div></div>'+
+    (isAll&&footFin>0?'<div class="clab-fs"><div class="clab-fs-lbl">Finiquitos</div><div class="clab-fs-val" style="color:#b45309">'+F(footFin)+'</div></div>':'')+
+    '<div class="clab-fs"><div class="clab-fs-lbl">Total efectivo</div><div class="clab-fs-val">'+F(footTot)+'</div></div>';
 }
 
+window.nomDbColabWin = function nomDbColabWin(action) {
+  var modal = document.querySelector('.ph-colab-modal');
+  if (!modal) return;
+  var btnMax = document.getElementById('clab-btn-max');
+  if (action === 'max') {
+    if (__colabWinState === 'max') {
+      modal.classList.remove('win-max');
+      modal.style.left = ''; modal.style.top = ''; modal.style.width = ''; modal.style.height = '';
+      if (btnMax) btnMax.innerHTML = '&#x25A1;';
+      __colabWinState = 'normal';
+    } else {
+      modal.classList.remove('win-min');
+      modal.classList.add('win-max');
+      if (btnMax) btnMax.innerHTML = '&#x25A6;';
+      __colabWinState = 'max';
+    }
+  } else if (action === 'min') {
+    if (__colabWinState === 'min') {
+      modal.classList.remove('win-min');
+      __colabWinState = 'normal';
+    } else {
+      modal.classList.remove('win-max');
+      modal.classList.add('win-min');
+      if (btnMax) btnMax.innerHTML = '&#x25A1;';
+      __colabWinState = 'min';
+    }
+  }
+};
+function nomDbColabInitDrag() {
+  var modal = document.querySelector('.ph-colab-modal');
+  var hd = modal ? modal.querySelector('.clab-hd') : null;
+  if (!hd) return;
+  hd.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'BUTTON' || __colabWinState === 'max') return;
+    var r = modal.getBoundingClientRect();
+    __colabDrag.on = true;
+    __colabDrag.sx = e.clientX; __colabDrag.sy = e.clientY;
+    __colabDrag.ox = r.left; __colabDrag.oy = r.top;
+    modal.style.position = 'fixed';
+    modal.style.margin = '0';
+    modal.style.left = r.left + 'px';
+    modal.style.top = r.top + 'px';
+    document.body.style.userSelect = 'none';
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!__colabDrag.on) return;
+    var newLeft = __colabDrag.ox + e.clientX - __colabDrag.sx;
+    var newTop  = __colabDrag.oy + e.clientY - __colabDrag.sy;
+    if (newTop < 0) newTop = 0;
+    modal.style.left = newLeft + 'px';
+    modal.style.top  = newTop  + 'px';
+  });
+  document.addEventListener('mouseup', function() {
+    if (__colabDrag.on) { __colabDrag.on = false; document.body.style.userSelect = ''; }
+  });
+}
 window.nomDbCloseColabModal = function nomDbCloseColabModal() {
   var ov = document.getElementById('ph-colab-overlay');
   if (ov) ov.className = 'ph-colab-overlay';
+  __colabWinState = 'normal';
+  var modal = document.querySelector('.ph-colab-modal');
+  if (modal) { modal.classList.remove('win-max','win-min'); modal.style.left=''; modal.style.top=''; modal.style.position=''; modal.style.margin=''; }
+  var btnMax = document.getElementById('clab-btn-max');
+  if (btnMax) btnMax.innerHTML = '&#x25A1;';
 };
 
 window.nomRenderDashboard = nomRenderDashboard;
