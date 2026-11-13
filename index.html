@@ -2102,13 +2102,13 @@ function nomDbColabRender() {
   var rowFt = __dbData.find(function(r){return r.semana===__dbSemActual;})||{};
   var Tft = rowFt.totals || {};
   var fiFt = rowFt.finiquito_detalle || {};
-  var totalEmpsAll = __colabAll.length + (fiFt.emps||0);
   var isAll = __colabCity==='all' && __colabTipo==='all' && !__colabQ;
-  var footEmps  = isAll ? totalEmpsAll : filtered.length;
-  var footNom   = isAll ? ((Tft.regNeto||0)+(Tft.valesTotal||0)) : tN;
+  /* Cuando no hay filtro: usar row.totals como fuente de verdad = igual que el reporte */
+  var footEmps  = isAll ? ((Tft.regEmps||0)+(fiFt.emps||0)) : filtered.length;
+  var footNom   = isAll ? (Tft.regNeto||0) : tN;
   var footProy  = isAll ? (Tft.flujoTotal||0) : (tP+tA);
-  var footFin   = isAll ? ((fiFt.neto||Tft.finNeto||0)) : 0;
-  var footTot   = isAll ? (Tft.totalEfectivo||0) : (tN+tP+tA);
+  var footFin   = isAll ? (fiFt.neto||Tft.finNeto||0) : 0;
+  var footTot   = isAll ? (Tft.costoReal||0) : (tN+tP+tA);
   var lblProy   = isAll ? 'Efectivo y proyectos' : 'Proy. y adic.';
   var foot = document.getElementById('ph-colab-foot');
   if (foot) foot.innerHTML =
@@ -2116,7 +2116,7 @@ function nomDbColabRender() {
     '<div class="clab-fs"><div class="clab-fs-lbl">Nom. regular neta</div><div class="clab-fs-val" style="color:#0c447c">'+F(footNom)+'</div></div>'+
     '<div class="clab-fs"><div class="clab-fs-lbl">'+lblProy+'</div><div class="clab-fs-val" style="color:#2176c4">'+F(footProy)+'</div></div>'+
     (isAll&&footFin>0?'<div class="clab-fs"><div class="clab-fs-lbl">Finiquitos</div><div class="clab-fs-val" style="color:#b45309">'+F(footFin)+'</div></div>':'')+
-    '<div class="clab-fs"><div class="clab-fs-lbl">Total efectivo</div><div class="clab-fs-val">'+F(footTot)+'</div></div>';
+    '<div class="clab-fs"><div class="clab-fs-lbl">'+(isAll?'Costo real':'Total')+'</div><div class="clab-fs-val">'+F(footTot)+'</div></div>';
 }
 
 window.nomDbColabWin = function nomDbColabWin(action) {
@@ -2126,12 +2126,19 @@ window.nomDbColabWin = function nomDbColabWin(action) {
   if (action === 'max') {
     if (__colabWinState === 'max') {
       modal.classList.remove('win-max');
-      modal.style.left = ''; modal.style.top = ''; modal.style.width = ''; modal.style.height = '';
+      /* limpiar TODOS los inline styles para que flexbox del overlay vuelva a centrar */
+      modal.style.cssText = '';
       if (btnMax) btnMax.innerHTML = '&#x25A1;';
       __colabWinState = 'normal';
     } else {
       modal.classList.remove('win-min');
       modal.classList.add('win-max');
+      /* forzar inline — el drag puede haber dejado left/top que el CSS no puede pisar */
+      modal.style.position = 'fixed';
+      modal.style.left = '0'; modal.style.top = '0';
+      modal.style.width = '100vw'; modal.style.height = '100vh';
+      modal.style.maxWidth = '100vw'; modal.style.borderRadius = '0';
+      modal.style.margin = '0';
       if (btnMax) btnMax.innerHTML = '&#x25A6;';
       __colabWinState = 'max';
     }
