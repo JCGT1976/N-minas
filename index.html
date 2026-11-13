@@ -2620,7 +2620,7 @@ function nomHistRenderAcumulado(body) {
 
   var kpiRow=document.createElement('div');
   kpiRow.className='nom-kpi-row';
-  [{lbl:'Efectivo acumulado',val:sum('totalEfectivo'),cls:'green'},{lbl:'Retenciones acumuladas',val:sum('retenciones'),cls:'amber'},{lbl:'Carga patronal acumulada',val:sum('cuotas'),cls:'amber'},{lbl:'Costo real acumulado',val:sum('costoReal'),cls:''},{lbl:'Reserva gobierno acumulada',val:sum('reservaTotal'),cls:''},{lbl:'Semanas registradas',val:rows.length,cls:'',raw:true}].forEach(function(k){
+  [{lbl:'Efectivo acumulado',val:sum('totalEfectivo'),cls:'green'},{lbl:'Retenciones acumuladas',val:sum('retenciones'),cls:'amber'},{lbl:'Carga patronal acumulada',val:sum('cuotas')+sum('infoTotal'),cls:'amber'},{lbl:'Costo real acumulado',val:sum('costoReal'),cls:''},{lbl:'Reserva gobierno acumulada',val:sum('reservaTotal'),cls:''},{lbl:'Semanas registradas',val:rows.length,cls:'',raw:true}].forEach(function(k){
     var card=document.createElement('div'); card.className='nom-kpi';
     var lb=document.createElement('div'); lb.className='nom-kpi-label'; lb.textContent=k.lbl;
     var vl=document.createElement('div'); vl.className='nom-kpi-val'+(k.cls?' '+k.cls:'');
@@ -2647,7 +2647,7 @@ function nomHistRenderAcumulado(body) {
   sorted.forEach(function(row){
     var T=row.totals||{};
     var tr=document.createElement('tr');
-    [{v:row.semana||'-',c:'#0d3d6b',fw:'800',al:'center'},{v:(T.regEmps||0),al:'center'},{v:nomFmtH(T.totalEfectivo),c:'#1a7a4a',fw:'700',al:'right'},{v:nomFmtH(T.retenciones),c:'#c0392b',al:'right'},{v:nomFmtH(T.cuotas),c:'#b86b00',al:'right'},{v:nomFmtH(T.costoReal),c:'#0d3d6b',fw:'700',al:'right'},{v:nomFmtH(T.reservaTotal),c:'#7c3aed',al:'right'}].forEach(function(d){
+    [{v:row.semana||'-',c:'#0d3d6b',fw:'800',al:'center'},{v:(T.regEmps||0),al:'center'},{v:nomFmtH(T.totalEfectivo),c:'#1a7a4a',fw:'700',al:'right'},{v:nomFmtH(T.retenciones),c:'#c0392b',al:'right'},{v:nomFmtH((T.cuotas||0)+(T.infoTotal||0)),c:'#b86b00',al:'right'},{v:nomFmtH(T.costoReal),c:'#0d3d6b',fw:'700',al:'right'},{v:nomFmtH(T.reservaTotal),c:'#7c3aed',al:'right'}].forEach(function(d){
       var td=document.createElement('td'); td.style.textAlign=d.al||'left';
       if(d.c)td.style.color=d.c; if(d.fw)td.style.fontWeight=d.fw; td.textContent=d.v; tr.appendChild(td);
     });
@@ -2655,7 +2655,7 @@ function nomHistRenderAcumulado(body) {
   });
   var tfoot=document.createElement('tfoot');
   var tfr=document.createElement('tr');
-  [{v:'TOTAL',c:'#0d3d6b',fw:'800',al:'center'},{v:'',al:'center'},{v:nomFmtH(sum('totalEfectivo')),c:'#1a7a4a',fw:'800',al:'right'},{v:nomFmtH(sum('retenciones')),c:'#c0392b',fw:'800',al:'right'},{v:nomFmtH(sum('cuotas')),c:'#b86b00',fw:'800',al:'right'},{v:nomFmtH(sum('costoReal')),c:'#0d3d6b',fw:'800',al:'right'},{v:nomFmtH(sum('reservaTotal')),c:'#7c3aed',fw:'800',al:'right'}].forEach(function(d){
+  [{v:'TOTAL',c:'#0d3d6b',fw:'800',al:'center'},{v:'',al:'center'},{v:nomFmtH(sum('totalEfectivo')),c:'#1a7a4a',fw:'800',al:'right'},{v:nomFmtH(sum('retenciones')),c:'#c0392b',fw:'800',al:'right'},{v:nomFmtH(sum('cuotas')+sum('infoTotal')),c:'#b86b00',fw:'800',al:'right'},{v:nomFmtH(sum('costoReal')),c:'#0d3d6b',fw:'800',al:'right'},{v:nomFmtH(sum('reservaTotal')),c:'#7c3aed',fw:'800',al:'right'}].forEach(function(d){
     var td=document.createElement('td'); td.style.cssText='padding:10px 12px;font-size:12px;background:#f0f4f9;border-top:2px solid #0d3d6b;text-align:'+d.al;
     if(d.c)td.style.color=d.c; if(d.fw)td.style.fontWeight=d.fw; td.textContent=d.v; tfr.appendChild(td);
   });
