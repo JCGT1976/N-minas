@@ -1664,7 +1664,7 @@ function nomDbRenderSem(semana) {
     '</div>',
     '<div class="ph-total-strip">',
       '<div>',
-        '<div class="ph-total-lbl">Total — ' + (__dbCity==='tj'?'Tijuana':__dbCity==='mty'?'Monterrey':'CDMX') + '</div>',
+        '<div class="ph-total-lbl">Total — ' + (__dbCity==='all'?'GRUPO MI GLOBAL':__dbCity==='tj'?'Tijuana':__dbCity==='mty'?'Monterrey':'CDMX') + '</div>',
         '<div class="ph-total-num">'+F(total)+'</div>',
       '</div>',
       '<div class="ph-total-divider"></div>',
@@ -2330,7 +2330,7 @@ function nomHistRenderLista(body) {
       {v:colabs, al:'center', c:'#444'},
       {v:nomFmtH(T.totalEfectivo), c:'#1a7a4a', fw:'700', al:'right'},
       {v:nomFmtH(T.retenciones), c:'#c0392b', al:'right'},
-      {v:nomFmtH(T.cuotas), c:'#b86b00', al:'right'},
+      {v:nomFmtH((T.cuotas||0)+(T.infoTotal||0)), c:'#b86b00', al:'right'},
       {v:nomFmtH(T.costoReal), c:'#0d3d6b', fw:'700', al:'right'},
       {v:nomFmtH(T.reservaTotal), c:'#7c3aed', al:'right'},
       {v:(row.created_by||'')+' '+((row.created_at||'').substring(0,10)), c:'#888', al:'left'}
