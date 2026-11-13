@@ -1453,6 +1453,38 @@ function calcSplitByCiudad(wb) {
       if(CDS[cd].emp_nomina.length<500)CDS[cd].emp_nomina.push({n:nom,m:neto,e:'INT',percep:nomParseMoney(r[kPerc]),isr:nomParseMoney(r[kISR]),imss:nomParseMoney(r[kIMSS]),vales:nomParseMoney(r[kVales])});
     });
   });
+  // Empresas TJ regulares: Comercial, Autobot, Ariitranst, Boughts
+  var TJ_CO_SHEETS = [
+    {pats:['NOM. COMERCIAL','COMERCIAL'],   e:'COM'},
+    {pats:['NOM. AUTOBOT','AUTOBOT'],       e:'AUT'},
+    {pats:['NOM. ARIITRANST','ARIITRANST'], e:'ARI'},
+    {pats:['NOM. BOUGHTS','BOUGHTS'],       e:'BOT'}
+  ];
+  TJ_CO_SHEETS.forEach(function(def){
+    var f=calcFindSheet(wb,def.pats);if(!f)return;
+    var rows=calcSmartSheetRows(f.sh);if(!rows.length)return;
+    var s=rows[0];
+    var kN=calcFindKey(s,['nombre']);
+    var kNeto=calcFindKey(s,['total neto','neto total','neto transferir']);
+    var kPerc=calcFindKey(s,['tot.percep','tot. percep','total percep']);
+    var kISR=calcFindKey(s,['51.ispt','ispt','isr']);
+    var kIMSS=calcFindKey(s,['52.imss','imss']);
+    var kVales=calcFindKey(s,['v.despensa','despensa','vale']);
+    if(!kNeto||!kN)return;
+    rows.forEach(function(r){
+      var nom=String(r[kN]||'').trim();
+      if(!nom||nom.toUpperCase().indexOf('TOTAL')>=0||nom.toUpperCase().indexOf('SUBTOTAL')>=0)return;
+      var neto=nomParseMoney(r[kNeto]);if(neto<=0||neto>200000)return;
+      var perc=kPerc?nomParseMoney(r[kPerc]):0;
+      var isr=kISR?nomParseMoney(r[kISR]):0;
+      var imss=kIMSS?nomParseMoney(r[kIMSS]):0;
+      var vales=kVales?nomParseMoney(r[kVales]):0;
+      CDS.tj.emps++;CDS.tj.percep+=perc;CDS.tj.isr+=isr;
+      CDS.tj.imss+=imss;CDS.tj.neto+=neto;CDS.tj.vales+=vales;
+      if(CDS.tj.emp_nomina.length<800)
+        CDS.tj.emp_nomina.push({n:nom,m:neto,e:def.e,percep:perc,isr:isr,imss:imss,vales:vales});
+    });
+  });
   function empList(pats,mKeys,maxN){
     var f=calcFindSheet(wb,pats);if(!f)return null;
     var rows=calcSmartSheetRows(f.sh);if(!rows.length)return null;
@@ -4125,7 +4157,8 @@ function calcProcessWorkbook(wb, fileName) {
     {empresa:'Internacional', color:'#1d4ed8', sheets:[['INT. TRANSFERENCIA','INTERNACIONAL TRANSF','NOM. INTERNACIONAL'],['INT. EFECTIVO','INTERNACIONAL EFEC']], refKey:'intNeto'},
     {empresa:'Comercial',     color:'#7c3aed', sheets:['NOM. COMERCIAL'],                    refKey:'comNeto'},
     {empresa:'Autobot',       color:'#059669', sheets:['NOM. AUTOBOT'],                      refKey:'autNeto'},
-    {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST'],                   refKey:'ariNeto'}
+    {empresa:'Ariitranst',    color:'#d97706', sheets:['NOM. ARIITRANST'],                   refKey:'ariNeto'},
+    {empresa:'Boughts',       color:'#dc2626', sheets:['NOM. BOUGHTS','BOUGHTS'],            refKey:'bouNeto'}
   ];
   var regular = [];
   EMPRESA_DEFS.forEach(function(def) {
