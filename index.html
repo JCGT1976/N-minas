@@ -1647,7 +1647,9 @@ function nomDbRenderSem(semana) {
       else adicionales += (f.total||0);
     });
   }
-  var total = percep + efectivo + adicionales;
+  var total = (__dbCity === 'all')
+    ? (T.totalEfectivo || (percep + efectivo + adicionales))
+    : percep + efectivo + adicionales;
 
   /* Cards y strip ciudad */
   var cardsHtml = [
@@ -1670,7 +1672,7 @@ function nomDbRenderSem(semana) {
       '<div class="ph-total-divider"></div>',
       '<div class="ph-total-right">',
         '<div class="ph-total-badge">Sem. '+semana+'</div>',
-        '<div class="ph-total-breakdown">Regular: '+FM(percep)+' &#183; Efectivo: '+FM(efectivo)+' &#183; Adic.: '+FM(adicionales)+'</div>',
+        '<div class="ph-total-breakdown">'+(__dbCity==='all'?'Nom. neta: '+FM((T.regNeto||0)+(T.valesTotal||0))+' &#183; Proy./Efec.: '+FM(efectivo+adicionales)+' &#183; Finiq.: '+FM(T.finNeto||0):'Regular: '+FM(percep)+' &#183; Efectivo: '+FM(efectivo)+' &#183; Adic.: '+FM(adicionales))+'</div>',
       '</div>',
     '</div>'
   ].join('');
