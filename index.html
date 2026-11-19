@@ -1503,7 +1503,7 @@ function calcSplitByCiudad(wb) {
   }
   var ptj=empList(['PROY. TIJUANA','PROYECTOS TIJUANA'],['sueldo','total neto','neto','importe','total'],500);
   if(ptj){var t=ptj.reduce(function(s,e){return s+e.m;},0);CDS.tj.flujo.push({k:'proyectos',concepto:'Proyectos Tijuana',total:t,emps:ptj.length,emp:ptj});}
-  var pmty=empList(['PROY. MTY','PROYECTOS MONTERREY'],['total neto','neto','sueldo','total','monto'],500);
+  var pmty=empList(['PROY. MTY','PROYECTOS MONTERREY','PROYECTOS MTY','PROY MTY'],['cantridad','total neto','total a pagar','monto total','neto','monto','sueldo','cantidad'],500);
   if(pmty){var t=pmty.reduce(function(s,e){return s+e.m;},0);CDS.mty.flujo.push({k:'proyectos',concepto:'Proyectos Monterrey',total:t,emps:pmty.length,emp:pmty});}
   var cs=empList(['COMP. SUELDOS','COMPL. SUELDOS'],['total neto','neto','complemento sueldo','complemento','sueldo','monto'],500);
   if(cs){var t=cs.reduce(function(s,e){return s+e.m;},0);CDS.tj.flujo.push({k:'complemento',concepto:'Complemento de sueldos',total:t,emps:cs.length,emp:cs});}
