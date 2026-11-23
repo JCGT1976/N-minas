@@ -3869,7 +3869,7 @@ function calcSmartSheetRows(sh) {
   var rawRows = XLSX.utils.sheet_to_json(sh, {header:1, defval:'', raw:false});
   if (!rawRows.length) return [];
   var hdrIdx = -1;
-  for (var i = 0; i < Math.min(rawRows.length, 12); i++) {
+  for (var i = 0; i < Math.min(rawRows.length, 20); i++) {
     var nonEmpty = rawRows[i].filter(function(v){ return v !== null && v !== undefined && String(v).trim() !== ''; });
     if (nonEmpty.length >= 3) { hdrIdx = i; break; }
   }
