@@ -1669,15 +1669,9 @@ function nomDbRenderSem(semana) {
     });
   } else {
     /* Fallback: totales globales cuando no hay datos por ciudad */
-    percep = (T.regPercep||0) + (T.valesTotal||0);
-    var flujoGlobal = row.flujo_detalle || [];
-    efectivo = 0; adicionales = 0;
-    flujoGlobal.forEach(function(f) {
-      var k = (f.concepto||'').toUpperCase();
-      var isProy = k.indexOf('PROY')>=0||k.indexOf('TEMPORAL')>=0||k.indexOf('PROYECTO')>=0;
-      if (isProy) efectivo += (f.total||0);
-      else adicionales += (f.total||0);
-    });
+    percep = (T.regNeto||0) + (T.valesTotal||0);
+    efectivo = T.flujoTotal || 0;
+    adicionales = T.finNeto || 0;
   }
   var total = (__dbCity === 'all')
     ? (T.totalEfectivo || (percep + efectivo + adicionales))
@@ -1692,9 +1686,9 @@ function nomDbRenderSem(semana) {
       '<div class="ph-card-sub">'+empsSub+'</div>'+
       '<div class="ph-card-hint"><i class="ti ti-zoom-in" aria-hidden="true"></i> Ver desglose por colaborador</div>'+
     '</div>',
-      phCard('ti-building-bank','Nómina regular',F(percep),'Incl. vales de despensa',true),
-      phCard('ti-cash','Nómina en efectivo',F(efectivo),'Proyectos y temporales',true),
-      phCard('ti-gift','Conceptos adicionales',F(adicionales||0),'Hrs extras, compl. y bonos',true),
+      phCard('ti-building-bank',__dbCity==='all'?'Nómina regular neta':'Nómina regular',F(percep),__dbCity==='all'?'Neto + vales de despensa':'Incl. vales de despensa',true),
+      phCard('ti-cash','Nómina en efectivo',F(efectivo),__dbCity==='all'?'Proyectos, hrs extras y bonos':'Proyectos y temporales',true),
+      phCard('ti-gift',__dbCity==='all'?'Finiquitos':'Conceptos adicionales',F(adicionales||0),__dbCity==='all'?'Liquidaciones y finiquitos':'Hrs extras, compl. y bonos',true),
     '</div>',
     '<div class="ph-total-strip">',
       '<div>',
@@ -1704,7 +1698,7 @@ function nomDbRenderSem(semana) {
       '<div class="ph-total-divider"></div>',
       '<div class="ph-total-right">',
         '<div class="ph-total-badge">Sem. '+semana+'</div>',
-        '<div class="ph-total-breakdown">'+(__dbCity==='all'?'Nom. neta: '+FM((T.regNeto||0)+(T.valesTotal||0))+' &#183; Proy./Efec.: '+FM(efectivo+adicionales)+' &#183; Finiq.: '+FM(T.finNeto||0):'Regular: '+FM(percep)+' &#183; Efectivo: '+FM(efectivo)+' &#183; Adic.: '+FM(adicionales))+'</div>',
+        '<div class="ph-total-breakdown">'+(__dbCity==='all'?'Nom. neta: '+FM((T.regNeto||0)+(T.valesTotal||0))+' &#183; Proy./Efec.: '+FM(T.flujoTotal||0)+' &#183; Finiq.: '+FM(T.finNeto||0):'Regular: '+FM(percep)+' &#183; Efectivo: '+FM(efectivo)+' &#183; Adic.: '+FM(adicionales))+'</div>',
       '</div>',
     '</div>'
   ].join('');
