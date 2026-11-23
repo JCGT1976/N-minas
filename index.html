@@ -1658,18 +1658,19 @@ function nomDbRenderSem(semana) {
   /* Montos por ciudad (tab activo) */
   var percep, efectivo, adicionales;
   if (city && (city.percep||0) > 0) {
-    percep = (city.percep||0) + (city.vales||0);
+    percep = (city.neto||0) + (city.vales||0);
     var flujoArr = city.flujo || [];
     efectivo = 0; adicionales = 0;
     flujoArr.forEach(function(f) {
       var k = (f.concepto||'').toUpperCase();
-      var isProy = k.indexOf('PROY')>=0||k.indexOf('TEMPORAL')>=0||k.indexOf('PROYECTO')>=0;
+      var isProy  = k.indexOf('PROY')>=0||k.indexOf('TEMPORAL')>=0||k.indexOf('PROYECTO')>=0;
+      var isVales = k.indexOf('VALE')>=0||k.indexOf('DESPENSA')>=0;
       if (isProy) efectivo += (f.total||0);
-      else adicionales += (f.total||0);
+      else if (!isVales) adicionales += (f.total||0);
     });
   } else {
     /* Fallback: totales globales cuando no hay datos por ciudad */
-    percep = (T.regNeto||0) + (T.valesTotal||0);
+    percep = (T.regNeto||0);
     efectivo = T.flujoTotal || 0;
     adicionales = T.finNeto || 0;
   }
@@ -2731,7 +2732,7 @@ function nomBuildEmpList(cds){
   var list=[];if(!cds)return list;
   ['tj','mty','cdmx'].forEach(function(cd){
     var city=cds[cd]||{};
-    (city.emp_nomina||[]).forEach(function(e){if(e.n)list.push({n:e.n,m:Math.round(e.m||0),e:e.e||'',cd:cd,tipo:'nom'});});
+    (city.emp_nomina||[]).forEach(function(e){if(e.n)list.push({n:e.n,m:Math.round((e.m||0)+(e.vales||0)),e:e.e||'',cd:cd,tipo:'nom'});});
     (city.flujo||[]).forEach(function(f){
       var kU=(f.concepto||f.k||'').toUpperCase();
       var tipo=kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0?'proy':'adic';
