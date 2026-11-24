@@ -1914,6 +1914,7 @@ function phCard(icon, lbl, val, sub, clickable) {
 }
 
 window.nomDbOpenModal = function nomDbOpenModal() {
+  if (__dbCity === 'all') { nomDbOpenColabModal(__dbSemActual); return; }
   var city = __dbCity;
   var semana = __dbSemActual;
   var CITY_NAMES = {tj:'Tijuana', mty:'Monterrey', cdmx:'CDMX'};
