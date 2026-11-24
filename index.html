@@ -2134,10 +2134,12 @@ function nomDbColabRender() {
   var isAll = __colabCity==='all' && __colabTipo==='all' && !__colabQ;
   /* Cuando no hay filtro: usar row.totals como fuente de verdad = igual que el reporte */
   var footEmps  = isAll ? ((Tft.regEmps||0)+(fiFt.emps||0)) : filtered.length;
-  var footNom   = isAll ? (Tft.regNeto||0) : tN;
+  var cdsRow  = rowFt.ciudades ? (typeof rowFt.ciudades==='string'?JSON.parse(rowFt.ciudades):rowFt.ciudades) : {};
+  var cdsCity = (!isAll && __colabCity!=='all') ? (cdsRow[__colabCity]||{}) : {};
+  var footNom   = isAll ? (Tft.regNeto||0) : ((cdsCity.neto||0)+(cdsCity.vales||0));
   var footProy  = isAll ? (Tft.flujoTotal||0) : (tP+tA);
   var footFin   = isAll ? (fiFt.neto||Tft.finNeto||0) : 0;
-  var footTot   = isAll ? (Tft.costoReal||0) : (tN+tP+tA);
+  var footTot   = isAll ? (Tft.costoReal||0) : ((cdsCity.neto||0)+(cdsCity.vales||0)+tP+tA);
   var lblProy   = isAll ? 'Efectivo y proyectos' : 'Proy. y adic.';
   var foot = document.getElementById('ph-colab-foot');
   if (foot) foot.innerHTML =
