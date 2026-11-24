@@ -1651,8 +1651,10 @@ function nomDbRenderSem(semana) {
       var kU=(f.concepto||f.k||'').toUpperCase();
       if(kU.indexOf('PROY')>=0||kU.indexOf('TEMPORAL')>=0) _cityProy+=(f.emps||0);
     });
-    emps = (city.emps||0) + _cityProy;
-    empsSub = 'Regular: '+(city.emps||0)+' &nbsp;&#183;&nbsp; Proyectos: '+_cityProy;
+    var _uq={}; (row.__empList||[]).forEach(function(e){if(e.cd===__dbCity)_uq[e.n.toLowerCase()]=1;});
+    var _uqCount=Object.keys(_uq).length;
+    emps = _uqCount||((city.emps||0)+_cityProy);
+    empsSub = 'Regular: '+(city.emps||0)+'&nbsp;&#183;&nbsp;Proyectos: '+_cityProy;
   }
 
   /* Montos por ciudad (tab activo) */
